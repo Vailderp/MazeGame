@@ -147,7 +147,6 @@
   <ItemGroup>
     <ClInclude Include="Engine3d.h" />
     <ClInclude Include="Math.h" />
-    <ClInclude Include="Raycaster_api.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

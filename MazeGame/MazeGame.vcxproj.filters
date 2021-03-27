@@ -26,8 +26,5 @@
     <ClInclude Include="Math.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
-    <ClInclude Include="Raycaster_api.h">
-      <Filter>Исходные файлы</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

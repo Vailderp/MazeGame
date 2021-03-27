@@ -149,8 +149,8 @@ public:
 	class FileSaveable
 	{
 	public:
-		virtual void save(std::string name) = 0;
 		virtual ~FileSaveable() = default;
+		virtual void save(std::string name) = 0;
 	};
 	
 	//Менеджер файлов
@@ -503,15 +503,74 @@ private:
 			const  sf::Vector2<int> matrix_size, 
 			const  sf::Vector2<float> wall_size, 
 			const  unsigned int render_distance,
-			sf::RenderWindow& window) :
+			sf::RenderTarget& target) :
 			size_(size),
 			matrix_(matrix),
 			matrix_size_(matrix_size),
 			wall_size_(wall_size),
 			render_distance_(render_distance),
-			ray_num_(window.getSize().x),
+			ray_num_(target.getSize().x),
 			ray_num_2_(ray_num_ / 2)
 		{
+			
+		}
+	};
+
+	class MainCameraStates
+	{
+	protected:
+		void resizeTarget(const sf::Vector2<unsigned> target_size)
+		{
+			this->window_size_.x = static_cast<float>(target_size.x);
+			this->window_size_.y = static_cast<float>(target_size.y);
+			this->window_size_2_.x = static_cast<float>(target_size.x) / 2.f;
+			this->window_size_2_.y = static_cast<float>(target_size.y) / 2.f;
+		}
+
+		void change_render_constant()
+		{
+			this->render_constant_ = static_cast<float>(this->window_size_.x) / abs(2 * (tanf(this->fov_) * math::PI_180))
+				* static_cast<float>(this->window_size_.y) * this->zoom_;
+		}
+	
+	public:
+		//FOV - Field Of View
+		sf::Vector2<float> window_size_;
+		sf::Vector2<float> window_size_2_;
+		sf::Vector2<float> position_;
+		float rotation_;
+		float fov_;
+		float zoom_;
+		float render_constant_{};
+		float wwf_;
+		float shading_coefficient_;
+
+		explicit MainCameraStates(const sf::RenderTarget& target) :
+			window_size_(target.getSize()),
+			window_size_2_(sf::Vector2<int>(target.getSize().x / 2, target.getSize().y / 2)),
+			position_(sf::Vector2<float>(0.f, 0.f)),
+			rotation_(0),
+			fov_(60),
+			zoom_(0.1f),
+			wwf_(window_size_.x / fov_),
+			shading_coefficient_(40.f * 0.00001f)
+		{
+			change_render_constant();
+		}
+
+	protected:
+		MainCameraStates(const sf::RenderTarget& target, const sf::Vector2<float> position, const float fov,
+			const float rotation, const float zoom = 4.f, const float shading_coefficient = 40.f) :
+			window_size_(target.getSize()),
+			window_size_2_(sf::Vector2<int>(target.getSize().x / 2, target.getSize().y / 2)),
+			position_(position),
+			rotation_(rotation),
+			fov_(fov),
+			zoom_(zoom),
+			wwf_(window_size_.x / fov),
+			shading_coefficient_(shading_coefficient * 0.00001f)
+		{
+			change_render_constant();
 		}
 	};
 
@@ -526,7 +585,8 @@ public:
 		
 		RayCaster_api(const MainWorldStates& states) :
 		MainWorldStates(states),
-			t_ray_data_vec(static_cast<RayData*>(malloc((states.ray_num_) * sizeof(RayData))))
+			t_ray_data_vec(static_cast<RayData*>(malloc(
+				(states.ray_num_) * sizeof(RayData))))
 		{
 
 		}
@@ -539,7 +599,8 @@ public:
 		void ResetStates(const MainWorldStates& states)
 		{
 			*this = states;
-			if (realloc(t_ray_data_vec, (states.ray_num_) * sizeof(RayData)) == NULL)
+			if (realloc(t_ray_data_vec, (states.ray_num_) * 
+				sizeof(RayData)) == NULL)
 			{
 				exit(-4);
 			}
@@ -557,37 +618,44 @@ public:
 		class RayData
 		{
 		public:			
-			float pos_x;
-			float pos_y;
-			float len;
-			unsigned int wall_num;
-			dir dir;
+			float position_x;
+			float position_y;
+			float length;
+			unsigned int wall_number;
+			float rotation;
+			dir direction;
 
 			RayData() :
-				pos_x(0),
-				pos_y(0),
-				len(0),
-				wall_num(0),
-				dir(dir::none)
+				position_x(0),
+				position_y(0),
+				length(0),
+				wall_number(0),
+				rotation(0),
+				direction(dir::none)
 			{
 				
 			}
 
-			RayData(const float pos_x, const float pos_y, const float len,
+			RayData(const float pos_x, 
+				const float pos_y, 
+				const float len,
 				const unsigned int wall_num,
+				const float rotation,
 				const RayCaster_api::dir dir) :
-				pos_x(pos_x),
-				pos_y(pos_y),
-				len(len),
-				wall_num(wall_num),
-				dir(dir)
+			
+				position_x(pos_x),
+				position_y(pos_y),
+				length(len),
+				wall_number(wall_num),
+				rotation(rotation),
+				direction(dir)
 			{
 				
 			}
 
 			bool operator < (const RayData& ray_data) const
 			{
-				if (len < ray_data.len)
+				if (length < ray_data.length)
 				{
 					return true;
 				}
@@ -599,26 +667,32 @@ public:
 		RayData* RayCast(Camera& camera)
 		{
 			/*
-				0
-			_________
-			|		|
-			|		|
-		3	|		|	1
-			|_______|
+				up
+			 ________
+			|		 |
+			|		 |
+	  left  |		 |  right
+			|________|
 
-				2
+			   down
 			*/
+			
 			float frn = camera.fov_ / static_cast<float>(ray_num_);
-			int f = -ray_num_2_;
+			
+			int f = static_cast<float>(-ray_num_2_);
+			
 			for (auto r = 0; r < ray_num_; r++)
 			{
 				std::vector<RayData> ray_data_vec;
+				
 				const float angle = camera.rotation_ + (f * (frn));
-				f++;
+				
 				const float cos_angle = math::cos180(angle);
 				const float sin_angle = math::sin180(angle);
 				const float tan_angle = math::tan180(angle);
 				const float ctg_angle = math::ctg180(angle);
+
+				f++;
 
 				if (cos_angle > 0 && sin_angle > 0)
 				{
@@ -634,7 +708,7 @@ public:
 					{
 						if (matrix_[vjx][vjy] != 0)
 						{
-							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], dir::left);
+							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::left);
 						}
 					}
 					const float vAA = wall_size_.x;
@@ -651,7 +725,7 @@ public:
 					{
 						if (matrix_[hjx][hjy] != 0)
 						{
-							ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], dir::left);
+							ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::up);
 						}
 					}
 					const float hBB = wall_size_.y;
@@ -667,7 +741,7 @@ public:
 						{
 							if (matrix_[vjx][vjy] != 0)
 							{
-								ray_data_vec.emplace_back(vcx, vcy, hypotf(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], dir::left);
+								ray_data_vec.emplace_back(vcx, vcy, hypotf(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::left);
 								break;
 							}
 						}
@@ -686,7 +760,7 @@ public:
 						{
 							if (matrix_[hjx][hjy] != 0)
 							{
-								ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], dir::left);
+								ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::up);
 								break;
 							}
 						}
@@ -700,13 +774,14 @@ public:
 					(
 						ray_data_vec.begin(),
 						ray_data_vec.end(),
-						[](RayData const& a, RayData const& b) -> bool
+						[] (RayData const& a, RayData const& b) -> bool
 						{
-							return a.len < b.len;
+							return a.length < b.length;
 						}
 					);
 					t_ray_data_vec[r] = ray_data_vec[0];
 				}
+				
 				else if (cos_angle < 0 && sin_angle > 0)
 				{
 					//Ver
@@ -720,7 +795,7 @@ public:
 					{
 						if (matrix_[vjx][vjy] != 0)
 						{
-							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjy][vjx], dir::left);
+							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjy][vjx], angle, dir::right);
 						}
 					}
 					const float vAA = wall_size_.x;
@@ -736,7 +811,7 @@ public:
 					{
 						if (matrix_[hjx][hjy] != 0)
 						{
-							ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], dir::left);
+							ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::up);
 						}
 					}
 					const float hBB = wall_size_.y;
@@ -752,7 +827,7 @@ public:
 						{
 							if (matrix_[vjx][vjy] != 0)
 							{
-								ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], dir::left);
+								ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::right);
 								break;
 							}
 						}
@@ -771,7 +846,7 @@ public:
 						{
 							if (matrix_[hjx][hjy] != 0)
 							{
-								ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], dir::left);
+								ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::up);
 								break;
 							}
 						}
@@ -787,13 +862,14 @@ public:
 						ray_data_vec.end(),
 						[](RayData const& a, RayData const& b) -> bool
 						{
-							return a.len < b.len;
+							return a.length < b.length;
 						}
 					);
 
 					t_ray_data_vec[r] = ray_data_vec[0];
 					
 				}
+				
 				else if (cos_angle > 0 && sin_angle < 0)
 				{
 					//Ver
@@ -807,7 +883,7 @@ public:
 					{
 						if (matrix_[vjx][vjy] != 0)
 						{
-							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjy][vjx], dir::left);
+							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjy][vjx], angle, dir::left);
 						}
 					}
 					const float vAA = wall_size_.x;
@@ -824,7 +900,7 @@ public:
 					{
 						if (matrix_[hjx][hjy] != 0)
 						{
-							ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], dir::left);
+							ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::down);
 						}
 					}
 					const float hBB = wall_size_.y;
@@ -840,7 +916,7 @@ public:
 						{
 							if (matrix_[vjx][vjy] != 0)
 							{
-								ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], dir::left);
+								ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::left);
 								break;
 							}
 						}
@@ -859,7 +935,7 @@ public:
 						{
 							if (matrix_[hjx][hjy] != 0)
 							{
-								ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], dir::left);
+								ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::down);
 								break;
 							}
 						}
@@ -875,13 +951,14 @@ public:
 						ray_data_vec.end(),
 						[](RayData const& a, RayData const& b) -> bool
 						{
-							return a.len < b.len;
+							return a.length < b.length;
 						}
 					);
 
 					t_ray_data_vec[r] = ray_data_vec[0];
 					
 				}
+				
 				else if (cos_angle < 0 && sin_angle < 0)
 				{
 					//Ver
@@ -895,7 +972,7 @@ public:
 					{
 						if (matrix_[vjx][vjy] != 0)
 						{
-							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjy][vjx], dir::left);
+							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjy][vjx], angle, dir::right);
 						}
 					}
 					const float vAA = wall_size_.x;
@@ -912,7 +989,7 @@ public:
 					{
 						if (matrix_[hjx][hjy] != 0)
 						{
-							ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], dir::left);
+							ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::down);
 						}
 					}
 					const float hBB = wall_size_.y;
@@ -928,7 +1005,7 @@ public:
 						{
 							if (matrix_[vjx][vjy] != 0)
 							{
-								ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], dir::left);
+								ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::right);
 								break;
 							}
 						}
@@ -947,7 +1024,7 @@ public:
 						{
 							if (matrix_[hjx][hjy] != 0)
 							{
-								ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], dir::left);
+								ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::down);
 								break;
 							}
 						}
@@ -963,137 +1040,260 @@ public:
 						ray_data_vec.end(),
 						[](RayData const& a, RayData const& b) -> bool
 						{
-							return a.len < b.len;
+							return a.length < b.length;
 						}
 					);
-					//t_ray_data_vec[r] = ray_data_vec[0];
+					t_ray_data_vec[r] = ray_data_vec[0];
 				}
+				
 			}
+			
 			return t_ray_data_vec;
+			
 		}
 	};
 
 public:
 
-	class WallAPI
+	class Wall_api
 	{
 	public:
-		//virtual voids
+
+		sf::Texture texture;
+		
+		virtual ~Wall_api()
+		{
+			std::cout << "wall api deleted" << std::endl;
+		}
+		
+		virtual void wall_states(RayCaster_api::RayData& data) = 0;
+		
+		Wall_api() = default;
 	};
 
-	class World : public MainWorldStates, public sf::Drawable, public sf::Transformable, public FileSaveable
+	class MainWall : public Wall_api
+	{
+	public:
+
+		MainWall() :
+		Wall_api()
+		{
+			texture.loadFromFile("data/tex/4.png");
+		}
+
+		void wall_states(RayCaster_api::RayData& data) override
+		{
+			
+		}
+		
+	};
+
+	class World :
+		public MainWorldStates,
+		public sf::Drawable,
+		public sf::Transformable,
+		public FileSaveable
 	{
 	private:
-		
+
 		RayCaster_api ray_caster_api_;
-		
+
 		RayCaster_api::RayData* ray_data_{};
 
-	public:
+		std::vector<Wall_api * > wall_{};
 		
-		World(sf::RenderWindow& window, const sf::Vector2<float> size =
+		sf::Texture* texture_{};
+
+		MainCameraStates camera_states_;
+
+	public:
+
+		std::vector<sf::Texture> textures;
+
+		World(sf::RenderTarget& target, const sf::Vector2<float> size =
 			sf::Vector2<float>(1024, 1024),
-			Matrix matrix = generateMatrix(32, 32, 1), 
+			Matrix matrix = generateMatrix(32, 32, 1),
 			unsigned int render_distance = 32 * 32) :
 		
 			MainWorldStates(size,
 				matrix,
-				sf::Vector2<int>(static_cast<int>(matrix.size()), 
+				sf::Vector2<int>(static_cast<int>(matrix.size()),
 					static_cast<int>(matrix[0].size())),
-				sf::Vector2<float>(size.x / 
+				sf::Vector2<float>(size.x /
 					static_cast<float>(matrix.size()),
 					size.y / static_cast<float>(matrix[0].size())),
 				render_distance,
-				window),
-			ray_caster_api_(*this)
+				target),
+			ray_caster_api_(*this),
+			texture_(static_cast<sf::Texture*>(malloc((this->ray_num_)
+				* sizeof(sf::Texture)))),
+			camera_states_(target)
 		{
-
+			wall_.push_back(new MainWall);
+			wall_.push_back(new MainWall);
 		}
 
-		void render(Camera& camera)
+		void setRenderTarget(sf::RenderTarget& target)
 		{
+			this->ray_num_ = target.getSize().x;
+			this->ray_num_2_ = static_cast<int>(static_cast<float>
+				(this->ray_num_) / 2.f);
+			
+			if (realloc(texture_, (this->ray_num_) * 
+				sizeof(sf::Texture)) == NULL)
+			{
+				exit(-5);
+			}
+			
+			ray_caster_api_.ResetStates(* this);
+
+			rectangle.setFillColor(sf::Color::Red);
+		}
+		
+		void render(Camera& camera, sf::RenderTarget& window)
+		{
+			camera_states_ = camera.getStates();
 			ray_data_ = (ray_caster_api_.RayCast(camera));
+			
+			for (auto i = 0; i < ray_num_; i++)
+			{
+				rectangle.setSize(sf::Vector2f(ray_data_[i].length, 1));
+				rectangle.setRotation(ray_data_[i].rotation);
+				rectangle.setPosition(camera.getPosition().x, 
+				camera.getPosition().y);
+				window.draw(rectangle);
+
+				wall_[ray_data_[i].wall_number]->wall_states(ray_data_[i]);
+				
+			}
 			
 		}
 
-		void draw(sf::RenderTarget& target, sf::RenderStates states) const override
+		void addWallType(Wall_api* wall)
 		{
-			for(auto i = 0; i < ray_num_; i++)
+			wall_.push_back(wall);
+		}
+
+		sf::RectangleShape rectangle;
+
+		
+
+		void draw(sf::RenderTarget& target,
+			sf::RenderStates states) const override
+		{
+			for (auto i = 0; i < ray_num_; i++)
 			{
+				//std::cout << wall_[ray_data_[i].wall_number] << std::endl;
+
+				float d{};
 				
+				switch (ray_data_[i].direction) {
+					
+				case RayCaster_api::dir::left:
+					d = fmodf(ray_data_[i].position_y, 
+						wall_size_.y) * 0.9f;
+					break;
+					
+				case RayCaster_api::dir::right:
+					d = (wall_size_.y - fmodf(ray_data_[i].position_y,
+						wall_size_.y)) * 0.9f;
+					break;
+					
+				case RayCaster_api::dir::down:
+					d = (wall_size_.x - fmodf(ray_data_[i].position_x,
+						wall_size_.x)) * 0.9f;
+					break;
+					
+				case RayCaster_api::dir::up:
+					d = fmodf(ray_data_[i].position_x
+						, wall_size_.x) * 0.9f;
+					break;
+					
+				case RayCaster_api::dir::none: 
+					break;
+					
+				default: 
+					break;
+					
+				}
+
+				sf::Sprite sprite(wall_[ray_data_[i].wall_number]->texture);
+				const float wall_height = camera_states_.render_constant_
+				/ ray_data_[i].length;
+				
+				sprite.setPosition(i, camera_states_.window_size_2_.y
+					- wall_height / 2.f);
+
+				const float tex_wall_scale = (static_cast<float>
+					(wall_[ray_data_[i].wall_number]->texture.getSize().x)
+					/ wall_size_.x);
+				
+				sprite.setTextureRect(sf::IntRect(
+					d * tex_wall_scale, 
+					0, 1,
+					wall_[ray_data_[i].wall_number]
+					->texture.getSize().y));
+
+				const float scale = 1 / tex_wall_scale;
+
+				sprite.setScale(1, wall_height / 
+					static_cast<float>(wall_[ray_data_[i].wall_number]
+						->texture.getSize().y));
+
+				const sf::Uint8 wall_clr = 255.f / (1 + 
+					powf(ray_data_[i].length, 2.f) * 
+					camera_states_.shading_coefficient_);
+
+				sprite.setColor(sf::Color(wall_clr, 
+					wall_clr, wall_clr));
+
+				if (i == 400)
+				{
+					std::cout << sprite.getPosition().y << std::endl;
+				}
+
+				target.draw(sprite);
 			}
 		}
 
 		void save(std::string name) override
 		{
-			
-		};
-		
+
+		}
+
 	};
 
-
-	class Camera : public FileSaveable
+	class Camera : public FileSaveable, public MainCameraStates
 	{
-	private:
-		//FOV - Field Of View
-		sf::Vector2<float> window_size_;
-		sf::Vector2<float> window_size_2_;
-		sf::Vector2<float> position_;
-		float rotation_;
-		float fov_;
-		float zoom_;
-		float render_constant_{};
-		float wwf_;
-		float shading_coefficient_;
 
 		friend class RayCaster_api;
-		
-		void window_init(const sf::Vector2<unsigned> window_size)
-		{
-			this->window_size_.x = window_size.x;
-			this->window_size_.y = window_size.y;
-			this->window_size_2_.x = static_cast<float>(window_size.x) / 2.f;
-			this->window_size_2_.y = static_cast<float>(window_size.y) / 2.f;
-		}
-		
-		void change_render_constant()
-		{
-			this->render_constant_ = static_cast<float>(this->window_size_.x) / abs(2 * (tanf(this->fov_) * math::PI_180))
-				* static_cast<float>(this->window_size_.y) * this->zoom_;
-		}
+
+		friend class World;
 
 	public:
-
-		explicit Camera(const sf::RenderWindow& window) :
-			window_size_(window.getSize()),
-			window_size_2_(sf::Vector2<int>(window.getSize().x / 2, window.getSize().y / 2)),
-			position_(sf::Vector2<float>(0.f, 0.f)),
-			rotation_(0),
-			fov_(60),
-			zoom_(1.f),
-			wwf_(window_size_.x / fov_),
-			shading_coefficient_(40.f * 0.00001f)
+		
+		Camera(const sf::RenderTarget& target) :
+			MainCameraStates(target)
 		{
 			change_render_constant();
 		}
 
-		Camera(const sf::RenderWindow& window, const sf::Vector2<float> position, const float fov,
-			const float rotation, const float zoom = 4.f, const float shading_coefficient = 40.f) :
-			window_size_(window.getSize()),
-			window_size_2_(sf::Vector2<int>(window.getSize().x / 2, window.getSize().y / 2)),
-			position_(position),
-			rotation_(rotation),
-			fov_(fov),
-			zoom_(zoom),
-			wwf_(window_size_.x / fov),
-			shading_coefficient_(shading_coefficient * 0.00001f)
+		Camera(const sf::RenderTarget& target, 
+			const sf::Vector2<float> position, 
+			const float fov,
+		    const float rotation, 
+			const float zoom = 0.01f, 
+			const float shading_coefficient = 40.f) :
+
+			MainCameraStates(target, position, fov, 
+				rotation, zoom, shading_coefficient)
 		{
 			change_render_constant();
 		}
 
-		void setWindow(const sf::RenderWindow& window)
+		void setRenderTarget(const sf::RenderTarget& target)
 		{
-			window_init(window.getSize());
+			resizeTarget(target.getSize());
 			wwf_ = window_size_.x / fov_;
 			change_render_constant();
 		}
@@ -1140,7 +1340,6 @@ public:
 		{
 			return position_;
 		}
-
 		void move(const float x, const float y)
 		{
 			position_.x += x;
@@ -1188,9 +1387,13 @@ public:
 		void save(std::string name) override
 		{
 			std::cout << "camera saved" << std::endl;
-		};
-		
+		}
+
+	private:
+
+		MainCameraStates getStates() const
+		{
+			return static_cast<MainCameraStates>(*this);
+		}
 	};
-	
-	
 };

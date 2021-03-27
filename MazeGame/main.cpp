@@ -5,7 +5,8 @@
 int main()
 {
 
-	sf::RenderWindow window(sf::VideoMode(1680, 1050), "3D", sf::Style::Fullscreen);
+	sf::RenderWindow window(sf::VideoMode(800, 800), "3D", sf::Style::Default);
+	sf::RenderWindow DW(sf::VideoMode(800, 800), "3D", sf::Style::Default);
 
 	const int sizeX = 32;
 	const int sizeY = 32;
@@ -14,8 +15,8 @@ int main()
 	v3d::FileManager::save(&maze, "maze");
 	v3d::Matrix lab = maze.generate();
 
-	v3d::World world(window, sf::Vector2<float>(1680, 1050), lab, sizeX * sizeY);
-	v3d::Camera camera(window);
+	v3d::World world(DW, sf::Vector2<float>(800, 800), lab, sizeX * sizeY);
+	v3d::Camera camera(DW, sf::Vector2f(100, 100), 60, 100, 0.3f, 40);
 	camera.setPosition(100, 100);
 	
 	sf::RectangleShape r(sf::Vector2f(window.getSize().x / sizeX, window.getSize().y / sizeY));
@@ -62,11 +63,11 @@ int main()
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 		{
-			camera.rotate(-1.53f);
+			camera.rotate(1.53f);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 		{
-			camera.rotate(1.53f);
+			camera.rotate(-1.53f);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 		{
@@ -86,6 +87,7 @@ int main()
 		}
 
 		window.clear();
+		DW.clear();
 
 		for (int i = 0; i < sizeX; i++)
 		{
@@ -103,16 +105,17 @@ int main()
 		ray.setRotation(camera.getRotation());
 		ray.setPosition(camera.getPosition());
 		window.draw(circle);
-		window.draw(ray);
-		world.render(camera);
+		//window.draw(ray);
+		world.render(camera, window);
 		Time = clock.getElapsedTime();
 		float lastTime = Time.asSeconds();
 		float fps = 1 / (lastTime - currentTime);
 		FPStext.setString(std::to_string(fps));
 		 
 		//world.render(camera);
-
+		DW.draw(world);
 		window.draw(FPStext);
+		DW.display();
 		window.display();
 		
 	}

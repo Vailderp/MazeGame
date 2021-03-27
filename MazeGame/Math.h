@@ -10,18 +10,18 @@ namespace math
 	const float PI180 = PI / 180.f;
 	const float PI_180 = 180.f / PI;
 
-	inline float toDeg(const float rad)
+	inline float __fastcall toDeg(const float rad)
 	{
 		return rad * PI_180;
 	}
 
-	inline float toRad(const float deg)
+	inline float __fastcall toRad(const float deg)
 	{
 		return deg * PI180;
 	}
 
 	//Разница между двамя углами
-	inline float getSignedAngle(const float Angle1, const float Angle2)
+	inline float __fastcall getSignedAngle(const float Angle1, const float Angle2)
 	{
 		const float sa = std::fmodf((Angle1 - Angle2) + 180, 360.f) - 180;
 		if (sa < -180)
@@ -38,7 +38,7 @@ namespace math
 	}
 
 	//ГСПЧ алгоритм рандома по сиду
-	inline int rand(const int min, const int max, unsigned int seed)
+	inline int __fastcall rand(const int min, const int max, unsigned int seed)
 	{
 		seed = 8253729 * seed + 2396403;
 		int rand = (8253729 * seed + 2396403) % (max + min + 1) - min;
@@ -53,7 +53,7 @@ namespace math
 	}
 
 	//ГСПЧ алгоритм рандома без сида
-	inline int rand(const int min, const int max)
+	inline int __fastcall rand(const int min, const int max)
 	{
 		return rand(min, max, static_cast<int>(8253729 * (std::clock() / static_cast<float>(CLOCKS_PER_SEC))));
 	}
@@ -78,7 +78,7 @@ namespace math
 		return math::ctg(math::toRad(deg));
 	}
 
-	inline float delimit_angle(float& angle)
+	inline float __fastcall delimit_angle(float& angle)
 	{
 		if (angle > 180)
 		{
@@ -91,13 +91,14 @@ namespace math
 		return angle;
 	}
 
-	inline int getMatrixPos(const float pos, const float m_matrix_width)
+	inline int __fastcall getMatrixPos(const float pos, const float m_matrix_width)
 	{
 		return static_cast<int>(pos / m_matrix_width);
 	}
 
-	inline float fast_hypot(const float a, const float b)
+	inline float __fastcall fast_hypot(const float a, const float b)
 	{
 		return sqrtf(a * a + b * b);
 	}
+
 };
