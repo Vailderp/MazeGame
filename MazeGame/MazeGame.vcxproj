@@ -147,6 +147,7 @@
   <ItemGroup>
     <ClInclude Include="Engine3d.h" />
     <ClInclude Include="Math.h" />
+    <ClInclude Include="Walls.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

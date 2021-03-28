@@ -73,7 +73,8 @@ public:
 	template<typename Time>
 	class Clock
 	{
-		static_assert(IsFloatType<Time>, "template's typename are not <float> or <double> or <long double>");
+		static_assert(IsFloatType<Time>, 
+		"template's typename are not <float> or <double> or <long double>");
 
 	public:
 
@@ -166,12 +167,17 @@ public:
 	//Генератор лабиринта
 	template<const unsigned int SizeX,
 	const unsigned int SizeY, const unsigned Seed>
-	class Maze : public FileSaveable
+	class Maze :
+		public FileSaveable,
+		public sf::Drawable,
+		public sf::Transformable
 	{
 	private:
 		
 		//Сид, по которому будет генерироваться определённый узор лабиринта
 		unsigned __int8 seed_[64] = {};
+
+		Matrix matrix_;
 		
 		//Варианты поворота
 		enum class Rot
@@ -470,13 +476,31 @@ public:
 					}
 				}
 			}
-			return matrix;
+			matrix_ = matrix;
+			return matrix_;
 		}
 		
 		void save(const std::string name) override
 		{
 			std::cout << "SAVE MAZE" << std::endl;
 		}
+
+		void draw(sf::RenderTarget& target, sf::RenderStates states) const override
+		{
+			sf::RectangleShape r(sf::Vector2f(target.getSize().x / SizeX, target.getSize().y / SizeY));
+			for (unsigned i = 0; i < SizeX; i++)
+			{
+				for (unsigned l = 0; l < SizeY; l++)
+				{
+					if (matrix_[i][l] != 0)
+					{
+						r.setPosition(target.getSize().x / SizeX * i, target.getSize().y / SizeY * l);
+						target.draw(r);
+					}
+				}
+			}
+		}
+		
 	};
 
 	class Camera;
@@ -795,7 +819,7 @@ public:
 					{
 						if (matrix_[vjx][vjy] != 0)
 						{
-							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjy][vjx], angle, dir::right);
+							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::right);
 						}
 					}
 					const float vAA = wall_size_.x;
@@ -883,7 +907,7 @@ public:
 					{
 						if (matrix_[vjx][vjy] != 0)
 						{
-							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjy][vjx], angle, dir::left);
+							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::left);
 						}
 					}
 					const float vAA = wall_size_.x;
@@ -972,7 +996,7 @@ public:
 					{
 						if (matrix_[vjx][vjy] != 0)
 						{
-							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjy][vjx], angle, dir::right);
+							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::right);
 						}
 					}
 					const float vAA = wall_size_.x;
@@ -1051,6 +1075,9 @@ public:
 			return t_ray_data_vec;
 			
 		}
+
+
+		
 	};
 
 public:
@@ -1078,12 +1105,14 @@ public:
 		MainWall() :
 		Wall_api()
 		{
-			texture.loadFromFile("data/tex/4.png");
+			texture.loadFromFile("data/tex/chrome.png");
 		}
+
+		sf::RenderTexture render_texture;
 
 		void wall_states(RayCaster_api::RayData& data) override
 		{
-			
+
 		}
 		
 	};
@@ -1100,21 +1129,22 @@ public:
 
 		RayCaster_api::RayData* ray_data_{};
 
-		std::vector<Wall_api * > wall_{};
-		
+		std::vector<Wall_api* > wall_{};
+
 		sf::Texture* texture_{};
 
 		MainCameraStates camera_states_;
 
+		std::vector<int> used_walls_;
+
 	public:
 
-		std::vector<sf::Texture> textures;
-
-		World(sf::RenderTarget& target, const sf::Vector2<float> size =
+		World(sf::RenderTarget& target,
+			const sf::Vector2<float> size =
 			sf::Vector2<float>(1024, 1024),
 			Matrix matrix = generateMatrix(32, 32, 1),
 			unsigned int render_distance = 32 * 32) :
-		
+
 			MainWorldStates(size,
 				matrix,
 				sf::Vector2<int>(static_cast<int>(matrix.size()),
@@ -1138,35 +1168,59 @@ public:
 			this->ray_num_ = target.getSize().x;
 			this->ray_num_2_ = static_cast<int>(static_cast<float>
 				(this->ray_num_) / 2.f);
-			
-			if (realloc(texture_, (this->ray_num_) * 
+
+			if (realloc(texture_, (this->ray_num_) *
 				sizeof(sf::Texture)) == NULL)
 			{
 				exit(-5);
 			}
-			
-			ray_caster_api_.ResetStates(* this);
+
+			ray_caster_api_.ResetStates(*this);
 
 			rectangle.setFillColor(sf::Color::Red);
 		}
-		
-		void render(Camera& camera, sf::RenderTarget& window)
+
+		void render(Camera& camera)
 		{
+
 			camera_states_ = camera.getStates();
 			ray_data_ = (ray_caster_api_.RayCast(camera));
-			
-			for (auto i = 0; i < ray_num_; i++)
-			{
-				rectangle.setSize(sf::Vector2f(ray_data_[i].length, 1));
-				rectangle.setRotation(ray_data_[i].rotation);
-				rectangle.setPosition(camera.getPosition().x, 
-				camera.getPosition().y);
-				window.draw(rectangle);
 
-				wall_[ray_data_[i].wall_number]->wall_states(ray_data_[i]);
+			used_walls_.push_back(ray_data_[0].wall_number);
+
+			for (auto i = 1; i < ray_num_; i++)
+			{
+				//rectangle.setSize(sf::Vector2f(ray_data_[i].length, 1));
+				//rectangle.setRotation(ray_data_[i].rotation);
+				//rectangle.setPosition(camera.getPosition().x,
+				//	camera.getPosition().y);
+				//window.draw(rectangle);
+
 				
+				bool flag = true;
+				for (int l = 0; l < used_walls_.size(); l++)
+				{
+					if (used_walls_[l] == ray_data_[i].wall_number)
+					{
+						flag = false;
+					}
+				}
+
+				if (flag)
+				{
+					used_walls_.push_back(ray_data_[i].wall_number);
+				}
+
 			}
 			
+			for (int i = 0; i < used_walls_.size(); i++)
+			{
+				wall_[ray_data_[i].wall_number]->wall_states(ray_data_[i]);
+			}
+			
+			used_walls_.clear();
+
+			//std::cout << used_walls_.size();
 		}
 
 		void addWallType(Wall_api* wall)
@@ -1174,9 +1228,14 @@ public:
 			wall_.push_back(wall);
 		}
 
+		void operator << (Wall_api* wall)
+		{
+			addWallType(wall);
+		}
+
 		sf::RectangleShape rectangle;
 
-		
+
 
 		void draw(sf::RenderTarget& target,
 			sf::RenderStates states) const override
@@ -1186,71 +1245,70 @@ public:
 				//std::cout << wall_[ray_data_[i].wall_number] << std::endl;
 
 				float d{};
-				
+
 				switch (ray_data_[i].direction) {
-					
+
 				case RayCaster_api::dir::left:
-					d = fmodf(ray_data_[i].position_y, 
+					d = fmodf(ray_data_[i].position_y,
 						wall_size_.y) * 0.9f;
 					break;
-					
+
 				case RayCaster_api::dir::right:
 					d = (wall_size_.y - fmodf(ray_data_[i].position_y,
 						wall_size_.y)) * 0.9f;
 					break;
-					
+
 				case RayCaster_api::dir::down:
 					d = (wall_size_.x - fmodf(ray_data_[i].position_x,
 						wall_size_.x)) * 0.9f;
 					break;
-					
+
 				case RayCaster_api::dir::up:
 					d = fmodf(ray_data_[i].position_x
 						, wall_size_.x) * 0.9f;
 					break;
-					
-				case RayCaster_api::dir::none: 
+
+				case RayCaster_api::dir::none:
 					break;
-					
-				default: 
+
+				default:
 					break;
-					
+
 				}
 
 				sf::Sprite sprite(wall_[ray_data_[i].wall_number]->texture);
-				const float wall_height = camera_states_.render_constant_
-				/ ray_data_[i].length;
-				
+
+				const float wall_height = camera_states_.render_constant_ /
+					(ray_data_[i].length * cosf(math::toRad(
+						ray_data_[i].rotation - 
+						camera_states_.rotation_) / 
+						1.05f));
+
 				sprite.setPosition(i, camera_states_.window_size_2_.y
 					- wall_height / 2.f);
 
 				const float tex_wall_scale = (static_cast<float>
 					(wall_[ray_data_[i].wall_number]->texture.getSize().x)
 					/ wall_size_.x);
-				
+
 				sprite.setTextureRect(sf::IntRect(
-					d * tex_wall_scale, 
+					d * tex_wall_scale,
 					0, 1,
 					wall_[ray_data_[i].wall_number]
 					->texture.getSize().y));
 
-				const float scale = 1 / tex_wall_scale;
+				const float scale = 1.f / tex_wall_scale;
 
-				sprite.setScale(1, wall_height / 
+				sprite.setScale(1, wall_height /
 					static_cast<float>(wall_[ray_data_[i].wall_number]
 						->texture.getSize().y));
 
-				const sf::Uint8 wall_clr = 255.f / (1 + 
-					powf(ray_data_[i].length, 2.f) * 
+				const sf::Uint8 wall_clr = 255.f / (1.f +
+					powf(ray_data_[i].length, 2.f) *
 					camera_states_.shading_coefficient_);
 
-				sprite.setColor(sf::Color(wall_clr, 
+				sprite.setColor(sf::Color(wall_clr,
 					wall_clr, wall_clr));
-
-				if (i == 400)
-				{
-					std::cout << sprite.getPosition().y << std::endl;
-				}
 
 				target.draw(sprite);
 			}

@@ -26,5 +26,8 @@
     <ClInclude Include="Math.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
+    <ClInclude Include="Walls.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

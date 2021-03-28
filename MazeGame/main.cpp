@@ -1,4 +1,4 @@
-#include "Engine3d.h"
+#include "Walls.h"
 
 
 
@@ -6,17 +6,31 @@ int main()
 {
 
 	sf::RenderWindow window(sf::VideoMode(800, 800), "3D", sf::Style::Default);
-	sf::RenderWindow DW(sf::VideoMode(800, 800), "3D", sf::Style::Default);
+	
+	//sf::RenderWindow DW(sf::VideoMode(800, 800), "3D", sf::Style::Default);
 
-	const int sizeX = 32;
-	const int sizeY = 32;
+	const int sizeX = 8;
+	const int sizeY = 8;
 
 	v3d::Maze<sizeX, sizeY, 132434> maze{};
 	v3d::FileManager::save(&maze, "maze");
 	v3d::Matrix lab = maze.generate();
 
-	v3d::World world(DW, sf::Vector2<float>(800, 800), lab, sizeX * sizeY);
-	v3d::Camera camera(DW, sf::Vector2f(100, 100), 60, 100, 0.3f, 40);
+
+	v3d::Matrix matrix = {
+		{2, 2, 2, 2, 2, 2, 2, 2},
+		{2, 0, 0, 0, 0, 0, 0, 2},
+		{2, 0, 0, 0, 0, 0, 0, 2},
+		{2, 0, 0, 0, 2, 1, 0, 2},
+		{2, 0, 2, 0, 0, 0, 0, 2},
+		{2, 0, 0, 0, 2, 0, 0, 2},
+		{2, 0, 0, 0, 0, 0, 0, 2},
+		{2, 2, 2, 2, 2, 2, 2, 2}
+	};
+
+	
+	v3d::World world(window, sf::Vector2<float>(800, 800), matrix, sizeX * sizeY);
+	v3d::Camera camera(window, sf::Vector2f(100.f, 100.f), 45.f, 100.f, 18.f, 1.f);
 	camera.setPosition(100, 100);
 	
 	sf::RectangleShape r(sf::Vector2f(window.getSize().x / sizeX, window.getSize().y / sizeY));
@@ -44,11 +58,15 @@ int main()
 	FPStext.setCharacterSize(30);
 	FPStext.setStyle(sf::Text::Bold);
 	FPStext.setFont(font);
-	
+
+	world << new CircleWall;
+
+	const int fps_i = 300;
+	int fps_ii = 0;
+	float fps_data = 0;
 
 	while (window.isOpen())
 	{
-
 		//FPS
 		Time = clock.getElapsedTime();
 		float currentTime = Time.asSeconds();
@@ -63,11 +81,11 @@ int main()
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 		{
-			camera.rotate(1.53f);
+			camera.rotate(0.53f);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 		{
-			camera.rotate(-1.53f);
+			camera.rotate(-0.53f);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 		{
@@ -77,46 +95,42 @@ int main()
 		{
 			camera.move(-math::cos180(camera.getRotation()), -math::sin180(camera.getRotation()));
 		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 		{
 			camera.move(math::cos180(camera.getRotation() + 90), math::sin180(camera.getRotation() + 90));
 		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 		{
 			camera.move(math::cos180(camera.getRotation() - 90), math::sin180(camera.getRotation() - 90));
 		}
 
 		window.clear();
-		DW.clear();
-
-		for (int i = 0; i < sizeX; i++)
-		{
-			for (int l = 0; l < sizeY; l++)
-			{
-				if (lab[i][l] == 1)
-				{
-					r.setPosition(window.getSize().x / sizeX * i, window.getSize().y / sizeY * l);
-					window.draw(r);
-				}
-			}
-		}
 
 		circle.setPosition(camera.getPosition());
-		ray.setRotation(camera.getRotation());
-		ray.setPosition(camera.getPosition());
-		window.draw(circle);
+		//ray.setRotation(camera.getRotation());
+		//ray.setPosition(camera.getPosition());
+		//window.draw(circle);
 		//window.draw(ray);
-		world.render(camera, window);
+		world.render(camera);
 		Time = clock.getElapsedTime();
 		float lastTime = Time.asSeconds();
 		float fps = 1 / (lastTime - currentTime);
-		FPStext.setString(std::to_string(fps));
+		fps_data += fps;
+
+		if (fps_ii == fps_i)
+		{
+			FPStext.setString(std::to_string(static_cast<int>(fps_data / static_cast<float>(fps_ii))));
+			fps_ii = 0;
+			fps_data = 0;
+		}
+		fps_ii++;
 		 
 		//world.render(camera);
-		DW.draw(world);
+		window.draw(world);
 		window.draw(FPStext);
-		DW.display();
 		window.display();
+
+		
 		
 	}
 
