@@ -21,6 +21,10 @@
 #include "include/my/binary.h"
 #include <SFML/Graphics.hpp>
 #include "Math.h"
+#include <iostream>
+#include <iomanip>
+#include <amp.h>
+#include <amp_math.h>
 
 template<typename Type>
 constexpr bool IsFloatType = 
@@ -574,7 +578,7 @@ private:
 			window_size_2_(sf::Vector2<int>(target.getSize().x / 2, target.getSize().y / 2)),
 			position_(sf::Vector2<float>(0.f, 0.f)),
 			rotation_(0),
-			fov_(60),
+			fov_(math::toRad(60.f)),
 			zoom_(0.1f),
 			wwf_(window_size_.x / fov_),
 			shading_coefficient_(40.f * 0.00001f)
@@ -588,8 +592,8 @@ private:
 			window_size_(target.getSize()),
 			window_size_2_(sf::Vector2<int>(target.getSize().x / 2, target.getSize().y / 2)),
 			position_(position),
-			rotation_(rotation),
-			fov_(fov),
+			rotation_(math::toRad(rotation)),
+			fov_(math::toRad(fov)),
 			zoom_(zoom),
 			wwf_(window_size_.x / fov),
 			shading_coefficient_(shading_coefficient * 0.00001f)
@@ -603,16 +607,17 @@ public:
 	{
 	public:
 
-		class  RayData;
+		class RayData;
 		
 		RayData* t_ray_data_vec{};
+		//concurrency::array_view<RayData, 1> t_ray_data_array_view_{1, t_ray_data_vec};
 		
 		RayCaster_api(const MainWorldStates& states) :
-		MainWorldStates(states),
+			MainWorldStates(states),
 			t_ray_data_vec(static_cast<RayData*>(malloc(
 				(states.ray_num_) * sizeof(RayData))))
 		{
-
+			
 		}
 
 		~RayCaster_api()
@@ -622,7 +627,8 @@ public:
 		
 		void ResetStates(const MainWorldStates& states)
 		{
-			*this = states;
+			* this = states;
+			
 			if (realloc(t_ray_data_vec, (states.ray_num_) * 
 				sizeof(RayData)) == NULL)
 			{
@@ -711,10 +717,10 @@ public:
 				
 				const float angle = camera.rotation_ + (f * (frn));
 				
-				const float cos_angle = math::cos180(angle);
-				const float sin_angle = math::sin180(angle);
-				const float tan_angle = math::tan180(angle);
-				const float ctg_angle = math::ctg180(angle);
+				const float cos_angle = cosf(angle);
+				const float sin_angle = sinf(angle);
+				const float tan_angle = tanf(angle);
+				const float ctg_angle = math::ctg(angle);
 
 				f++;
 
@@ -732,7 +738,7 @@ public:
 					{
 						if (matrix_[vjx][vjy] != 0)
 						{
-							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::left);
+							ray_data_vec.emplace_back(vcx, vcy, math::fast_hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::left);
 						}
 					}
 					const float vAA = wall_size_.x;
@@ -749,7 +755,7 @@ public:
 					{
 						if (matrix_[hjx][hjy] != 0)
 						{
-							ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::up);
+							ray_data_vec.emplace_back(hcx, hcy, math::fast_hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::up);
 						}
 					}
 					const float hBB = wall_size_.y;
@@ -765,7 +771,7 @@ public:
 						{
 							if (matrix_[vjx][vjy] != 0)
 							{
-								ray_data_vec.emplace_back(vcx, vcy, hypotf(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::left);
+								ray_data_vec.emplace_back(vcx, vcy, math::fast_hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::left);
 								break;
 							}
 						}
@@ -784,7 +790,7 @@ public:
 						{
 							if (matrix_[hjx][hjy] != 0)
 							{
-								ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::up);
+								ray_data_vec.emplace_back(hcx, hcy, math::fast_hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::up);
 								break;
 							}
 						}
@@ -819,7 +825,7 @@ public:
 					{
 						if (matrix_[vjx][vjy] != 0)
 						{
-							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::right);
+							ray_data_vec.emplace_back(vcx, vcy, math::fast_hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::right);
 						}
 					}
 					const float vAA = wall_size_.x;
@@ -835,7 +841,7 @@ public:
 					{
 						if (matrix_[hjx][hjy] != 0)
 						{
-							ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::up);
+							ray_data_vec.emplace_back(hcx, hcy, math::fast_hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::up);
 						}
 					}
 					const float hBB = wall_size_.y;
@@ -851,7 +857,7 @@ public:
 						{
 							if (matrix_[vjx][vjy] != 0)
 							{
-								ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::right);
+								ray_data_vec.emplace_back(vcx, vcy, math::fast_hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::right);
 								break;
 							}
 						}
@@ -870,7 +876,7 @@ public:
 						{
 							if (matrix_[hjx][hjy] != 0)
 							{
-								ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::up);
+								ray_data_vec.emplace_back(hcx, hcy, math::fast_hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::up);
 								break;
 							}
 						}
@@ -907,7 +913,7 @@ public:
 					{
 						if (matrix_[vjx][vjy] != 0)
 						{
-							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::left);
+							ray_data_vec.emplace_back(vcx, vcy, math::fast_hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::left);
 						}
 					}
 					const float vAA = wall_size_.x;
@@ -924,7 +930,7 @@ public:
 					{
 						if (matrix_[hjx][hjy] != 0)
 						{
-							ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::down);
+							ray_data_vec.emplace_back(hcx, hcy, math::fast_hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::down);
 						}
 					}
 					const float hBB = wall_size_.y;
@@ -940,7 +946,7 @@ public:
 						{
 							if (matrix_[vjx][vjy] != 0)
 							{
-								ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::left);
+								ray_data_vec.emplace_back(vcx, vcy, math::fast_hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::left);
 								break;
 							}
 						}
@@ -959,7 +965,7 @@ public:
 						{
 							if (matrix_[hjx][hjy] != 0)
 							{
-								ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::down);
+								ray_data_vec.emplace_back(hcx, hcy, math::fast_hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::down);
 								break;
 							}
 						}
@@ -996,7 +1002,7 @@ public:
 					{
 						if (matrix_[vjx][vjy] != 0)
 						{
-							ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::right);
+							ray_data_vec.emplace_back(vcx, vcy, math::fast_hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::right);
 						}
 					}
 					const float vAA = wall_size_.x;
@@ -1013,7 +1019,7 @@ public:
 					{
 						if (matrix_[hjx][hjy] != 0)
 						{
-							ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::down);
+							ray_data_vec.emplace_back(hcx, hcy, math::fast_hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::down);
 						}
 					}
 					const float hBB = wall_size_.y;
@@ -1029,7 +1035,7 @@ public:
 						{
 							if (matrix_[vjx][vjy] != 0)
 							{
-								ray_data_vec.emplace_back(vcx, vcy, hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::right);
+								ray_data_vec.emplace_back(vcx, vcy, math::fast_hypot(vcx - camera.position_.x, vcy - camera.position_.y), matrix_[vjx][vjy], angle, dir::right);
 								break;
 							}
 						}
@@ -1048,7 +1054,7 @@ public:
 						{
 							if (matrix_[hjx][hjy] != 0)
 							{
-								ray_data_vec.emplace_back(hcx, hcy, hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::down);
+								ray_data_vec.emplace_back(hcx, hcy, math::fast_hypot(hcx - camera.position_.x, hcy - camera.position_.y), matrix_[hjx][hjy], angle, dir::down);
 								break;
 							}
 						}
@@ -1069,7 +1075,7 @@ public:
 					);
 					t_ray_data_vec[r] = ray_data_vec[0];
 				}
-				
+
 			}
 			
 			return t_ray_data_vec;
@@ -1120,7 +1126,6 @@ public:
 	class World :
 		public MainWorldStates,
 		public sf::Drawable,
-		public sf::Transformable,
 		public FileSaveable
 	{
 	private:
@@ -1135,7 +1140,9 @@ public:
 
 		MainCameraStates camera_states_;
 
-		std::vector<int> used_walls_;
+		std::vector<unsigned int> used_walls_{};
+		
+		std::vector<unsigned int> unique_walls_{};
 
 	public:
 
@@ -1143,7 +1150,7 @@ public:
 			const sf::Vector2<float> size =
 			sf::Vector2<float>(1024, 1024),
 			Matrix matrix = generateMatrix(32, 32, 1),
-			unsigned int render_distance = 32 * 32) :
+			const unsigned int render_distance = 32 * 32) :
 
 			MainWorldStates(size,
 				matrix,
@@ -1155,9 +1162,10 @@ public:
 				render_distance,
 				target),
 			ray_caster_api_(*this),
-			texture_(static_cast<sf::Texture*>(malloc((this->ray_num_)
-				* sizeof(sf::Texture)))),
-			camera_states_(target)
+			texture_(static_cast<sf::Texture*>(malloc(
+				(this->ray_num_)* sizeof(sf::Texture)))),
+			camera_states_(target),
+			used_walls_(this->ray_num_)
 		{
 			wall_.push_back(new MainWall);
 			wall_.push_back(new MainWall);
@@ -1176,51 +1184,32 @@ public:
 			}
 
 			ray_caster_api_.ResetStates(*this);
-
-			rectangle.setFillColor(sf::Color::Red);
 		}
 
 		void render(Camera& camera)
 		{
 
 			camera_states_ = camera.getStates();
+			
 			ray_data_ = (ray_caster_api_.RayCast(camera));
 
-			used_walls_.push_back(ray_data_[0].wall_number);
 
-			for (auto i = 1; i < ray_num_; i++)
+			for (int i = 1; i < ray_num_; i++)
 			{
-				//rectangle.setSize(sf::Vector2f(ray_data_[i].length, 1));
-				//rectangle.setRotation(ray_data_[i].rotation);
-				//rectangle.setPosition(camera.getPosition().x,
-				//	camera.getPosition().y);
-				//window.draw(rectangle);
-
-				
-				bool flag = true;
-				for (int l = 0; l < used_walls_.size(); l++)
-				{
-					if (used_walls_[l] == ray_data_[i].wall_number)
-					{
-						flag = false;
-					}
-				}
-
-				if (flag)
-				{
-					used_walls_.push_back(ray_data_[i].wall_number);
-				}
-
+				used_walls_[i] = ray_data_[i].wall_number;
 			}
+
+			std::unique_copy(used_walls_.begin(), used_walls_.end(), std::back_inserter(unique_walls_));
 			
-			for (int i = 0; i < used_walls_.size(); i++)
+			for (int i = 0; i < unique_walls_.size(); i++)
 			{
-				wall_[ray_data_[i].wall_number]->wall_states(ray_data_[i]);
+				wall_[unique_walls_[i]]->wall_states(ray_data_[i]);
 			}
-			
-			used_walls_.clear();
 
-			//std::cout << used_walls_.size();
+			//std::cout << unique_walls_.size() << std::endl;
+
+			unique_walls_.clear();
+			
 		}
 
 		void addWallType(Wall_api* wall)
@@ -1232,10 +1221,6 @@ public:
 		{
 			addWallType(wall);
 		}
-
-		sf::RectangleShape rectangle;
-
-
 
 		void draw(sf::RenderTarget& target,
 			sf::RenderStates states) const override
@@ -1279,13 +1264,15 @@ public:
 				sf::Sprite sprite(wall_[ray_data_[i].wall_number]->texture);
 
 				const float wall_height = camera_states_.render_constant_ /
-					(ray_data_[i].length * cosf(math::toRad(
+					(ray_data_[i].length * cosf(
 						ray_data_[i].rotation - 
-						camera_states_.rotation_) / 
-						1.05f));
+						camera_states_.rotation_ / 
+						1.01f));
 
-				sprite.setPosition(i, camera_states_.window_size_2_.y
-					- wall_height / 2.f);
+				const float sprite_position_x = camera_states_.window_size_2_.y
+					- wall_height / 2.f;
+
+				sprite.setPosition(i, sprite_position_x);
 
 				const float tex_wall_scale = (static_cast<float>
 					(wall_[ray_data_[i].wall_number]->texture.getSize().x)
@@ -1311,6 +1298,41 @@ public:
 					wall_clr, wall_clr));
 
 				target.draw(sprite);
+
+				//floor
+				if (i == 400)
+				{
+					const float y = math::ctg(i) * sin(ray_data_[i].rotation) * 800;
+					//std::cout << y << std::endl;	
+				}
+			}
+		}
+
+		void camera_move_with_cls(Camera& camera, const float step_x,
+			const float step_y) const
+		{
+			if (matrix_[math::getMatrixPos(((step_x > 0) ? 
+				(camera.position_.x + camera.radius_) : 
+				(camera.position_.x - camera.radius_)) + step_x,
+				wall_size_.x)]
+				[math::getMatrixPos(((step_y > 0) ? 
+				(camera.position_.y + camera.radius_) : 
+				(camera.position_.y - camera.radius_)),
+				wall_size_.y)] == 0)
+			{
+				camera.move(step_x, 0);
+			}
+			
+			if (matrix_[math::getMatrixPos(((step_x > 0) ? 
+				(camera.position_.x + camera.radius_) : 
+				(camera.position_.x - camera.radius_)),
+				wall_size_.x)]
+				[math::getMatrixPos(((step_y > 0) ? 
+				(camera.position_.y + camera.radius_) : 
+				(camera.position_.y - camera.radius_)) + step_y,
+				wall_size_.y)] == 0)
+			{
+				camera.move(0, step_y);
 			}
 		}
 
@@ -1328,23 +1350,30 @@ public:
 
 		friend class World;
 
+	private:
+		
+		float radius_;
+
 	public:
 		
 		Camera(const sf::RenderTarget& target) :
-			MainCameraStates(target)
+			MainCameraStates(target),
+			radius_(5.f)
 		{
 			change_render_constant();
 		}
 
-		Camera(const sf::RenderTarget& target, 
-			const sf::Vector2<float> position, 
+		Camera(const sf::RenderTarget& target,
+			const sf::Vector2<float> position,
 			const float fov,
-		    const float rotation, 
-			const float zoom = 0.01f, 
-			const float shading_coefficient = 40.f) :
+			const float rotation,
+			const float zoom = 0.01f,
+			const float shading_coefficient = 40.f,
+			const float radius = 5) :
 
-			MainCameraStates(target, position, fov, 
-				rotation, zoom, shading_coefficient)
+			MainCameraStates(target, position, fov,
+				rotation, zoom, shading_coefficient),
+			radius_(radius)
 		{
 			change_render_constant();
 		}
@@ -1352,56 +1381,54 @@ public:
 		void setRenderTarget(const sf::RenderTarget& target)
 		{
 			resizeTarget(target.getSize());
-			wwf_ = window_size_.x / fov_;
+			this->wwf_ = this->window_size_.x / this->fov_;
 			change_render_constant();
 		}
 
 		void setShadingCoefficient(const float shading_coefficient)
 		{
-			shading_coefficient_ = shading_coefficient * 0.00001f;
+			this->shading_coefficient_ = shading_coefficient * 0.00001f;
 		}
 
 		float getShadingCoefficient() const
 		{
-			return shading_coefficient_;
+			return this->shading_coefficient_;
 		}
 
-		void setRotation(const float rotation)
+		void setRotation(const float rotation_degrees)
 		{
-			rotation_ = rotation;
-			math::delimit_angle(this->rotation_);
+			this->rotation_ = math::toRad(rotation_degrees);
 		}
 
 		float getRotation() const
 		{
-			return rotation_;
+			return math::toDeg(this->rotation_);
 		}
 
-		void rotate(const float rotation)
+		void rotate(const float rotation_degrees)
 		{
-			rotation_ += rotation;
-			math::delimit_angle(this->rotation_);
+			this->rotation_ += math::toRad(rotation_degrees);
 		}
 
 		void setPosition(const sf::Vector2<float> position)
 		{
-			position_ = position;
+			this->position_ = position;
 		}
 
 		void setPosition(const float x, const float y)
 		{
-			position_.x = x;
-			position_.y = y;
+			this->position_.x = x;
+			this->position_.y = y;
 		}
 
 		sf::Vector2<float> getPosition() const
 		{
-			return position_;
+			return this->position_;
 		}
 		void move(const float x, const float y)
 		{
-			position_.x += x;
-			position_.y += y;
+			this->position_.x += x;
+			this->position_.y += y;
 		}
 
 		void move(const sf::Vector2<float> position)
@@ -1411,35 +1438,45 @@ public:
 
 		void setFov(const float fov)
 		{
-			fov_ = fov;
-			wwf_ = window_size_.x / fov;
+			this->fov_ = fov;
+			this->wwf_ = this->window_size_.x / fov;
 			change_render_constant();
 		}
 
 		float getFov() const
 		{
-			return fov_;
+			return math::toDeg(this->fov_);
 		}
 
 		void fov_unary(const float fov)
 		{
-			setFov(fov_ + fov);
+			setFov(this->fov_ + math::toRad(fov));
 		}
 
 		void setZoom(const float zoom)
 		{
-			zoom_ = zoom;
+			this->zoom_ = zoom;
 			change_render_constant();
 		}
 
 		float getZoom() const
 		{
-			return zoom_;
+			return this->zoom_;
 		}
 
 		void zoom_unary(const float zoom)
 		{
-			setZoom(zoom_ + zoom);
+			setZoom(this->zoom_ + zoom);
+		}
+
+		void serRadius(const float radius)
+		{
+			radius_ = radius;
+		}
+		
+		float getRadius() const
+		{
+			return radius_;
 		}
 
 		void save(std::string name) override

@@ -1,9 +1,24 @@
 #include "Walls.h"
+#include <iostream>
+#include <iomanip>
+#include <amp.h>
+#include <amp_math.h>
+
+
+void floor()
+{
+	for (float i = math::PI2 / 2; i < math::PI2; i += math::PI2 / 2 / 525)
+	{
+		const float y = math::ctg(i) * 800;
+		std::cout << y << std::endl;
+	}
+}
 
 
 
 int main()
 {
+	floor();
 
 	sf::RenderWindow window(sf::VideoMode(800, 800), "3D", sf::Style::Default);
 	
@@ -31,7 +46,7 @@ int main()
 	
 	v3d::World world(window, sf::Vector2<float>(800, 800), matrix, sizeX * sizeY);
 	v3d::Camera camera(window, sf::Vector2f(100.f, 100.f), 45.f, 100.f, 18.f, 1.f);
-	camera.setPosition(100, 100);
+	camera.setPosition(130, 130);
 	
 	sf::RectangleShape r(sf::Vector2f(window.getSize().x / sizeX, window.getSize().y / sizeY));
 	r.setFillColor(sf::Color::Blue);
@@ -61,9 +76,11 @@ int main()
 
 	world << new CircleWall;
 
-	const int fps_i = 300;
+	const int fps_i = 3;
 	int fps_ii = 0;
 	float fps_data = 0;
+
+	const float speed = 0.3f;
 
 	while (window.isOpen())
 	{
@@ -81,30 +98,30 @@ int main()
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 		{
-			camera.rotate(0.53f);
+			camera.rotate(0.20f);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 		{
-			camera.rotate(-0.53f);
+			camera.rotate(-0.20f);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 		{
-			camera.move(math::cos180(camera.getRotation()), math::sin180(camera.getRotation()));
+			world.camera_move_with_cls(camera, math::cos180(camera.getRotation()) * speed, math::sin180(camera.getRotation()) * speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 		{
-			camera.move(-math::cos180(camera.getRotation()), -math::sin180(camera.getRotation()));
+			world.camera_move_with_cls(camera, -math::cos180(camera.getRotation()) * speed, -math::sin180(camera.getRotation()) * speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 		{
-			camera.move(math::cos180(camera.getRotation() + 90), math::sin180(camera.getRotation() + 90));
+			world.camera_move_with_cls(camera, math::cos180(camera.getRotation() + 90) * speed, math::sin180(camera.getRotation() + 90) * speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 		{
-			camera.move(math::cos180(camera.getRotation() - 90), math::sin180(camera.getRotation() - 90));
+			world.camera_move_with_cls(camera, math::cos180(camera.getRotation() - 90) * speed, math::sin180(camera.getRotation() - 90) * speed);
 		}
 
-		window.clear();
+		window.clear(sf::Color::Magenta);
 
 		circle.setPosition(camera.getPosition());
 		//ray.setRotation(camera.getRotation());
@@ -125,13 +142,11 @@ int main()
 		}
 		fps_ii++;
 		 
-		//world.render(camera);
 		window.draw(world);
+
 		window.draw(FPStext);
 		window.display();
 
-		
-		
 	}
 
 	return EXIT_SUCCESS;

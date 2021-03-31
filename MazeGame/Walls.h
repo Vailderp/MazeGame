@@ -66,3 +66,4 @@ private:
 	sf::CircleShape circle_shape_;
 	sf::RenderTexture render_texture_;
 };
+
