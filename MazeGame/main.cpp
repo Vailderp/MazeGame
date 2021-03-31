@@ -7,7 +7,7 @@
 
 void floor()
 {
-	for (float i = math::PI2 / 2; i < math::PI2; i += math::PI2 / 2 / 525)
+	for (float i = math::PI2_2; i < math::PI2; i += math::PI2_2 / (525))
 	{
 		const float y = math::ctg(i) * 800;
 		std::cout << y << std::endl;
@@ -129,6 +129,7 @@ int main()
 		//window.draw(circle);
 		//window.draw(ray);
 		world.render(camera);
+		window.draw(world);
 		Time = clock.getElapsedTime();
 		float lastTime = Time.asSeconds();
 		float fps = 1 / (lastTime - currentTime);
@@ -141,8 +142,6 @@ int main()
 			fps_data = 0;
 		}
 		fps_ii++;
-		 
-		window.draw(world);
 
 		window.draw(FPStext);
 		window.display();

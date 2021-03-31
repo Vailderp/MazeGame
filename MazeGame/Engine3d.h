@@ -1111,7 +1111,7 @@ public:
 		MainWall() :
 		Wall_api()
 		{
-			texture.loadFromFile("data/tex/chrome.png");
+			texture.loadFromFile("data/tex/screen.png");
 		}
 
 		sf::RenderTexture render_texture;
@@ -1144,6 +1144,12 @@ public:
 		
 		std::vector<unsigned int> unique_walls_{};
 
+		sf::Texture render_texture_floor_{};
+
+		sf::Image image_;
+
+		sf::Image image_floor_;
+
 	public:
 
 		World(sf::RenderTarget& target,
@@ -1167,8 +1173,10 @@ public:
 			camera_states_(target),
 			used_walls_(this->ray_num_)
 		{
+			
 			wall_.push_back(new MainWall);
 			wall_.push_back(new MainWall);
+			image_floor_.loadFromFile("data/tex/4.png");
 		}
 
 		void setRenderTarget(sf::RenderTarget& target)
@@ -1206,9 +1214,9 @@ public:
 				wall_[unique_walls_[i]]->wall_states(ray_data_[i]);
 			}
 
-			//std::cout << unique_walls_.size() << std::endl;
-
 			unique_walls_.clear();
+
+
 			
 		}
 
@@ -1235,22 +1243,22 @@ public:
 
 				case RayCaster_api::dir::left:
 					d = fmodf(ray_data_[i].position_y,
-						wall_size_.y) * 0.9f;
+						wall_size_.y);
 					break;
 
 				case RayCaster_api::dir::right:
 					d = (wall_size_.y - fmodf(ray_data_[i].position_y,
-						wall_size_.y)) * 0.9f;
+						wall_size_.y));
 					break;
 
 				case RayCaster_api::dir::down:
 					d = (wall_size_.x - fmodf(ray_data_[i].position_x,
-						wall_size_.x)) * 0.9f;
+						wall_size_.x));
 					break;
 
 				case RayCaster_api::dir::up:
 					d = fmodf(ray_data_[i].position_x
-						, wall_size_.x) * 0.9f;
+						, wall_size_.x);
 					break;
 
 				case RayCaster_api::dir::none:
@@ -1269,10 +1277,10 @@ public:
 						camera_states_.rotation_ / 
 						1.01f));
 
-				const float sprite_position_x = camera_states_.window_size_2_.y
+				const float sprite_position_y = camera_states_.window_size_2_.y
 					- wall_height / 2.f;
 
-				sprite.setPosition(i, sprite_position_x);
+				sprite.setPosition(i, sprite_position_y);
 
 				const float tex_wall_scale = (static_cast<float>
 					(wall_[ray_data_[i].wall_number]->texture.getSize().x)
@@ -1299,11 +1307,29 @@ public:
 
 				target.draw(sprite);
 
+				sf::Sprite spf(wall_[1]->texture);
+				
 				//floor
 				if (i == 400)
 				{
-					const float y = math::ctg(i) * sin(ray_data_[i].rotation) * 800;
-					//std::cout << y << std::endl;	
+					const float cos_alpha = cos(ray_data_[i].rotation);
+					const float sin_beta = sin(ray_data_[i].rotation);
+					//const float tan_theta = sin_beta / cos_alpha;
+					int j = 500;
+					for (float l = math::PI2_2; j < camera_states_.window_size_.y; l += math::PI2_2 / 525)
+					{
+						j++;
+						const float ctg_gamma = math::ctg180(l);
+						const int texture_position_y = camera_states_.position_.y + ctg_gamma * sin_beta * size_.y;
+						const int texture_position_x = camera_states_.position_.x + ctg_gamma * cos_alpha * size_.x;
+						spf.setTextureRect(sf::IntRect(texture_position_x, texture_position_y, 1,1));
+						if (j > 700 && j < 750)
+						{
+							std::cout << ctg_gamma << std::endl;
+						}
+						spf.setPosition(i, j);
+						target.draw(spf);
+					}
 				}
 			}
 		}

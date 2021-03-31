@@ -7,6 +7,7 @@ namespace math
 {
 	const float PI = acosf(-1.f);
 	const float PI2 = PI / 2.f;
+	const float PI2_2 = PI2 / 2.f;
 	const float PI180 = PI / 180.f;
 	const float PI_180 = 180.f / PI;
 
