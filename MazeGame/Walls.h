@@ -22,6 +22,7 @@ public:
 protected:
 	void wall_states(v3d::RayCaster_api::RayData& data) override
 	{
+		
 		if (timer_.microseconds() > 100)
 		{
 

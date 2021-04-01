@@ -142,14 +142,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="gui_system.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Sprite3D.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine3d.h" />
+    <ClInclude Include="Gui.h" />
     <ClInclude Include="Math.h" />
-    <ClInclude Include="Sprite3D.h" />
     <ClInclude Include="Walls.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -56,6 +56,10 @@ public:
 	class FileManager
 	{
 	public:
+
+		/*
+		 * Читает файл и переводит его в std::map<std::string, std::string>
+		 */
 		static std::map<std::string, std::string>
 			ReadConfFile(const std::string& path)
 		{
@@ -117,6 +121,9 @@ public:
 			return output;
 		}
 
+		/*
+		 * std::map<std::string, std::string> переводит в файл
+		 */
 		static void WriteConfFile(const std::map<std::string,
 			std::string>& input, const std::string& path)
 		{
@@ -172,7 +179,8 @@ public:
 		 */
 		static Time seconds()
 		{
-			return static_cast<Time>(std::clock()) / static_cast<Time>(CLOCKS_PER_SEC);
+			return static_cast<Time>(std::clock()) / 
+				static_cast<Time>(CLOCKS_PER_SEC);
 		}
 
 		/*
@@ -278,8 +286,6 @@ public:
 		 * Развёрнутый ключ генерации, имеющий только 4 символа
 		 */
 		unsigned __int8 seed_[64] = {};
-
-	protected:
 		
 		Matrix matrix_;
 
@@ -622,13 +628,17 @@ public:
 		}
 
 	public:
+		
+		/*
+		 * Сохранить лабиринт в файл
+		 */
 		void save(const std::string& name) const
 		{
 			std::ofstream ofstream;
 			ofstream.open("data/saves/camera/" + name);
 			if (!ofstream.is_open())
 			{
-				std::cout << "Camera >> save >> error >> -0" << std::endl;
+				std::cout << "Camera >> save >> error >> -7" << std::endl;
 				exit(-0);
 			}
 			else
@@ -638,13 +648,16 @@ public:
 			ofstream.close();
 		}
 
+	   /*
+		* Открыть лабиринт из файла
+		*/
 		void open(const std::string& name)
 		{
 			std::ifstream ifstream;
 			ifstream.open("data/saves/camera/" + name);
 			if (!ifstream.is_open())
 			{
-				std::cout << "Camera >> open >> error >> -6" << std::endl;
+				std::cout << "Camera >> open >> error >> -8" << std::endl;
 				exit(-6);
 			}
 			else
@@ -2147,6 +2160,7 @@ public:
 		{
 			std::ofstream ofstream;
 			ofstream.open("data/saves/camera/" + name);
+			
 			if (!ofstream.is_open())
 			{
 				std::cout << "Camera >> save >> error >> -0" << std::endl;
@@ -2158,6 +2172,7 @@ public:
 					this->shading_coefficient_, this->radius_);
 				ofstream.write((char*)&camera_save,  sizeof(CameraSave));
 			}
+			
 			ofstream.close();
 		}
 
@@ -2168,6 +2183,7 @@ public:
 		{
 			std::ifstream ifstream;
 			ifstream.open("data/saves/camera/" + name);
+			
 			if (!ifstream.is_open())
 			{
 				std::cout << "Camera >> open >> error >> -6" << std::endl;
@@ -2176,6 +2192,7 @@ public:
 			else
 			{
 				CameraSave camera_save;
+				
 				ifstream.read((char*)&camera_save, sizeof(CameraSave));
 
 				this->fov_ = camera_save.fov;

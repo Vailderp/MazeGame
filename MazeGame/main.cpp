@@ -1,10 +1,11 @@
 #include "Walls.h"
 #include <iostream>
 #include <iomanip>
-
+#include "Gui.h"
 int main()
 {
-	sf::RenderWindow window(sf::VideoMode(1680, 1050), "3D", sf::Style::Fullscreen);
+	sf::RenderWindow window(sf::VideoMode(800, 800), "3D", sf::Style::Default);
+	sf::RenderWindow window1(sf::VideoMode(800, 800), "3D", sf::Style::Default);
 	window.setVerticalSyncEnabled(true);
 	//sf::RenderWindow DW(sf::VideoMode(800, 800), "3D", sf::Style::Default);
 
@@ -67,6 +68,50 @@ int main()
 
 	const float speed = 0.3f;
 
+
+
+
+
+
+
+
+
+
+	
+
+	gui::Drawable drawable;
+	
+	gui::Button button(100, 100, 100, 100, "data/tex/4.png");
+	
+	std::string message = "S";
+	
+	button.onMove([&button]()
+	{
+			//std::cout << "g";
+		button.setTexture("data/tex/8.png");
+	});
+
+	button.onOut([&button]()
+	{
+		button.setTexture("data/tex/4.png");
+	});
+	
+	drawable.addGuiElement(&button, "button1");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
 	
 	while (window.isOpen())
 	{
@@ -108,15 +153,17 @@ int main()
 		}
 
 		window.clear();
+		window1.clear();
 
 		circle.setPosition(camera.getPosition());
 		world.render(camera);
 		window.draw(world);
+		drawable.draw(window1);
+		//FPS
 		Time = clock.getElapsedTime();
 		float lastTime = Time.asSeconds();
 		float fps = 1 / (lastTime - currentTime);
 		fps_data += fps;
-
 		if (fps_ii == fps_i)
 		{
 			FPStext.setString(std::to_string(static_cast<int>(fps_data / static_cast<float>(fps_ii))));
@@ -126,6 +173,7 @@ int main()
 		fps_ii++;
 		
 		window.draw(FPStext);
+		window1.display();
 		window.display();
 
 
