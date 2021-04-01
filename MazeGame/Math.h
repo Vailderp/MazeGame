@@ -7,7 +7,7 @@ namespace math
 {
 	const float PI = acosf(-1.f);
 	const float PI2 = PI / 2.f;
-	const float PI2_2 = PI2 / 2.f;
+	const float PI4 = PI2 / 2.f;
 	const float PI180 = PI / 180.f;
 	const float PI_180 = 180.f / PI;
 
@@ -77,19 +77,6 @@ namespace math
 	inline float ctg180(const float deg)
 	{
 		return math::ctg(math::toRad(deg));
-	}
-
-	inline float __fastcall delimit_angle(float& angle)
-	{
-		if (angle > 180)
-		{
-			angle = -179.9f;
-		}
-		else if (angle < -180)
-		{
-			angle = 179.9f;
-		}
-		return angle;
 	}
 
 	inline int __fastcall getMatrixPos(const float pos, const float m_matrix_width)

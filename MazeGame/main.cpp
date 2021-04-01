@@ -1,52 +1,37 @@
 #include "Walls.h"
 #include <iostream>
 #include <iomanip>
-#include <amp.h>
-#include <amp_math.h>
-
-
-void floor()
-{
-	for (float i = math::PI2_2; i < math::PI2; i += math::PI2_2 / (525))
-	{
-		const float y = math::ctg(i) * 800;
-		std::cout << y << std::endl;
-	}
-}
-
-
 
 int main()
 {
-	floor();
-
-	sf::RenderWindow window(sf::VideoMode(800, 800), "3D", sf::Style::Default);
-	
+	sf::RenderWindow window(sf::VideoMode(1680, 1050), "3D", sf::Style::Fullscreen);
+	window.setVerticalSyncEnabled(true);
 	//sf::RenderWindow DW(sf::VideoMode(800, 800), "3D", sf::Style::Default);
 
-	const int sizeX = 8;
-	const int sizeY = 8;
+	const int sizeX = 50;
+	const int sizeY = 50;
 
 	v3d::Maze<sizeX, sizeY, 132434> maze{};
-	v3d::FileManager::save(&maze, "maze");
 	v3d::Matrix lab = maze.generate();
-
-
-	v3d::Matrix matrix = {
-		{2, 2, 2, 2, 2, 2, 2, 2},
-		{2, 0, 0, 0, 0, 0, 0, 2},
-		{2, 0, 0, 0, 0, 0, 0, 2},
-		{2, 0, 0, 0, 2, 1, 0, 2},
-		{2, 0, 2, 0, 0, 0, 0, 2},
-		{2, 0, 0, 0, 2, 0, 0, 2},
-		{2, 0, 0, 0, 0, 0, 0, 2},
-		{2, 2, 2, 2, 2, 2, 2, 2}
-	};
-
 	
-	v3d::World world(window, sf::Vector2<float>(800, 800), matrix, sizeX * sizeY);
-	v3d::Camera camera(window, sf::Vector2f(100.f, 100.f), 45.f, 100.f, 18.f, 1.f);
-	camera.setPosition(130, 130);
+	v3d::World world(window, sf::Vector2f(1000, 1000), lab);
+	v3d::Camera camera(window, 100.f, 100.f, 45, 100.f, 1.f, 1.f);
+
+	sf::Vector2f spawn_position;
+	
+	for (float i = 0; i < world.getMatrixSize().x; i++)
+	{
+		for (float l = 0; l < world.getMatrixSize().y; l++)
+		{
+			if(world[i][l] == 0)
+			{
+				spawn_position = { i * world.getWallSize().x + world.getWallSize().x / 2, l * world.getWallSize().y + world.getWallSize().y / 2};
+				break;
+			}
+		}
+	}
+	
+	camera.setPosition(spawn_position.x, spawn_position.y);
 	
 	sf::RectangleShape r(sf::Vector2f(window.getSize().x / sizeX, window.getSize().y / sizeY));
 	r.setFillColor(sf::Color::Blue);
@@ -82,6 +67,7 @@ int main()
 
 	const float speed = 0.3f;
 
+	
 	while (window.isOpen())
 	{
 		//FPS
@@ -98,11 +84,11 @@ int main()
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 		{
-			camera.rotate(0.20f);
+			camera.rotate(2.20f);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 		{
-			camera.rotate(-0.20f);
+			camera.rotate(-2.20f);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 		{
@@ -121,13 +107,9 @@ int main()
 			world.camera_move_with_cls(camera, math::cos180(camera.getRotation() - 90) * speed, math::sin180(camera.getRotation() - 90) * speed);
 		}
 
-		window.clear(sf::Color::Magenta);
+		window.clear();
 
 		circle.setPosition(camera.getPosition());
-		//ray.setRotation(camera.getRotation());
-		//ray.setPosition(camera.getPosition());
-		//window.draw(circle);
-		//window.draw(ray);
 		world.render(camera);
 		window.draw(world);
 		Time = clock.getElapsedTime();
@@ -142,9 +124,10 @@ int main()
 			fps_data = 0;
 		}
 		fps_ii++;
-
+		
 		window.draw(FPStext);
 		window.display();
+
 
 	}
 

@@ -48,7 +48,7 @@ protected:
 
 			circle_shape_.move(speedX, speedY);
 			
-			render_texture_.clear(sf::Color::Green);
+			render_texture_.clear(sf::Color::Blue);
 			render_texture_.draw(circle_shape_);
 			
 			this->texture = render_texture_.getTexture();
