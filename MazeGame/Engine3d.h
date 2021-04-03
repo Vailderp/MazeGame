@@ -691,131 +691,7 @@ private:
 	*/
 	class World;
 
-   /*
-	* Объявляем класс MainWorldStates,
-	* чтобы обозначить его как friend class в других классах,
-	* и чтобы наследовать этот класс для быстрейшего доступа к его элементам.
-	*/
-	class MainWorldStates
-	{
-	public:
-		
-		MainWorldStates() :
-			size_(),
-			matrix_(),
-			matrix_size_(),
-			wall_size_(),
-			render_distance_(),
-			ray_num_(),
-			ray_num_2_()
-		{
-
-		}
-	
-	protected:
-		sf::Vector2<float> size_;
-		Matrix matrix_;
-		sf::Vector2<int> matrix_size_;
-		sf::Vector2<float> wall_size_;
-		unsigned int render_distance_;
-		int ray_num_;
-		int ray_num_2_;
-
-		friend class RayCaster_api;
-
-		friend class World;
-		
-		MainWorldStates(const sf::Vector2<float> size,
-			Matrix& matrix,
-			const  sf::Vector2<int> matrix_size,
-			const  sf::Vector2<float> wall_size,
-			const  unsigned int render_distance,
-			sf::RenderTarget& target) :
-		
-			size_(size),
-			matrix_(matrix),
-			matrix_size_(matrix_size),
-			wall_size_(wall_size),
-			render_distance_(render_distance),
-			ray_num_(target.getSize().x),
-			ray_num_2_(ray_num_ / 2)
-		{
-
-		}
-		
-	};
-
-   /*
-	* Объявляем класс MainCameraStates,
-	* чтобы обозначить его как friend class в других классах,
-	* и чтобы наследовать этот класс для быстрейшего доступа к его элементам.
-	*/
 private:
-	
-	class MainCameraStates
-	{
-
-		friend class World;
-		
-	protected:
-
-		/*
-		 * Переопределение размеров холста
-		 */
-		void resizeTarget(const sf::Vector2<unsigned> target_size)
-		{
-			this->window_size_.x = static_cast<float>(target_size.x);
-			this->window_size_.y = static_cast<float>(target_size.y);
-			this->window_size_2_.x = static_cast<float>(target_size.x) / 2.f;
-			this->window_size_2_.y = static_cast<float>(target_size.y) / 2.f;
-		}
-
-		void change_render_constant()
-		{
-			/*
-			 * Важная константа.
-			 * Используется для определения размера стены
-			 */
-			this->render_constant_ = static_cast<float>(this->window_size_.x)
-			/ abs(2 * (tanf(this->fov_) * math::PI_180))
-			* static_cast<float>(this->window_size_.y) * this->zoom_;
-		}
-
-	protected:
-		/*
-		 * FOV - Field Of View.
-		 * FOV - Угол Обзора.
-		 */
-		sf::Vector2<float> window_size_;
-		sf::Vector2<float> window_size_2_;
-		sf::Vector2<float> position_;
-		float rotation_;
-		float fov_;
-		float zoom_;
-		float render_constant_{};
-		float wwf_;
-		float shading_coefficient_;
-
-	protected:
-		MainCameraStates(const sf::RenderTarget& target,
-			const sf::Vector2<float> position = sf::Vector2<float>(),
-			const float fov = 60,
-			const float rotation = 0, 
-			const float zoom = 4.f, 
-			const float shading_coefficient = 40.f) :
-		
-			window_size_(target.getSize()),
-			window_size_2_(sf::Vector2<int>(target.getSize().x / 2, target.getSize().y / 2)),
-			position_(position),
-			rotation_(math::toRad(rotation)),
-			fov_(math::toRad(fov)),
-			zoom_(zoom),
-			wwf_(window_size_.x / fov),
-			shading_coefficient_(shading_coefficient * 0.00001f)
-		{
-			change_render_constant();
-		}
-	};
 
 	class CameraSave
 	{
@@ -843,9 +719,16 @@ public:
 	/*
 	 * Каласс для удобного проведения процедуры бросания лучей.
 	 */
-	class RayCaster_api : public MainWorldStates
+	class RayCaster_api
 	{
+
+	
 	public:
+
+		RayCaster_api()
+		{
+			
+		}
 
 	   /*
 		* Объявляем класс RayData,
@@ -854,49 +737,13 @@ public:
 		class RayData;
 
 		/*
-		 * Динамический массив для
-		 * бытрого доступа к состоянию определённого луча.
-		 */
-		RayData* t_ray_data_vec{};
-
-		RayCaster_api(const MainWorldStates& states) :
-			MainWorldStates(states),
-		/*
-		 * Выделяем место в оперативной памяти
-		 */
-			t_ray_data_vec(static_cast<RayData*>(malloc(
-				(states.ray_num_) * sizeof(RayData))))
-		{
-
-		}
-
-		/*
 		 * При удалении класса удаляем массив лучей
 		 */
 		~RayCaster_api()
 		{
-			free(t_ray_data_vec);
+			
 		}
 
-		/*
-		 * В случае перехода на другой холст, обновляем состояния
-		 */
-		void ResetStates(const MainWorldStates& states)
-		{
-			*this = states;
-			
-			/*
-			 * Переопределения размера динамического массива состояний лучей
-			 */
-			if (realloc(t_ray_data_vec, (states.ray_num_) *
-				sizeof(RayData)) == NULL)
-			{
-				/*
-				 * В случае неудачи выходим с кодом ошибки -4
-				 */
-				exit(-4);
-			}
-		}
 
 		/*
 		 * Энумераторы сторон стены
@@ -969,8 +816,9 @@ public:
 		/*
 		 * Возврацает состояния все лучей в виде массива
 		 */
-		RayData* RayCast(Camera& camera)
+		std::vector<RayData> RayCast(Camera *camera, const World *world) const
 		{
+			std::vector<RayData> t_ray_data_vec(static_cast<int>(camera->window_size_.x));
 			/*Условные обозначения
 				up
 			 ________
@@ -984,29 +832,28 @@ public:
 			/*
 			 * Отношение угла обзора к количеству лучей
 			 */
-			float frn = camera.fov_ / static_cast<float>(ray_num_);
+			float frn = camera->fov_ / static_cast<float>(camera->window_size_.x);
 
 			/*
 			 * Счётчик лучей
 			 */
-			int f = static_cast<float>(-ray_num_2_);
+			int f = static_cast<float>(-camera->window_size_2_.x);
 
 			/*
 			 * Процедура бросания лучей
 			 */
-			for (auto r = 0; r < ray_num_; r++)
+			for (auto r = 0; r < camera->window_size_.x; r++)
 			{
-
+				std::vector<RayData> ray_data_vec;
 				/*
 				 * Вектор состояний лучей.
 				 * Для дальнейшей его сортировки
 				 */
-				std::vector<RayData> ray_data_vec;
 
 				/*
 				 * Угол данного луча
 				 */
-				const float angle = camera.rotation_ + (f * (frn));
+				const float angle = camera->rotation_ + (static_cast<float>(f) * (frn));
 
 				/*
 				 * Тригонометрические состояния угла
@@ -1022,66 +869,66 @@ public:
 				{
 					//Ver
 
-					const float vA = wall_size_.x - (camera.position_.x - 
-						math::getMatrixPos(camera.position_.x, 
-							wall_size_.x) * wall_size_.x);
+					const float vA = world->wall_size_.x - (camera->position_.x -
+						math::getMatrixPos(camera->position_.x,
+							world->wall_size_.x) * world->wall_size_.x);
 					const float vB = vA * tan_angle;
-					float vcx = camera.position_.x + vA;
-					float vcy = camera.position_.y + vB;
-					int vjx = math::getMatrixPos(vcx, wall_size_.x);
-					int vjy = math::getMatrixPos(vcy, wall_size_.y);
-					if (vjx < matrix_size_.x && vjx >= 0 &&
-						vjy < matrix_size_.y && vjy >= 0)
+					float vcx = camera->position_.x + vA;
+					float vcy = camera->position_.y + vB;
+					int vjx = math::getMatrixPos(vcx, world->wall_size_.x);
+					int vjy = math::getMatrixPos(vcy, world->wall_size_.y);
+					if (vjx < world->matrix_size_.x && vjx >= 0 &&
+						vjy < world->matrix_size_.y && vjy >= 0)
 					{
-						if (matrix_[vjx][vjy] != 0)
+						if (world->matrix_[vjx][vjy] != 0)
 						{
 							ray_data_vec.emplace_back(vcx, vcy, 
-								math::fast_hypot(vcx - camera.position_.x, 
-									vcy - camera.position_.y), 
-								matrix_[vjx][vjy], angle, dir::left);
+								math::fast_hypot(vcx - camera->position_.x, 
+									vcy - camera->position_.y), 
+								world->matrix_[vjx][vjy], angle, dir::left);
 						}
 					}
-					const float vAA = wall_size_.x;
+					const float vAA = world->wall_size_.x;
 					const float vBB = vAA * tan_angle;
 
 					//Hor
-					const float hB = wall_size_.y - (camera.position_.y -
-						math::getMatrixPos(camera.position_.y,
-							wall_size_.y) * wall_size_.y);
+					const float hB = world->wall_size_.y - (camera->position_.y -
+						math::getMatrixPos(camera->position_.y,
+							world->wall_size_.y) * world->wall_size_.y);
 					const float hA = hB * ctg_angle;
-					float hcx = camera.position_.x + hA;
-					float hcy = camera.position_.y + hB;
-					int hjx = math::getMatrixPos(hcx, wall_size_.x);
-					int hjy = math::getMatrixPos(hcy, wall_size_.y);
-					if (hjx < matrix_size_.x && hjx >= 0 &&
-						hjy < matrix_size_.y && hjy >= 0)
+					float hcx = camera->position_.x + hA;
+					float hcy = camera->position_.y + hB;
+					int hjx = math::getMatrixPos(hcx, world->wall_size_.x);
+					int hjy = math::getMatrixPos(hcy, world->wall_size_.y);
+					if (hjx < world->matrix_size_.x && hjx >= 0 &&
+						hjy < world->matrix_size_.y && hjy >= 0)
 					{
-						if (matrix_[hjx][hjy] != 0)
+						if (world->matrix_[hjx][hjy] != 0)
 						{
 							ray_data_vec.emplace_back(hcx, hcy,
-								math::fast_hypot(hcx - camera.position_.x,
-									hcy - camera.position_.y),
-								matrix_[hjx][hjy], angle, dir::up);
+								math::fast_hypot(hcx - camera->position_.x,
+									hcy - camera->position_.y),
+								world->matrix_[hjx][hjy], angle, dir::up);
 						}
 					}
-					const float hBB = wall_size_.y;
+					const float hBB = world->wall_size_.y;
 					const float hAA = hBB * ctg_angle;
 					//RAY LEN SEARCHER
-					for (unsigned int i = 0; i < render_distance_; i++)
+					for (unsigned int i = 0; i < 4194304; i++)
 					{
 						vcx += vAA;
 						vcy += vBB;
-						vjx = math::getMatrixPos(vcx, wall_size_.x);
-						vjy = math::getMatrixPos(vcy, wall_size_.y);
-						if (vjx < matrix_size_.x && vjx >= 0 &&
-							vjy < matrix_size_.y && vjy >= 0)
+						vjx = math::getMatrixPos(vcx, world->wall_size_.x);
+						vjy = math::getMatrixPos(vcy, world->wall_size_.y);
+						if (vjx < world->matrix_size_.x && vjx >= 0 &&
+							vjy < world->matrix_size_.y && vjy >= 0)
 						{
-							if (matrix_[vjx][vjy] != 0)
+							if (world->matrix_[vjx][vjy] != 0)
 							{
 								ray_data_vec.emplace_back(vcx, vcy,
-									math::fast_hypot(vcx - camera.position_.x,
-										vcy - camera.position_.y),
-									matrix_[vjx][vjy], angle, dir::left);
+									math::fast_hypot(vcx - camera->position_.x,
+										vcy - camera->position_.y),
+									world->matrix_[vjx][vjy], angle, dir::left);
 								break;
 							}
 						}
@@ -1090,21 +937,21 @@ public:
 							break;
 						}
 					}
-					for (unsigned int i = 0; i < render_distance_; i++)
+					for (unsigned int i = 0; i < 4194304; i++)
 					{
 						hcx += hAA;
 						hcy += hBB;
-						hjx = math::getMatrixPos(hcx, wall_size_.x);
-						hjy = math::getMatrixPos(hcy, wall_size_.y);
-						if (hjx < matrix_size_.x && hjx >= 0 &&
-							hjy < matrix_size_.y && hjy >= 0)
+						hjx = math::getMatrixPos(hcx, world->wall_size_.x);
+						hjy = math::getMatrixPos(hcy, world->wall_size_.y);
+						if (hjx < world->matrix_size_.x && hjx >= 0 &&
+							hjy < world->matrix_size_.y && hjy >= 0)
 						{
-							if (matrix_[hjx][hjy] != 0)
+							if (world->matrix_[hjx][hjy] != 0)
 							{
 								ray_data_vec.emplace_back(hcx, hcy,
-									math::fast_hypot(hcx - camera.position_.x,
-										hcy - camera.position_.y),
-									matrix_[hjx][hjy], angle, dir::up);
+									math::fast_hypot(hcx - camera->position_.x,
+										hcy - camera->position_.y),
+									world->matrix_[hjx][hjy], angle, dir::up);
 								break;
 							}
 						}
@@ -1129,67 +976,67 @@ public:
 				else if (cos_angle < 0 && sin_angle > 0)
 				{
 					//Ver
-					const float vA = camera.position_.x - 
-						math::getMatrixPos(camera.position_.x,
-							wall_size_.x) * wall_size_.x;
+					const float vA = camera->position_.x - 
+						math::getMatrixPos(camera->position_.x,
+							world->wall_size_.x) * world->wall_size_.x;
 					const float vB = vA * tan_angle;
-					float vcx = camera.position_.x - vA;
-					float vcy = camera.position_.y - vB;
+					float vcx = camera->position_.x - vA;
+					float vcy = camera->position_.y - vB;
 					int vjx = math::getMatrixPos(vcx - 0.1f,
-						wall_size_.x);
-					int vjy = math::getMatrixPos(vcy, wall_size_.y);
-					if (vjx < matrix_size_.x && vjx >= 0 &&
-						vjy < matrix_size_.y && vjy >= 0)
+						world->wall_size_.x);
+					int vjy = math::getMatrixPos(vcy, world->wall_size_.y);
+					if (vjx < world->matrix_size_.x && vjx >= 0 &&
+						vjy < world->matrix_size_.y && vjy >= 0)
 					{
-						if (matrix_[vjx][vjy] != 0)
+						if (world->matrix_[vjx][vjy] != 0)
 						{
 							ray_data_vec.emplace_back(vcx, vcy,
-								math::fast_hypot(vcx - camera.position_.x,
-									vcy - camera.position_.y),
-								matrix_[vjx][vjy], angle, dir::right);
+								math::fast_hypot(vcx - camera->position_.x,
+									vcy - camera->position_.y),
+								world->matrix_[vjx][vjy], angle, dir::right);
 						}
 					}
-					const float vAA = wall_size_.x;
+					const float vAA = world->wall_size_.x;
 					const float vBB = vAA * tan_angle;
 					//Hor
-					const float hB = wall_size_.y - (camera.position_.y -
-						math::getMatrixPos(camera.position_.y,
-							wall_size_.y) * wall_size_.y);
+					const float hB = world->wall_size_.y - (camera->position_.y -
+						math::getMatrixPos(camera->position_.y,
+							world->wall_size_.y) * world->wall_size_.y);
 					const float hA = hB * ctg_angle;
-					float hcx = camera.position_.x + hA;
-					float hcy = camera.position_.y + hB;
-					int hjx = math::getMatrixPos(hcx, wall_size_.x);
-					int hjy = math::getMatrixPos(hcy, wall_size_.y);
-					if (hjx < matrix_size_.x && hjx >= 0 &&
-						hjy < matrix_size_.y && hjy >= 0)
+					float hcx = camera->position_.x + hA;
+					float hcy = camera->position_.y + hB;
+					int hjx = math::getMatrixPos(hcx, world->wall_size_.x);
+					int hjy = math::getMatrixPos(hcy, world->wall_size_.y);
+					if (hjx < world->matrix_size_.x && hjx >= 0 &&
+						hjy < world->matrix_size_.y && hjy >= 0)
 					{
-						if (matrix_[hjx][hjy] != 0)
+						if (world->matrix_[hjx][hjy] != 0)
 						{
 							ray_data_vec.emplace_back(hcx, hcy,
-								math::fast_hypot(hcx - camera.position_.x,
-									hcy - camera.position_.y), 
-								matrix_[hjx][hjy], angle, dir::up);
+								math::fast_hypot(hcx - camera->position_.x,
+									hcy - camera->position_.y), 
+								world->matrix_[hjx][hjy], angle, dir::up);
 						}
 					}
-					const float hBB = wall_size_.y;
+					const float hBB = world->wall_size_.y;
 					const float hAA = hBB * ctg_angle;
 					//RAY LEN SEARCHER
-					for (unsigned int i = 0; i < render_distance_; i++)
+					for (unsigned int i = 0; i < 4194304; i++)
 					{
 						vcx -= vAA;
 						vcy -= vBB;
 						vjx = math::getMatrixPos(vcx - 0.1f,
-							wall_size_.x);
-						vjy = math::getMatrixPos(vcy, wall_size_.y);
-						if (vjx < matrix_size_.x && vjx >= 0 && 
-							vjy < matrix_size_.y && vjy >= 0)
+							world->wall_size_.x);
+						vjy = math::getMatrixPos(vcy, world->wall_size_.y);
+						if (vjx < world->matrix_size_.x && vjx >= 0 &&
+							vjy < world->matrix_size_.y && vjy >= 0)
 						{
-							if (matrix_[vjx][vjy] != 0)
+							if (world->matrix_[vjx][vjy] != 0)
 							{
 								ray_data_vec.emplace_back(vcx, vcy,
-									math::fast_hypot(vcx - camera.position_.x,
-										vcy - camera.position_.y),
-									matrix_[vjx][vjy], angle, dir::right);
+									math::fast_hypot(vcx - camera->position_.x,
+										vcy - camera->position_.y),
+									world->matrix_[vjx][vjy], angle, dir::right);
 								break;
 							}
 						}
@@ -1198,21 +1045,21 @@ public:
 							break;
 						}
 					}
-					for (unsigned int i = 0; i < render_distance_; i++)
+					for (unsigned int i = 0; i < 4194304; i++)
 					{
 						hcx += hAA;
 						hcy += hBB;
-						hjx = math::getMatrixPos(hcx, wall_size_.x);
-						hjy = math::getMatrixPos(hcy, wall_size_.y);
-						if (hjx < matrix_size_.x && hjx >= 0 && 
-							hjy < matrix_size_.y && hjy >= 0)
+						hjx = math::getMatrixPos(hcx, world->wall_size_.x);
+						hjy = math::getMatrixPos(hcy, world->wall_size_.y);
+						if (hjx < world->matrix_size_.x && hjx >= 0 &&
+							hjy < world->matrix_size_.y && hjy >= 0)
 						{
-							if (matrix_[hjx][hjy] != 0)
+							if (world->matrix_[hjx][hjy] != 0)
 							{
 								ray_data_vec.emplace_back(hcx, hcy,
-									math::fast_hypot(hcx - camera.position_.x,
-										hcy - camera.position_.y), 
-									matrix_[hjx][hjy], angle, dir::up);
+									math::fast_hypot(hcx - camera->position_.x,
+										hcy - camera->position_.y), 
+									world->matrix_[hjx][hjy], angle, dir::up);
 								break;
 							}
 						}
@@ -1239,67 +1086,67 @@ public:
 				else if (cos_angle > 0 && sin_angle < 0)
 				{
 					//Ver
-					const float vA = wall_size_.x - (camera.position_.x -
-						math::getMatrixPos(camera.position_.x, 
-							wall_size_.x) * wall_size_.x);
+					const float vA = world->wall_size_.x - (camera->position_.x -
+						math::getMatrixPos(camera->position_.x, 
+							world->wall_size_.x) * world->wall_size_.x);
 					const float vB = vA * tan_angle;
-					float vcx = camera.position_.x + vA;
-					float vcy = camera.position_.y + vB;
-					int vjx = math::getMatrixPos(vcx, wall_size_.x);
-					int vjy = math::getMatrixPos(vcy, wall_size_.y);
-					if (vjx < matrix_size_.x && vjx >= 0 &&
-						vjy < matrix_size_.y && vjy >= 0)
+					float vcx = camera->position_.x + vA;
+					float vcy = camera->position_.y + vB;
+					int vjx = math::getMatrixPos(vcx, world->wall_size_.x);
+					int vjy = math::getMatrixPos(vcy, world->wall_size_.y);
+					if (vjx < world->matrix_size_.x && vjx >= 0 &&
+						vjy < world->matrix_size_.y && vjy >= 0)
 					{
-						if (matrix_[vjx][vjy] != 0)
+						if (world->matrix_[vjx][vjy] != 0)
 						{
 							ray_data_vec.emplace_back(vcx, vcy,
-								math::fast_hypot(vcx - camera.position_.x,
-									vcy - camera.position_.y),
-								matrix_[vjx][vjy], angle, dir::left);
+								math::fast_hypot(vcx - camera->position_.x,
+									vcy - camera->position_.y),
+								world->matrix_[vjx][vjy], angle, dir::left);
 						}
 					}
-					const float vAA = wall_size_.x;
+					const float vAA = world->wall_size_.x;
 					const float vBB = vAA * tan_angle;
 
 					//Hor
-					const float hB = camera.position_.y -
-						math::getMatrixPos(camera.position_.y,
-							wall_size_.y) * wall_size_.y;
+					const float hB = camera->position_.y -
+						math::getMatrixPos(camera->position_.y,
+							world->wall_size_.y) * world->wall_size_.y;
 					const float hA = hB * ctg_angle;
-					float hcx = camera.position_.x - hA;
-					float hcy = camera.position_.y - hB;
-					int hjx = math::getMatrixPos(hcx, wall_size_.x);
+					float hcx = camera->position_.x - hA;
+					float hcy = camera->position_.y - hB;
+					int hjx = math::getMatrixPos(hcx, world->wall_size_.x);
 					int hjy = math::getMatrixPos(hcy - 0.1f,
-						wall_size_.y);
-					if (hjx < matrix_size_.x && hjx >= 0 &&
-						hjy < matrix_size_.y && hjy >= 0)
+						world->wall_size_.y);
+					if (hjx < world->matrix_size_.x && hjx >= 0 &&
+						hjy < world->matrix_size_.y && hjy >= 0)
 					{
-						if (matrix_[hjx][hjy] != 0)
+						if (world->matrix_[hjx][hjy] != 0)
 						{
 							ray_data_vec.emplace_back(hcx, hcy, 
-								math::fast_hypot(hcx - camera.position_.x,
-									hcy - camera.position_.y),
-								matrix_[hjx][hjy], angle, dir::down);
+								math::fast_hypot(hcx - camera->position_.x,
+									hcy - camera->position_.y),
+								world->matrix_[hjx][hjy], angle, dir::down);
 						}
 					}
-					const float hBB = wall_size_.y;
+					const float hBB = world->wall_size_.y;
 					const float hAA = hBB * ctg_angle;
 					//RAY LEN SEARCHER
-					for (unsigned int i = 0; i < render_distance_; i++)
+					for (unsigned int i = 0; i < 4194304; i++)
 					{
 						vcx += vAA;
 						vcy += vBB;
-						vjx = math::getMatrixPos(vcx, wall_size_.x);
-						vjy = math::getMatrixPos(vcy, wall_size_.y);
-						if (vjx < matrix_size_.x && vjx >= 0 &&
-							vjy < matrix_size_.y && vjy >= 0)
+						vjx = math::getMatrixPos(vcx, world->wall_size_.x);
+						vjy = math::getMatrixPos(vcy, world->wall_size_.y);
+						if (vjx < world->matrix_size_.x && vjx >= 0 &&
+							vjy < world->matrix_size_.y && vjy >= 0)
 						{
-							if (matrix_[vjx][vjy] != 0)
+							if (world->matrix_[vjx][vjy] != 0)
 							{
 								ray_data_vec.emplace_back(vcx, vcy,
-									math::fast_hypot(vcx - camera.position_.x,
-										vcy - camera.position_.y),
-									matrix_[vjx][vjy], angle, dir::left);
+									math::fast_hypot(vcx - camera->position_.x,
+										vcy - camera->position_.y),
+									world->matrix_[vjx][vjy], angle, dir::left);
 								break;
 							}
 						}
@@ -1308,21 +1155,21 @@ public:
 							break;
 						}
 					}
-					for (unsigned int i = 0; i < render_distance_; i++)
+					for (unsigned int i = 0; i < 4194304; i++)
 					{
 						hcx -= hAA;
 						hcy -= hBB;
-						hjx = math::getMatrixPos(hcx, wall_size_.x);
-						hjy = math::getMatrixPos(hcy - 0.1f, wall_size_.y);
-						if (hjx < matrix_size_.x && hjx >= 0 &&
-							hjy < matrix_size_.y && hjy >= 0)
+						hjx = math::getMatrixPos(hcx, world->wall_size_.x);
+						hjy = math::getMatrixPos(hcy - 0.1f, world->wall_size_.y);
+						if (hjx < world->matrix_size_.x && hjx >= 0 &&
+							hjy < world->matrix_size_.y && hjy >= 0)
 						{
-							if (matrix_[hjx][hjy] != 0)
+							if (world->matrix_[hjx][hjy] != 0)
 							{
 								ray_data_vec.emplace_back(hcx, hcy,
-									math::fast_hypot(hcx - camera.position_.x,
-										hcy - camera.position_.y),
-									matrix_[hjx][hjy], angle, dir::down);
+									math::fast_hypot(hcx - camera->position_.x,
+										hcy - camera->position_.y),
+									world->matrix_[hjx][hjy], angle, dir::down);
 								break;
 							}
 						}
@@ -1349,69 +1196,69 @@ public:
 				else if (cos_angle < 0 && sin_angle < 0)
 				{
 					//Ver
-					const float vA = camera.position_.x -
-						math::getMatrixPos(camera.position_.x,
-							wall_size_.x) * wall_size_.x;
+					const float vA = camera->position_.x -
+						math::getMatrixPos(camera->position_.x,
+							world->wall_size_.x) * world->wall_size_.x;
 					const float vB = vA * tan_angle;
-					float vcx = camera.position_.x - vA;
-					float vcy = camera.position_.y - vB;
+					float vcx = camera->position_.x - vA;
+					float vcy = camera->position_.y - vB;
 					int vjx = math::getMatrixPos(vcx - 0.1f,
-						wall_size_.x);
-					int vjy = math::getMatrixPos(vcy, wall_size_.y);
-					if (vjx < matrix_size_.x && vjx >= 0 &&
-						vjy < matrix_size_.y && vjy >= 0)
+						world->wall_size_.x);
+					int vjy = math::getMatrixPos(vcy, world->wall_size_.y);
+					if (vjx < world->matrix_size_.x && vjx >= 0 &&
+						vjy < world->matrix_size_.y && vjy >= 0)
 					{
-						if (matrix_[vjx][vjy] != 0)
+						if (world->matrix_[vjx][vjy] != 0)
 						{
 							ray_data_vec.emplace_back(vcx, vcy,
-								math::fast_hypot(vcx - camera.position_.x, 
-									vcy - camera.position_.y), 
-								matrix_[vjx][vjy], angle, dir::right);
+								math::fast_hypot(vcx - camera->position_.x, 
+									vcy - camera->position_.y), 
+								world->matrix_[vjx][vjy], angle, dir::right);
 						}
 					}
-					const float vAA = wall_size_.x;
+					const float vAA = world->wall_size_.x;
 					const float vBB = vAA * tan_angle;
 
 					//Hor
-					const float hB = camera.position_.y -
-						math::getMatrixPos(camera.position_.y,
-							wall_size_.y) * wall_size_.y;
+					const float hB = camera->position_.y -
+						math::getMatrixPos(camera->position_.y,
+							world->wall_size_.y) * world->wall_size_.y;
 					const float hA = hB * ctg_angle;
-					float hcx = camera.position_.x - hA;
-					float hcy = camera.position_.y - hB;
-					int hjx = math::getMatrixPos(hcx, wall_size_.x);
+					float hcx = camera->position_.x - hA;
+					float hcy = camera->position_.y - hB;
+					int hjx = math::getMatrixPos(hcx, world->wall_size_.x);
 					int hjy = math::getMatrixPos(hcy - 0.1f,
-						wall_size_.y);
-					if (hjx < matrix_size_.x && hjx >= 0 && 
-						hjy < matrix_size_.y && hjy >= 0)
+						world->wall_size_.y);
+					if (hjx < world->matrix_size_.x && hjx >= 0 &&
+						hjy < world->matrix_size_.y && hjy >= 0)
 					{
-						if (matrix_[hjx][hjy] != 0)
+						if (world->matrix_[hjx][hjy] != 0)
 						{
 							ray_data_vec.emplace_back(hcx, hcy, 
-								math::fast_hypot(hcx - camera.position_.x, 
-									hcy - camera.position_.y), 
-								matrix_[hjx][hjy], angle, dir::down);
+								math::fast_hypot(hcx - camera->position_.x, 
+									hcy - camera->position_.y), 
+								world->matrix_[hjx][hjy], angle, dir::down);
 						}
 					}
-					const float hBB = wall_size_.y;
+					const float hBB = world->wall_size_.y;
 					const float hAA = hBB * ctg_angle;
 					//RAY LEN SEARCHER
-					for (unsigned int i = 0; i < render_distance_; i++)
+					for (unsigned int i = 0; i < 4194304; i++)
 					{
 						vcx -= vAA;
 						vcy -= vBB;
 						vjx = math::getMatrixPos(vcx - 0.1f, 
-							wall_size_.x);
-						vjy = math::getMatrixPos(vcy, wall_size_.y);
-						if (vjx < matrix_size_.x && vjx >= 0 &&
-							vjy < matrix_size_.y && vjy >= 0)
+							world->wall_size_.x);
+						vjy = math::getMatrixPos(vcy, world->wall_size_.y);
+						if (vjx < world->matrix_size_.x && vjx >= 0 &&
+							vjy < world->matrix_size_.y && vjy >= 0)
 						{
-							if (matrix_[vjx][vjy] != 0)
+							if (world->matrix_[vjx][vjy] != 0)
 							{
 								ray_data_vec.emplace_back(vcx, vcy,
-									math::fast_hypot(vcx - camera.position_.x, 
-										vcy - camera.position_.y), 
-									matrix_[vjx][vjy], angle, dir::right);
+									math::fast_hypot(vcx - camera->position_.x, 
+										vcy - camera->position_.y), 
+									world->matrix_[vjx][vjy], angle, dir::right);
 								break;
 							}
 						}
@@ -1420,22 +1267,22 @@ public:
 							break;
 						}
 					}
-					for (unsigned int i = 0; i < render_distance_; i++)
+					for (unsigned int i = 0; i < 4194304; i++)
 					{
 						hcx -= hAA;
 						hcy -= hBB;
-						hjx = math::getMatrixPos(hcx, wall_size_.x);
+						hjx = math::getMatrixPos(hcx, world->wall_size_.x);
 						hjy = math::getMatrixPos(hcy - 0.1f,
-							wall_size_.y);
-						if (hjx < matrix_size_.x && hjx >= 0 &&
-							hjy < matrix_size_.y && hjy >= 0)
+							world->wall_size_.y);
+						if (hjx < world->matrix_size_.x && hjx >= 0 &&
+							hjy < world->matrix_size_.y && hjy >= 0)
 						{
-							if (matrix_[hjx][hjy] != 0)
+							if (world->matrix_[hjx][hjy] != 0)
 							{
 								ray_data_vec.emplace_back(hcx, hcy,
-									math::fast_hypot(hcx - camera.position_.x,
-										hcy - camera.position_.y),
-									matrix_[hjx][hjy], angle, dir::down);
+									math::fast_hypot(hcx - camera->position_.x,
+										hcy - camera->position_.y),
+									world->matrix_[hjx][hjy], angle, dir::down);
 								break;
 							}
 						}
@@ -1465,12 +1312,8 @@ public:
 
 	};
 
-public:
 
-	/*
-	 * Абстрактный класс - держит связь между движком и вашим классом,
-	 * который унаследовал Wall_api.
-	 */
+public:
 	class Wall_api
 	{
 	public:
@@ -1483,9 +1326,11 @@ public:
 		}
 
 		/*
-		 * Передаём приватные состояния луча.
+		 * Передаёт приватные состояния луча.
 		 */
-		virtual void wall_states(RayCaster_api::RayData& data) = 0;
+		virtual void wall_states(const RayCaster_api::RayData& data) = 0;
+
+		virtual void wall_states_center_ray(const RayCaster_api::RayData& data, const sf::Vector2<float> center_ray) = 0;
 
 		Wall_api() = default;
 	};
@@ -1497,18 +1342,23 @@ public:
 	{
 	public:
 
-		MainWall() :
+		explicit MainWall(const std::string& texture_path = "data/tex/4.png") :
 			Wall_api()
 		{
-			texture.loadFromFile("data/tex/4.png");
+			texture.loadFromFile(texture_path);
 		}
 
 		sf::RenderTexture render_texture;
 
-		void wall_states(RayCaster_api::RayData& data) override
+		void wall_states(const RayCaster_api::RayData& data) override
 		{
-
-		}
+			
+		};
+		void wall_states_center_ray(const RayCaster_api::RayData& data,
+			const sf::Vector2<float> center_ray) override
+		{
+			
+		};
 
 	};
 
@@ -1519,11 +1369,13 @@ public:
 	 * Подчиняется класслу FileManager
 	 */
 	class World :
-		private MainWorldStates,
 		public sf::Drawable
 	{
-	public:
+
+		friend  std::vector<RayCaster_api::RayData> RayCaster_api::RayCast(Camera* camera, const World* world) const;
 		
+	public:
+
 		sf::Vector2<float> getSize() const
 		{
 			return this->size_;
@@ -1553,36 +1405,32 @@ public:
 		{
 			return this->matrix_[position_matrix.x][position_matrix.y];
 		}
-	
+
+		void setCamera(Camera* camera)
+		{
+			camera_ = camera;
+		}
+
 	private:
-		
+
+		sf::Vector2<float> size_;
+		Matrix matrix_;
+		sf::Vector2<int> matrix_size_;
+		sf::Vector2<float> wall_size_;
+
 		/*
 		 * Ксласс бросателя лучей
 		 */
-		RayCaster_api ray_caster_api_;
-
-		RayCaster_api::RayData* ray_data_{};
-
-	   /*
-		* Вектор,
-		* хранящий все классы,
-		* которые унаследовали абстрактный класс Wall_api.
-		*/
-		std::vector<Wall_api* > wall_{};
-
-		sf::Texture* texture_{};
-
-		MainCameraStates camera_states_;
+		RayCaster_api ray_caster_api_{};
 
 		/*
-		 * Вектор использованых номеров стен
+		 * Вектор,
+		 * хранящий все классы,
+		 * которые унаследовали абстрактный класс Wall_api.
 		 */
-		std::vector<unsigned int> used_walls_{};
+		std::vector<Wall_api*> wall_{};
 
-		/*
-		 * Вектор уникальных номеров использованых номером стен
-		 */
-		std::vector<unsigned int> unique_walls_{};
+		Camera* camera_;
 
 		/*
 		 * Цвет пола
@@ -1595,28 +1443,19 @@ public:
 		sf::Texture background_texture_;
 
 	public:
-		
-		World(sf::RenderTarget& target,
-			const sf::Vector2<float> size =
-			sf::Vector2<float>(1024, 1024),
-			Matrix matrix = generateMatrix(32, 32, 1),
-			const unsigned int render_distance = 32 * 32) :
 
-			MainWorldStates(size,
-				matrix,
-				sf::Vector2<int>(static_cast<int>(matrix.size()),
-					static_cast<int>(matrix[0].size())),
-				sf::Vector2<float>(size.x /
-					static_cast<float>(matrix.size()),
-					size.y / static_cast<float>(matrix[0].size())),
-				render_distance,
-				target),
-			ray_caster_api_(*this),
-			texture_(static_cast<sf::Texture*>(malloc(
-				(this->ray_num_) * sizeof(sf::Texture)))),
-			camera_states_(target),
-			used_walls_(this->ray_num_),
-		floor_color_(0, 150,0)
+		explicit World(sf::RenderTarget& target,
+		               const sf::Vector2<float> size =
+			               sf::Vector2<float>(1024, 1024),
+		               Matrix matrix = generateMatrix(32, 32, 1)) :
+
+			size_(size),
+			matrix_(matrix),
+			matrix_size_({static_cast<int>(matrix.size()),
+				static_cast<int>(matrix[0].size())}),
+			wall_size_({ size.x / static_cast<float>(matrix_size_.x),
+				size.y / static_cast<float>(matrix_size_.y)}),
+			floor_color_(0, 150,0)
 		{
 
 			wall_.push_back(new MainWall);
@@ -1624,73 +1463,6 @@ public:
 
 			background_texture_.loadFromFile("data/tex/bg.jpg");
 			
-		}
-
-		/*
-		 * Смена холста
-		 */
-		void setRenderTarget(sf::RenderTarget& target)
-		{
-			this->ray_num_ = target.getSize().x;
-			this->ray_num_2_ = static_cast<int>(static_cast<float>
-				(this->ray_num_) / 2.f);
-
-			if (realloc(texture_, (this->ray_num_) *
-				sizeof(sf::Texture)) == NULL)
-			{
-				/*
-				 * В случае неудачи переопределения
-				 * размеров динамического массива,
-				 * выходим из программы с кодом ошибки -5
-				 */
-				exit(-5);
-			}
-
-			ray_caster_api_.ResetStates(*this);
-		}
-
-		/*
-		 * Рендер мира, путём передачи в него камеры
-		 */
-		void render(Camera& camera)
-		{
-			
-			camera_states_ = camera.getStates();
-			
-			/*
-			 * Получаем данные от рейкастера
-			 */
-			ray_data_ = (ray_caster_api_.RayCast(camera));
-
-			/*
-			 * Записьномеров стен,
-			 * для уменьшения количества вызовав виртуальных функций стен
-			 * и последующей их сортировки
-			 */
-			for (int i = 1; i < ray_num_; i++)
-			{
-				used_walls_[i] = ray_data_[i].wall_number;
-			}
-
-			/*
-			 * Процедура отбора уникальных номеров стен,
-			 * для уменьшения количества вызовав виртуальных функций стен
-			 * и их сортировка средствами STL
-			 */
-			std::unique_copy(used_walls_.begin(),
-				used_walls_.end(),
-				std::back_inserter(unique_walls_));
-
-			/*
-			 * Вызов виртуальных функций стен
-			 */
-			for (int i = 0; i < unique_walls_.size(); i++)
-			{
-				wall_[unique_walls_[i]]->wall_states(ray_data_[i]);
-			}
-
-			unique_walls_.clear();
-
 		}
 
 		/*
@@ -1718,30 +1490,65 @@ public:
 		void draw(sf::RenderTarget& target,
 			sf::RenderStates states) const override
 		{
+			std::vector<RayCaster_api::RayData> ray_data = ray_caster_api_.RayCast(camera_, this);
 
+			/*
+			* Вектор использованых номеров стен
+			*/
+			std::vector<unsigned int> used_walls_;
+
+			/*
+			 * Вектор уникальных номеров использованых номером стен
+			 */
+			std::vector<unsigned int> unique_walls_;
+
+			for (int i = 1; i < camera_->window_size_.x; i++)
+			{
+				used_walls_.push_back(ray_data[i].wall_number);
+			}
+
+			/*
+			 * Процедура отбора уникальных номеров стен,
+			 * для уменьшения количества вызовав виртуальных функций стен
+			 * и их сортировка средствами STL
+			 */
+			std::unique_copy(used_walls_.begin(),
+				used_walls_.end(),
+				std::back_inserter(unique_walls_));
+
+			/*
+			 * Вызов виртуальных функций стен
+			 */
+			for (int i = 0; i < unique_walls_.size(); i++)
+			{
+				wall_[unique_walls_[i]]->wall_states(ray_data[i]);
+			}
+
+			unique_walls_.clear();
+			
 			/*
 			 * Отрисовка пола
 			 */
 			sf::RectangleShape rectangle_shape_floor_;
 
 			rectangle_shape_floor_.setSize(sf::Vector2<float>
-				(camera_states_.window_size_.x, 1));
+				(camera_->window_size_.x, 1));
 
 			const float delta_color_r((floor_color_.r) /
-				camera_states_.window_size_2_.y);
+				camera_->window_size_2_.y);
 			
 			const float delta_color_g((floor_color_.g) /
-				camera_states_.window_size_2_.y);
+				camera_->window_size_2_.y);
 			
 			const float delta_color_b((floor_color_.b) /
-				camera_states_.window_size_2_.y);
+				camera_->window_size_2_.y);
 
-			for (auto i = camera_states_.window_size_2_.y;
-				i < camera_states_.window_size_.y; i++)
+			for (auto i = camera_->window_size_2_.y;
+				i < camera_->window_size_.y; i++)
 			{
 				rectangle_shape_floor_.setPosition(0, i);
 				
-				const auto it = (i - camera_states_.window_size_2_.y);
+				const auto it = (i - camera_->window_size_2_.y);
 				
 				rectangle_shape_floor_.setFillColor(
 					sf::Color(it * delta_color_r,
@@ -1761,29 +1568,29 @@ public:
 			
 			const float ww_scale = (static_cast<float>(
 				background_texture_.getSize().x) /
-				camera_states_.window_size_.x);
+				camera_->window_size_.x);
 			
-			const float scale_tex_r3d = (camera_states_.window_size_.x /
-				static_cast<float>(this->ray_num_)) / ww_scale;
+			const float scale_tex_r3d = (camera_->window_size_.x /
+				static_cast<float>(camera_->window_size_.x)) / ww_scale;
 			
 			background_sprite_.setScale(scale_tex_r3d, 1);
 			
-			for (int i = 0; i < this->ray_num_; i++)
+			for (int i = 0; i < camera_->window_size_.x; i++)
 			{
-				if (ray_data_[i].rotation < 0)
+				if (ray_data[i].rotation < 0)
 				{
-					a = 4 - abs(fmodf(ray_data_[i].rotation, 4));
+					a = 4 - abs(fmodf(ray_data[i].rotation, 4));
 				}
 				else
 				{
-					a = abs(fmodf(ray_data_[i].rotation, 4));
+					a = abs(fmodf(ray_data[i].rotation, 4));
 				}
 				
 				background_sprite_.setTextureRect(
 					sf::IntRect(static_cast<int>(a *
-						(camera_states_.window_size_.x / 4.f) * ww_scale),
+						(camera_->window_size_.x / 4.f) * ww_scale),
 						0, static_cast<int>(ww_scale),
-				static_cast<int>(camera_states_.window_size_2_.y)));
+				static_cast<int>(camera_->window_size_2_.y)));
 				
 				background_sprite_.setPosition(i, 0);
 				
@@ -1795,7 +1602,7 @@ public:
 			 */
 			sf::Sprite sprite;
 			
-			for (auto i = 0; i < ray_num_; i++)
+			for (auto i = 0; i < camera_->window_size_.x; i++)
 			{
 
 				float d{};
@@ -1805,25 +1612,25 @@ public:
 				 * находим столб текстуры
 				 */
 				
-				switch (ray_data_[i].direction) {
+				switch (ray_data[i].direction) {
 
 				case RayCaster_api::dir::left:
-					d = fmodf(ray_data_[i].position_y,
+					d = fmodf(ray_data[i].position_y,
 						wall_size_.y);
 					break;
 
 				case RayCaster_api::dir::right:
-					d = (wall_size_.y - fmodf(ray_data_[i].position_y,
+					d = (wall_size_.y - fmodf(ray_data[i].position_y,
 						wall_size_.y));
 					break;
 
 				case RayCaster_api::dir::down:
-					d = (wall_size_.x - fmodf(ray_data_[i].position_x,
+					d = (wall_size_.x - fmodf(ray_data[i].position_x,
 						wall_size_.x));
 					break;
 
 				case RayCaster_api::dir::up:
-					d = fmodf(ray_data_[i].position_x,
+					d = fmodf(ray_data[i].position_x,
 						wall_size_.x);
 					break;
 
@@ -1838,21 +1645,21 @@ public:
 				/*
 				 * Берём текстуру у стены.
 				 */
-				sprite.setTexture(wall_[ray_data_[i].wall_number]->texture);
+				sprite.setTexture(wall_[ray_data[i].wall_number]->texture);
 
 				/*
 				 * Высота стены.
 				 */
-				const float wall_height = camera_states_.render_constant_ /
-					(ray_data_[i].length * cosf(
-						ray_data_[i].rotation -
-						camera_states_.rotation_ /
+				const float wall_height = camera_->render_constant_ /
+					(ray_data[i].length * cosf(
+						ray_data[i].rotation -
+						camera_->rotation_ /
 						1.01f));
 
 				/*
 				 * Позиция столба стены на экране по координате Y.
 				 */
-				const float sprite_position_y = camera_states_.window_size_2_.y
+				const float sprite_position_y = camera_->window_size_2_.y
 					- wall_height / 2.f;
 
 				/*
@@ -1861,19 +1668,21 @@ public:
 				sprite.setPosition(i, sprite_position_y);
 
 				const float tex_wall_scale = (static_cast<float>
-					(wall_[ray_data_[i].wall_number]->texture.getSize().x)
+					(wall_[ray_data[i].wall_number]->texture.getSize().x)
 					/ wall_size_.x);
 
+				const int texture_position_x = d * tex_wall_scale;
+				
 				sprite.setTextureRect(sf::IntRect(
-					d * tex_wall_scale,
+					texture_position_x,
 					0, 1,
-					wall_[ray_data_[i].wall_number]
+					wall_[ray_data[i].wall_number]
 					->texture.getSize().y));
 
 				const float scale = 1.f / tex_wall_scale;
 
 				sprite.setScale(1, wall_height /
-					static_cast<float>(wall_[ray_data_[i].wall_number]
+					static_cast<float>(wall_[ray_data[i].wall_number]
 						->texture.getSize().y));
 
 				/*
@@ -1881,12 +1690,19 @@ public:
 				 * в зависимости от её расстояния до камеры.
 				 */
 				const sf::Uint8 wall_clr = 255.f / (1.f +
-					powf(ray_data_[i].length, 2.f) *
-					camera_states_.shading_coefficient_);
+					powf(ray_data[i].length, 2.f) *
+					camera_->shading_coefficient_);
 
 				sprite.setColor(sf::Color(wall_clr,
 					wall_clr, wall_clr));
 
+				if (i == static_cast<int>(camera_->window_size_2_.x))
+				{
+					wall_[ray_data[static_cast<int>(camera_->window_size_2_.x)].wall_number]->wall_states_center_ray(ray_data[
+						static_cast<int>(camera_->window_size_2_.x)],
+						{ static_cast<float>(texture_position_x), (sprite_position_y + wall_height / 2) - camera_->window_size_2_.y });
+					//std::cout << (sprite_position_y + wall_height / 2) - camera_->window_size_2_.y << std::endl;
+				}
 				/*
 				 * Отрисовка данного столба
 				 */
@@ -1903,27 +1719,27 @@ public:
 			const float step_y) const
 		{
 			if (matrix_[math::getMatrixPos(((step_x > 0) ?
-				(camera.position_.x + camera.radius_) :
-				(camera.position_.x - camera.radius_)) + step_x,
+				(camera_->position_.x + camera_->radius_) :
+				(camera_->position_.x - camera_->radius_)) + step_x,
 				wall_size_.x)]
 				[math::getMatrixPos(((step_y > 0) ?
-					(camera.position_.y + camera.radius_) :
-					(camera.position_.y - camera.radius_)),
+					(camera_->position_.y + camera_->radius_) :
+					(camera_->position_.y - camera_->radius_)),
 					wall_size_.y)] == 0)
 			{
-				camera.move(step_x, 0);
+				camera_->move(step_x, 0);
 			}
 
 			if (matrix_[math::getMatrixPos(((step_x > 0) ?
-				(camera.position_.x + camera.radius_) :
-				(camera.position_.x - camera.radius_)),
+				(camera_->position_.x + camera_->radius_) :
+				(camera_->position_.x - camera_->radius_)),
 				wall_size_.x)]
 				[math::getMatrixPos(((step_y > 0) ?
-					(camera.position_.y + camera.radius_) :
-					(camera.position_.y - camera.radius_)) + step_y,
+					(camera_->position_.y + camera_->radius_) :
+					(camera_->position_.y - camera_->radius_)) + step_y,
 					wall_size_.y)] == 0)
 			{
-				camera.move(0, step_y);
+				camera_->move(0, step_y);
 			}
 		}
 
@@ -1932,7 +1748,7 @@ public:
 	/*
 	 * Класс камеры.
 	 */
-	class Camera : public MainCameraStates
+	class Camera
 	{
 		/*
 		 * Дружелюбные классы
@@ -1943,6 +1759,64 @@ public:
 		friend class World;
 
 	private:
+		/*
+		 * Переопределение размеров холста
+		 */
+		void resizeTarget(const sf::Vector2<unsigned> target_size)
+		{
+			this->window_size_.x = static_cast<int>(target_size.x);
+			this->window_size_.y = static_cast<int>(target_size.y);
+			this->window_size_2_.x = static_cast<float>(target_size.x) / 2.f;
+			this->window_size_2_.y = static_cast<float>(target_size.y) / 2.f;
+		}
+
+		void change_render_constant()
+		{
+			/*
+			 * Важная константа.
+			 * Используется для определения размера стены
+			 */
+			this->render_constant_ = static_cast<float>(this->window_size_.x)
+				/ abs(2 * (tanf(this->fov_) * math::PI_180))
+				* static_cast<float>(this->window_size_.y) * this->zoom_;
+		}
+
+	private:
+		/*
+		 * FOV - Field Of View.
+		 * FOV - Угол Обзора.
+		 */
+		sf::Vector2<int> window_size_;
+		sf::Vector2<float> window_size_2_;
+		sf::Vector2<float> position_;
+		float rotation_;
+		float fov_;
+		float zoom_;
+		float render_constant_{};
+		float wwf_;
+		float shading_coefficient_;
+	
+	public:
+		explicit Camera(const sf::RenderTarget& target,
+		                const sf::Vector2<float> position = sf::Vector2<float>(),
+		                const float fov = 60,
+		                const float rotation = 0,
+		                const float zoom = 4.f,
+		                const float shading_coefficient = 40.f) :
+
+			window_size_(target.getSize()),
+			window_size_2_(sf::Vector2<int>(target.getSize().x / 2, target.getSize().y / 2)),
+			position_(position),
+			rotation_(math::toRad(rotation)),
+			fov_(math::toRad(fov)),
+			zoom_(zoom),
+			wwf_(window_size_.x / fov),
+			shading_coefficient_(shading_coefficient * 0.00001f)
+		{
+			change_render_constant();
+		}
+
+	private:
 
 		/*
 		 * Радиус камеры
@@ -1950,44 +1824,6 @@ public:
 		float radius_;
 
 	public:
-
-		Camera(const sf::RenderTarget& target) :
-			MainCameraStates(target),
-			radius_(5.f)
-		{
-			change_render_constant();
-		}
-
-		Camera(const sf::RenderTarget& target,
-			const float position_x,
-			const float position_y,
-			const float fov,
-			const float rotation,
-			const float zoom = 0.01f,
-			const float shading_coefficient = 40.f,
-			const float radius = 5) :
-
-			MainCameraStates(target, { position_x, position_y }, fov,
-				rotation, zoom, shading_coefficient),
-			radius_(radius)
-		{
-			change_render_constant();
-		}
-
-		Camera(const sf::RenderTarget& target,
-			const sf::Vector2<float> position,
-			const float fov,
-			const float rotation,
-			const float zoom = 0.01f,
-			const float shading_coefficient = 40.f,
-			const float radius = 5) :
-
-			MainCameraStates(target, position, fov,
-				rotation, zoom, shading_coefficient),
-			radius_(radius)
-		{
-			change_render_constant();
-		}
 
 		/*
 		 * Переопределение холста
@@ -2204,17 +2040,6 @@ public:
 				this->wwf_ = this->window_size_.x / this->fov_;
 			}
 			ifstream.close();
-		}
-
-	private:
-		
-		/*
-		 * Служебная функция.
-		 * Получение состояния камеры.
-		 */
-		MainCameraStates getStates() const
-		{
-			return static_cast<MainCameraStates>(*this);
 		}
 	};
 };

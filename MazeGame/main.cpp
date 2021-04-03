@@ -5,7 +5,6 @@
 int main()
 {
 	sf::RenderWindow window(sf::VideoMode(800, 800), "3D", sf::Style::Default);
-	sf::RenderWindow window1(sf::VideoMode(800, 800), "3D", sf::Style::Default);
 	window.setVerticalSyncEnabled(true);
 	//sf::RenderWindow DW(sf::VideoMode(800, 800), "3D", sf::Style::Default);
 
@@ -16,7 +15,9 @@ int main()
 	v3d::Matrix lab = maze.generate();
 	
 	v3d::World world(window, sf::Vector2f(1000, 1000), lab);
-	v3d::Camera camera(window, 100.f, 100.f, 45, 100.f, 1.f, 1.f);
+	v3d::Camera camera(window);
+
+	world.setCamera(&camera);
 
 	sf::Vector2f spawn_position;
 	
@@ -52,7 +53,7 @@ int main()
 	float LastTimeMenu = 0;
 	float NewTimeMenu = 0;
 	sf::Font font;
-	font.loadFromFile("fonts/ob.otf");
+	font.loadFromFile("data/fonts/ob.otf");
 	sf::Text FPStext;
 	FPStext.setPosition(10, 10);
 	FPStext.setFillColor(sf::Color(255, 0, 0, 150));
@@ -81,7 +82,9 @@ int main()
 
 	gui::Drawable drawable;
 	
-	gui::Button button(100, 100, 100, 100, "data/tex/4.png");
+	gui::Button button(100, 100, 100, 50, "data/tex/4.png");
+
+	//button.setBorderThickness(3);
 	
 	std::string message = "S";
 	
@@ -96,7 +99,7 @@ int main()
 		button.setTexture("data/tex/4.png");
 	});
 	
-	drawable.addGuiElement(&button, "button1");
+	drawable.addGuiElement(&button);
 
 
 
@@ -153,12 +156,10 @@ int main()
 		}
 
 		window.clear();
-		window1.clear();
 
 		circle.setPosition(camera.getPosition());
-		world.render(camera);
 		window.draw(world);
-		drawable.draw(window1);
+		drawable.draw(window);
 		//FPS
 		Time = clock.getElapsedTime();
 		float lastTime = Time.asSeconds();
@@ -173,7 +174,6 @@ int main()
 		fps_ii++;
 		
 		window.draw(FPStext);
-		window1.display();
 		window.display();
 
 

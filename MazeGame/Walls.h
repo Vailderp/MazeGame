@@ -7,7 +7,7 @@
  * можно создавать стены с неограниченными возможностями
  */
 
-class CircleWall : public v3d::Wall_api
+class CircleWall final : public v3d::Wall_api
 {
 
 public:
@@ -20,7 +20,7 @@ public:
 	}
 	
 protected:
-	void wall_states(v3d::RayCaster_api::RayData& data) override
+	void wall_states(const v3d::RayCaster_api::RayData& data) override
 	{
 		
 		if (timer_.microseconds() > 100)
@@ -59,6 +59,11 @@ protected:
 			timer_.clear();
 		}
 	}
+
+	void wall_states_center_ray(const v3d::RayCaster_api::RayData& data, const sf::Vector2<float> center_ray) override
+	{
+		
+	};
 
 private:
 	float speedX = 0.8f;

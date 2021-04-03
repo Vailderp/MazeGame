@@ -2,7 +2,6 @@
 #include <iostream>
 
 //Trigonometric math
-
 namespace math
 {
 	const float PI = acosf(-1.f);
