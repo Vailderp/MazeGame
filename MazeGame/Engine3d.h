@@ -45,7 +45,7 @@ std::is_same<Type, long double>::value;
  */
 class v3d
 {
-
+	
 public:
 
 
@@ -58,7 +58,7 @@ public:
 	public:
 
 		/*
-		 * Читает файл и переводит его в std::map<std::string, std::string>
+		 * Читает файл и переводит его в std::map<std::string, std::string >
 		 */
 		static std::map<std::string, std::string>
 			ReadConfFile(const std::string& path)
