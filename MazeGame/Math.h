@@ -7,6 +7,7 @@ namespace math
 	const float PI = acosf(-1.f);
 	const float PI2 = PI / 2.f;
 	const float PI4 = PI2 / 2.f;
+	const float PI_2 = PI * 2.f;
 	const float PI180 = PI / 180.f;
 	const float PI_180 = 180.f / PI;
 
@@ -38,7 +39,7 @@ namespace math
 	}
 
 	//ГСПЧ алгоритм рандома по сиду
-	inline int __fastcall rand(const int min, const int max, unsigned int seed)
+	inline int rand(const int min, const int max, unsigned int seed)
 	{
 		seed = 8253729 * seed + 2396403;
 		int rand = (8253729 * seed + 2396403) % (max + min + 1) - min;
@@ -53,7 +54,7 @@ namespace math
 	}
 
 	//ГСПЧ алгоритм рандома без сида
-	inline int __fastcall rand(const int min, const int max)
+	inline int rand(const int min, const int max)
 	{
 		return rand(min, max, static_cast<int>(8253729 * (std::clock() / static_cast<float>(CLOCKS_PER_SEC))));
 	}
@@ -86,6 +87,11 @@ namespace math
 	inline float __fastcall fast_hypot(const float a, const float b)
 	{
 		return sqrtf(a * a + b * b);
+	}
+
+	inline float __fastcall scale(const float a, const float b)
+	{
+		return a / b;
 	}
 
 };

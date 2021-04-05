@@ -1,29 +1,52 @@
 #include "Walls.h"
 #include <iostream>
 #include <iomanip>
+#include <windows.h>
 #include "Gui.h"
 int main()
 {
-	sf::RenderWindow window(sf::VideoMode(800, 800), "3D", sf::Style::Default);
+	//sf::RenderWindow window0(sf::VideoMode(800, 800), "Rays", sf::Style::Default);
+	sf::RenderWindow window(sf::VideoMode(), "3D", sf::Style::Fullscreen);
+	window.setPosition({ 10, 10 });
+	//window0.close();
+	sf::View view0;
+	view0.setSize(200, 200);
+	view0.setCenter(100, 100);
+	//window0.setView(view0);
+	//window0.setPosition({ 810, 10 });
 	window.setVerticalSyncEnabled(true);
 	//sf::RenderWindow DW(sf::VideoMode(800, 800), "3D", sf::Style::Default);
 
-	const int sizeX = 50;
-	const int sizeY = 50;
+	const int sizeX = 10;
+	const int sizeY = 10;
 
-	v3d::Maze<sizeX, sizeY, 132434> maze{};
+	v3d::Maze<sizeX, sizeY, 2> maze{};
 	v3d::Matrix lab = maze.generate();
+	/*v3d::Matrix lab = 
+	{   {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 1, 1, 1, 1, 2, 1, 1, 1, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 1, 2, 1, 1, 1, 1, 1, 1, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 1, 1, 1, 1, 1, 1, 2, 1, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	};*/
 	
-	v3d::World world(window, sf::Vector2f(1000, 1000), lab);
+	v3d::World world(window, sf::Vector2f(200, 200), lab);
 	v3d::Camera camera(window);
-
 	world.setCamera(&camera);
+	camera.setRadius(1);
+	camera.setShadingCoefficient(50);
+	camera.setBackgroundRepeatingFov(360);
 
 	sf::Vector2f spawn_position;
 	
-	for (float i = 0; i < world.getMatrixSize().x; i++)
+	for (int i = 0; i < world.getMatrixSize().x; i++)
 	{
-		for (float l = 0; l < world.getMatrixSize().y; l++)
+		for (int l = 0; l < world.getMatrixSize().y; l++)
 		{
 			if(world[i][l] == 0)
 			{
@@ -33,9 +56,21 @@ int main()
 		}
 	}
 	
-	camera.setPosition(spawn_position.x, spawn_position.y);
+	for (int i = 0; i < world.getMatrixSize().x; i++)
+	{
+		for (int l = 0; l < world.getMatrixSize().y; l++)
+		{
+			if (world[i][l] == 1)
+			{
+				world[i][l] = math::rand(3, 6, i * l);
+			}
+		}
+	}
 	
-	sf::RectangleShape r(sf::Vector2f(window.getSize().x / sizeX, window.getSize().y / sizeY));
+	camera.setPosition(spawn_position.x, spawn_position.y);
+
+	sf::Vector2f r_size(world.getSize().x / sizeX, world.getSize().y / sizeY);
+	sf::RectangleShape r(r_size);
 	r.setFillColor(sf::Color::Blue);
 	sf::RectangleShape poly(sf::Vector2f(50, 5));
 	poly.setRotation(45);
@@ -62,23 +97,17 @@ int main()
 	FPStext.setFont(font);
 
 	world << new CircleWall;
+	world << new v3d::MainWall("data/tex/wall2.png");
+	world << new v3d::MainWall("data/tex/wall3.png");
+	world << new v3d::MainWall("data/tex/wall4.png");
+	world << new v3d::MainWall("data/tex/wall5.png");
 
 	const int fps_i = 3;
 	int fps_ii = 0;
 	float fps_data = 0;
 
-	const float speed = 0.3f;
+	const float speed = 1.3f;
 
-
-
-
-
-
-
-
-
-
-	
 
 	gui::Drawable drawable;
 	
@@ -88,7 +117,7 @@ int main()
 	
 	std::string message = "S";
 	
-	button.onMove([&button]()
+	button.onClick([&button]()
 	{
 			//std::cout << "g";
 		button.setTexture("data/tex/8.png");
@@ -105,12 +134,7 @@ int main()
 
 
 
-
-
-
-
-
-
+	v3d::RayCaster_api ray_caster;
 
 
 
@@ -121,7 +145,7 @@ int main()
 		//FPS
 		Time = clock.getElapsedTime();
 		float currentTime = Time.asSeconds();
-		
+
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
@@ -129,14 +153,6 @@ int main()
 			{
 				window.close();
 			}
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-		{
-			camera.rotate(2.20f);
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
-		{
-			camera.rotate(-2.20f);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 		{
@@ -154,12 +170,50 @@ int main()
 		{
 			world.camera_move_with_cls(camera, math::cos180(camera.getRotation() - 90) * speed, math::sin180(camera.getRotation() - 90) * speed);
 		}
+		//if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+//{
+	
+		//}
 
 		window.clear();
+		//window0.clear();
 
 		circle.setPosition(camera.getPosition());
 		window.draw(world);
-		drawable.draw(window);
+		//drawable.draw(window);
+		
+		sf::Vector2i mouse_pos0 = sf::Mouse::getPosition(window);
+
+		ShowCursor(false);
+
+		/*for (int i = 0; i < world.getMatrixSize().x; i++)
+		{
+			for (int l = 0; l < world.getMatrixSize().y; l++)
+			{
+				if (world[i][l] != 0)
+				{
+					r.setPosition(i * r_size.x, l * r_size.y);
+					//window0.draw(r);
+				}
+			}
+		}
+
+		auto ray_data = ray_caster.RayCast(&camera, &world);
+		circle.setPosition(camera.getPosition());
+		ray.setPosition(camera.getPosition());
+		for (int i = 0; i < ray_data.size(); i += ray_data.size() / 30)
+		{
+			ray.setRotation(math::toDeg(ray_data[i].rotation));
+			ray.setSize(sf::Vector2f(ray_data[i].length, 0.3f));
+			//window0.draw(ray);
+		}*/
+
+		sf::Vector2i mouse_pos1 = sf::Mouse::getPosition(window);
+		std::cout << static_cast<float>(mouse_pos1.x) - static_cast<float>(mouse_pos0.x) << std::endl;
+		camera.rotate(static_cast<float>(mouse_pos1.x - mouse_pos0.x));
+		camera.windowDeltaY_unary((static_cast<float>(mouse_pos0.y) - static_cast<float>(mouse_pos1.y)) * 2.f);
+		sf::Mouse::setPosition(sf::Vector2i(window.getSize().x / 2, window.getSize().y / 2));
+		
 		//FPS
 		Time = clock.getElapsedTime();
 		float lastTime = Time.asSeconds();
@@ -172,11 +226,10 @@ int main()
 			fps_data = 0;
 		}
 		fps_ii++;
-		
 		window.draw(FPStext);
+		//window0.display();
 		window.display();
-
-
+		
 	}
 
 	return EXIT_SUCCESS;

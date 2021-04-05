@@ -25,11 +25,11 @@
 #pragma comment(lib, "lib/sfml-window.lib")
 #endif
 
-#include "include/my/binary.h"
 #include <SFML/Graphics.hpp>
 #include "Math.h"
 #include <iostream>
 #include <iomanip>
+#include <fstream>
 
 /*
  * Проверяем тип имени на тип и мени с плавающей точкой
@@ -853,7 +853,8 @@ public:
 				/*
 				 * Угол данного луча
 				 */
-				const float angle = camera->rotation_ + (static_cast<float>(f) * (frn));
+				const float angle = camera->rotation_ + 
+					(static_cast<float>(f) * (frn));
 
 				/*
 				 * Тригонометрические состояния угла
@@ -869,14 +870,18 @@ public:
 				{
 					//Ver
 
-					const float vA = world->wall_size_.x - (camera->position_.x -
+					const float vA = world->wall_size_.x - (camera
+						->position_.x -
 						math::getMatrixPos(camera->position_.x,
-							world->wall_size_.x) * world->wall_size_.x);
+							world->wall_size_.x) *
+						world->wall_size_.x);
 					const float vB = vA * tan_angle;
 					float vcx = camera->position_.x + vA;
 					float vcy = camera->position_.y + vB;
-					int vjx = math::getMatrixPos(vcx, world->wall_size_.x);
-					int vjy = math::getMatrixPos(vcy, world->wall_size_.y);
+					int vjx = math::getMatrixPos(vcx,
+						world->wall_size_.x);
+					int vjy = math::getMatrixPos(vcy,
+						world->wall_size_.y);
 					if (vjx < world->matrix_size_.x && vjx >= 0 &&
 						vjy < world->matrix_size_.y && vjy >= 0)
 					{
@@ -892,14 +897,18 @@ public:
 					const float vBB = vAA * tan_angle;
 
 					//Hor
-					const float hB = world->wall_size_.y - (camera->position_.y -
+					const float hB = world->wall_size_.y - (camera
+						->position_.y -
 						math::getMatrixPos(camera->position_.y,
-							world->wall_size_.y) * world->wall_size_.y);
+							world->wall_size_.y) *
+						world->wall_size_.y);
 					const float hA = hB * ctg_angle;
 					float hcx = camera->position_.x + hA;
 					float hcy = camera->position_.y + hB;
-					int hjx = math::getMatrixPos(hcx, world->wall_size_.x);
-					int hjy = math::getMatrixPos(hcy, world->wall_size_.y);
+					int hjx = math::getMatrixPos(hcx,
+						world->wall_size_.x);
+					int hjy = math::getMatrixPos(hcy,
+						world->wall_size_.y);
 					if (hjx < world->matrix_size_.x && hjx >= 0 &&
 						hjy < world->matrix_size_.y && hjy >= 0)
 					{
@@ -918,8 +927,10 @@ public:
 					{
 						vcx += vAA;
 						vcy += vBB;
-						vjx = math::getMatrixPos(vcx, world->wall_size_.x);
-						vjy = math::getMatrixPos(vcy, world->wall_size_.y);
+						vjx = math::getMatrixPos(vcx, 
+							world->wall_size_.x);
+						vjy = math::getMatrixPos(vcy,
+							world->wall_size_.y);
 						if (vjx < world->matrix_size_.x && vjx >= 0 &&
 							vjy < world->matrix_size_.y && vjy >= 0)
 						{
@@ -941,8 +952,10 @@ public:
 					{
 						hcx += hAA;
 						hcy += hBB;
-						hjx = math::getMatrixPos(hcx, world->wall_size_.x);
-						hjy = math::getMatrixPos(hcy, world->wall_size_.y);
+						hjx = math::getMatrixPos(hcx,
+							world->wall_size_.x);
+						hjy = math::getMatrixPos(hcy,
+							world->wall_size_.y);
 						if (hjx < world->matrix_size_.x && hjx >= 0 &&
 							hjy < world->matrix_size_.y && hjy >= 0)
 						{
@@ -978,13 +991,15 @@ public:
 					//Ver
 					const float vA = camera->position_.x - 
 						math::getMatrixPos(camera->position_.x,
-							world->wall_size_.x) * world->wall_size_.x;
+							world->wall_size_.x) * world
+					->wall_size_.x;
 					const float vB = vA * tan_angle;
 					float vcx = camera->position_.x - vA;
 					float vcy = camera->position_.y - vB;
 					int vjx = math::getMatrixPos(vcx - 0.1f,
 						world->wall_size_.x);
-					int vjy = math::getMatrixPos(vcy, world->wall_size_.y);
+					int vjy = math::getMatrixPos(vcy, world
+						->wall_size_.y);
 					if (vjx < world->matrix_size_.x && vjx >= 0 &&
 						vjy < world->matrix_size_.y && vjy >= 0)
 					{
@@ -999,14 +1014,18 @@ public:
 					const float vAA = world->wall_size_.x;
 					const float vBB = vAA * tan_angle;
 					//Hor
-					const float hB = world->wall_size_.y - (camera->position_.y -
+					const float hB = world->wall_size_.y - (camera
+						->position_.y -
 						math::getMatrixPos(camera->position_.y,
-							world->wall_size_.y) * world->wall_size_.y);
+							world->wall_size_.y) *
+						world->wall_size_.y);
 					const float hA = hB * ctg_angle;
 					float hcx = camera->position_.x + hA;
 					float hcy = camera->position_.y + hB;
-					int hjx = math::getMatrixPos(hcx, world->wall_size_.x);
-					int hjy = math::getMatrixPos(hcy, world->wall_size_.y);
+					int hjx = math::getMatrixPos(hcx,
+						world->wall_size_.x);
+					int hjy = math::getMatrixPos(hcy,
+						world->wall_size_.y);
 					if (hjx < world->matrix_size_.x && hjx >= 0 &&
 						hjy < world->matrix_size_.y && hjy >= 0)
 					{
@@ -1027,7 +1046,8 @@ public:
 						vcy -= vBB;
 						vjx = math::getMatrixPos(vcx - 0.1f,
 							world->wall_size_.x);
-						vjy = math::getMatrixPos(vcy, world->wall_size_.y);
+						vjy = math::getMatrixPos(vcy,
+							world->wall_size_.y);
 						if (vjx < world->matrix_size_.x && vjx >= 0 &&
 							vjy < world->matrix_size_.y && vjy >= 0)
 						{
@@ -1049,8 +1069,10 @@ public:
 					{
 						hcx += hAA;
 						hcy += hBB;
-						hjx = math::getMatrixPos(hcx, world->wall_size_.x);
-						hjy = math::getMatrixPos(hcy, world->wall_size_.y);
+						hjx = math::getMatrixPos(hcx, 
+							world->wall_size_.x);
+						hjy = math::getMatrixPos(hcy,
+							world->wall_size_.y);
 						if (hjx < world->matrix_size_.x && hjx >= 0 &&
 							hjy < world->matrix_size_.y && hjy >= 0)
 						{
@@ -1086,14 +1108,18 @@ public:
 				else if (cos_angle > 0 && sin_angle < 0)
 				{
 					//Ver
-					const float vA = world->wall_size_.x - (camera->position_.x -
+					const float vA = world->wall_size_.x - (camera
+						->position_.x -
 						math::getMatrixPos(camera->position_.x, 
-							world->wall_size_.x) * world->wall_size_.x);
+							world->wall_size_.x) *
+						world->wall_size_.x);
 					const float vB = vA * tan_angle;
 					float vcx = camera->position_.x + vA;
 					float vcy = camera->position_.y + vB;
-					int vjx = math::getMatrixPos(vcx, world->wall_size_.x);
-					int vjy = math::getMatrixPos(vcy, world->wall_size_.y);
+					int vjx = math::getMatrixPos(vcx, 
+						world->wall_size_.x);
+					int vjy = math::getMatrixPos(vcy,
+						world->wall_size_.y);
 					if (vjx < world->matrix_size_.x && vjx >= 0 &&
 						vjy < world->matrix_size_.y && vjy >= 0)
 					{
@@ -1111,11 +1137,13 @@ public:
 					//Hor
 					const float hB = camera->position_.y -
 						math::getMatrixPos(camera->position_.y,
-							world->wall_size_.y) * world->wall_size_.y;
+							world->wall_size_.y)
+					* world->wall_size_.y;
 					const float hA = hB * ctg_angle;
 					float hcx = camera->position_.x - hA;
 					float hcy = camera->position_.y - hB;
-					int hjx = math::getMatrixPos(hcx, world->wall_size_.x);
+					int hjx = math::getMatrixPos(hcx,
+						world->wall_size_.x);
 					int hjy = math::getMatrixPos(hcy - 0.1f,
 						world->wall_size_.y);
 					if (hjx < world->matrix_size_.x && hjx >= 0 &&
@@ -1136,8 +1164,10 @@ public:
 					{
 						vcx += vAA;
 						vcy += vBB;
-						vjx = math::getMatrixPos(vcx, world->wall_size_.x);
-						vjy = math::getMatrixPos(vcy, world->wall_size_.y);
+						vjx = math::getMatrixPos(vcx,
+							world->wall_size_.x);
+						vjy = math::getMatrixPos(vcy,
+							world->wall_size_.y);
 						if (vjx < world->matrix_size_.x && vjx >= 0 &&
 							vjy < world->matrix_size_.y && vjy >= 0)
 						{
@@ -1159,8 +1189,10 @@ public:
 					{
 						hcx -= hAA;
 						hcy -= hBB;
-						hjx = math::getMatrixPos(hcx, world->wall_size_.x);
-						hjy = math::getMatrixPos(hcy - 0.1f, world->wall_size_.y);
+						hjx = math::getMatrixPos(hcx,
+							world->wall_size_.x);
+						hjy = math::getMatrixPos(hcy - 0.1f,
+							world->wall_size_.y);
 						if (hjx < world->matrix_size_.x && hjx >= 0 &&
 							hjy < world->matrix_size_.y && hjy >= 0)
 						{
@@ -1198,13 +1230,15 @@ public:
 					//Ver
 					const float vA = camera->position_.x -
 						math::getMatrixPos(camera->position_.x,
-							world->wall_size_.x) * world->wall_size_.x;
+							world->wall_size_.x) *
+						world->wall_size_.x;
 					const float vB = vA * tan_angle;
 					float vcx = camera->position_.x - vA;
 					float vcy = camera->position_.y - vB;
 					int vjx = math::getMatrixPos(vcx - 0.1f,
 						world->wall_size_.x);
-					int vjy = math::getMatrixPos(vcy, world->wall_size_.y);
+					int vjy = math::getMatrixPos(vcy,
+						world->wall_size_.y);
 					if (vjx < world->matrix_size_.x && vjx >= 0 &&
 						vjy < world->matrix_size_.y && vjy >= 0)
 					{
@@ -1226,7 +1260,8 @@ public:
 					const float hA = hB * ctg_angle;
 					float hcx = camera->position_.x - hA;
 					float hcy = camera->position_.y - hB;
-					int hjx = math::getMatrixPos(hcx, world->wall_size_.x);
+					int hjx = math::getMatrixPos(hcx,
+						world->wall_size_.x);
 					int hjy = math::getMatrixPos(hcy - 0.1f,
 						world->wall_size_.y);
 					if (hjx < world->matrix_size_.x && hjx >= 0 &&
@@ -1342,7 +1377,7 @@ public:
 	{
 	public:
 
-		explicit MainWall(const std::string& texture_path = "data/tex/4.png") :
+		explicit MainWall(const std::string& texture_path = "data/tex/mainall.jpg") :
 			Wall_api()
 		{
 			texture.loadFromFile(texture_path);
@@ -1358,7 +1393,7 @@ public:
 			const sf::Vector2<float> center_ray) override
 		{
 			
-		};
+		}
 
 	};
 
@@ -1373,7 +1408,7 @@ public:
 	{
 
 		friend  std::vector<RayCaster_api::RayData> RayCaster_api::RayCast(Camera* camera, const World* world) const;
-		
+
 	public:
 
 		sf::Vector2<float> getSize() const
@@ -1396,12 +1431,12 @@ public:
 			return this->matrix_;
 		}
 
-		std::vector<int> operator [] (const int x)
+		std::vector<int>& operator [] (const int x)
 		{
 			return this->matrix_[x];
 		}
 
-		int operator [] (const sf::Vector2<int>& position_matrix)
+		int& operator [] (const sf::Vector2<int>& position_matrix)
 		{
 			return this->matrix_[position_matrix.x][position_matrix.y];
 		}
@@ -1409,6 +1444,11 @@ public:
 		void setCamera(Camera* camera)
 		{
 			camera_ = camera;
+		}
+
+		void setBackgroundTexture(sf::Texture* texture)
+		{
+			background_texture_ = texture;
 		}
 
 	private:
@@ -1440,29 +1480,29 @@ public:
 		/*
 		 * Текстура заднего плана
 		 */
-		sf::Texture background_texture_;
+		sf::Texture background_texture_p;
+		sf::Texture* background_texture_{};
 
 	public:
 
 		explicit World(sf::RenderTarget& target,
-		               const sf::Vector2<float> size =
-			               sf::Vector2<float>(1024, 1024),
-		               Matrix matrix = generateMatrix(32, 32, 1)) :
+			const sf::Vector2<float> size =
+			sf::Vector2<float>(1024, 1024),
+			Matrix matrix = generateMatrix(32, 32, 1)) :
 
-			size_(size),
-			matrix_(matrix),
-			matrix_size_({static_cast<int>(matrix.size()),
-				static_cast<int>(matrix[0].size())}),
-			wall_size_({ size.x / static_cast<float>(matrix_size_.x),
-				size.y / static_cast<float>(matrix_size_.y)}),
-			floor_color_(0, 150,0)
+				size_(size),
+				matrix_(matrix),
+				matrix_size_({ static_cast<int>(matrix.size()),
+				static_cast<int>(matrix[0].size()) }),
+				wall_size_({ size.x / static_cast<float>(matrix_size_.x),
+				size.y / static_cast<float>(matrix_size_.y) }),
+				floor_color_(0, 150, 0)
 		{
-
 			wall_.push_back(new MainWall);
 			wall_.push_back(new MainWall);
 
-			background_texture_.loadFromFile("data/tex/bg.jpg");
-			
+			background_texture_p.loadFromFile("data/tex/bg.jpg");
+			setBackgroundTexture(&background_texture_p);
 		}
 
 		/*
@@ -1490,7 +1530,9 @@ public:
 		void draw(sf::RenderTarget& target,
 			sf::RenderStates states) const override
 		{
-			std::vector<RayCaster_api::RayData> ray_data = ray_caster_api_.RayCast(camera_, this);
+			std::vector<RayCaster_api::RayData> ray_data =
+				ray_caster_api_.RayCast(camera_, this);
+
 
 			/*
 			* Вектор использованых номеров стен
@@ -1524,94 +1566,161 @@ public:
 				wall_[unique_walls_[i]]->wall_states(ray_data[i]);
 			}
 
+
+
+
+			float d{};
+
+			/*
+			 * В зависимости от того, на какую сторону падает луч,
+			 * находим столб текстуры
+			 */
+
+			switch (ray_data[static_cast<int>(camera_
+				->window_size_2_.x)].direction) {
+
+			case RayCaster_api::dir::left:
+				d = fmodf(ray_data[static_cast<int>(camera_
+					->window_size_2_.x)].position_y,
+					wall_size_.y);
+				break;
+
+			case RayCaster_api::dir::right:
+				d = (wall_size_.y - fmodf(ray_data[static_cast<int>(camera_
+					->window_size_2_.x)].position_y,
+					wall_size_.y));
+				break;
+
+			case RayCaster_api::dir::down:
+				d = (wall_size_.x - fmodf(ray_data[static_cast<int>(camera_
+					->window_size_2_.x)].position_x,
+					wall_size_.x));
+				break;
+
+			case RayCaster_api::dir::up:
+				d = fmodf(ray_data[static_cast<int>(camera_
+					->window_size_2_.x)].position_x,
+					wall_size_.x);
+				break;
+
+			case RayCaster_api::dir::none:
+				break;
+
+			default:
+				break;
+
+			}
+
+			wall_[ray_data[static_cast<int>(camera_
+				->window_size_2_.x)].wall_number]
+				->wall_states_center_ray(ray_data
+					[static_cast<int>(camera_->window_size_2_.x)],
+					{ static_cast<float>(d *
+					((static_cast<float>(wall_[ray_data
+					[static_cast<int>(camera_->window_size_2_.x)].wall_number]
+					->texture.getSize().x) / wall_size_.x))),
+						static_cast<float>(wall_[ray_data[static_cast<int>
+							(camera_->window_size_2_.x)].wall_number]
+							->texture.getSize().y) - ((camera_
+								->window_size_2_.y - (camera_
+									->window_delta_y_ - (camera_
+										->render_constant_ /
+										(ray_data[static_cast<int>
+											(camera_->window_size_2_.x)].length
+											* cosf(ray_data[static_cast<int>(camera_
+												->window_size_2_.x)].rotation - camera_
+												->rotation_))) / 2.f)) *
+								(static_cast<float>(wall_[ray_data
+									[static_cast<int>(camera_
+										->window_size_2_.x)].wall_number]
+									->texture.getSize().y) / (camera_
+										->render_constant_ /
+										(ray_data[static_cast<int>(camera_
+											->window_size_2_.x)].length *
+											cosf(ray_data[static_cast<int>(camera_
+												->window_size_2_.x)].rotation - camera_
+												->rotation_))))) });
+
+
+
 			unique_walls_.clear();
-			
+
 			/*
 			 * Отрисовка пола
 			 */
 			sf::RectangleShape rectangle_shape_floor_;
 
-			rectangle_shape_floor_.setSize(sf::Vector2<float>
-				(camera_->window_size_.x, 1));
+			rectangle_shape_floor_.setSize({ static_cast<float>(camera_
+				->window_size_.x),1 });
 
-			const float delta_color_r((floor_color_.r) /
-				camera_->window_size_2_.y);
-			
-			const float delta_color_g((floor_color_.g) /
-				camera_->window_size_2_.y);
-			
-			const float delta_color_b((floor_color_.b) /
-				camera_->window_size_2_.y);
+			const float floor_delta = camera_->window_size_.y - camera_
+				->window_delta_y_;
 
-			for (auto i = camera_->window_size_2_.y;
+			const float delta_color_r(static_cast<float>(floor_color_.r)
+				/ floor_delta);
+
+			const float delta_color_g(static_cast<float>(floor_color_.g)
+				/ floor_delta);
+
+			const float delta_color_b(static_cast<float>(floor_color_.b)
+				/ floor_delta);
+
+
+			for (auto i = camera_->window_delta_y_;
 				i < camera_->window_size_.y; i++)
 			{
 				rectangle_shape_floor_.setPosition(0, i);
-				
-				const auto it = (i - camera_->window_size_2_.y);
-				
+
+				const float it = (i - camera_->window_delta_y_);
+
 				rectangle_shape_floor_.setFillColor(
 					sf::Color(it * delta_color_r,
-						it * delta_color_g, it * delta_color_b));
-				
+					it * delta_color_g, it * delta_color_b));
+
 				target.draw(rectangle_shape_floor_);
 			}
 
 			/*
 			 * Отрисовка заднего плана
 			 */
-			sf::Sprite background_sprite_;
+			sf::Sprite background_sprite{};
+			background_sprite.setTexture(*background_texture_);
 			
-			background_sprite_.setTexture(background_texture_);
-			
+			background_sprite.setScale(1, (static_cast<float>(camera_->window_size_.y) + camera_->window_size_2_.y) / static_cast<float>(background_texture_->getSize().y));
+
 			float a;
-			
-			const float ww_scale = (static_cast<float>(
-				background_texture_.getSize().x) /
-				camera_->window_size_.x);
-			
-			const float scale_tex_r3d = (camera_->window_size_.x /
-				static_cast<float>(camera_->window_size_.x)) / ww_scale;
-			
-			background_sprite_.setScale(scale_tex_r3d, 1);
-			
+
 			for (int i = 0; i < camera_->window_size_.x; i++)
 			{
 				if (ray_data[i].rotation < 0)
 				{
-					a = 4 - abs(fmodf(ray_data[i].rotation, 4));
+					a = camera_->background_repeating_fov_ - abs(fmodf(ray_data[i].rotation, camera_->background_repeating_fov_));
 				}
 				else
 				{
-					a = abs(fmodf(ray_data[i].rotation, 4));
+					a = abs(fmodf(ray_data[i].rotation, camera_->background_repeating_fov_));
 				}
 				
-				background_sprite_.setTextureRect(
-					sf::IntRect(static_cast<int>(a *
-						(camera_->window_size_.x / 4.f) * ww_scale),
-						0, static_cast<int>(ww_scale),
-				static_cast<int>(camera_->window_size_2_.y)));
-				
-				background_sprite_.setPosition(i, 0);
-				
-				target.draw(background_sprite_);
+				background_sprite.setPosition(sf::Vector2f(i, -static_cast<float>(camera_->window_size_.y) + camera_->window_delta_y_ - camera_->window_size_2_.y));
+				background_sprite.setTextureRect(sf::IntRect( a * (static_cast<float>(background_texture_->getSize().x) / camera_->background_repeating_fov_), 0, 1, background_texture_->getSize().y));
+
+				target.draw(background_sprite);
 			}
+			
 
 			/*
 			 * Отрисовка стен
 			 */
 			sf::Sprite sprite;
-			
+
 			for (auto i = 0; i < camera_->window_size_.x; i++)
 			{
-
-				float d{};
 
 				/*
 				 * В зависимости от того, на какую сторону падает луч,
 				 * находим столб текстуры
 				 */
-				
+
 				switch (ray_data[i].direction) {
 
 				case RayCaster_api::dir::left:
@@ -1653,13 +1762,12 @@ public:
 				const float wall_height = camera_->render_constant_ /
 					(ray_data[i].length * cosf(
 						ray_data[i].rotation -
-						camera_->rotation_ /
-						1.01f));
+						camera_->rotation_));
 
 				/*
 				 * Позиция столба стены на экране по координате Y.
 				 */
-				const float sprite_position_y = camera_->window_size_2_.y
+				const float sprite_position_y = camera_->window_delta_y_
 					- wall_height / 2.f;
 
 				/*
@@ -1672,7 +1780,7 @@ public:
 					/ wall_size_.x);
 
 				const int texture_position_x = d * tex_wall_scale;
-				
+
 				sprite.setTextureRect(sf::IntRect(
 					texture_position_x,
 					0, 1,
@@ -1695,14 +1803,6 @@ public:
 
 				sprite.setColor(sf::Color(wall_clr,
 					wall_clr, wall_clr));
-
-				if (i == static_cast<int>(camera_->window_size_2_.x))
-				{
-					wall_[ray_data[static_cast<int>(camera_->window_size_2_.x)].wall_number]->wall_states_center_ray(ray_data[
-						static_cast<int>(camera_->window_size_2_.x)],
-						{ static_cast<float>(texture_position_x), (sprite_position_y + wall_height / 2) - camera_->window_size_2_.y });
-					//std::cout << (sprite_position_y + wall_height / 2) - camera_->window_size_2_.y << std::endl;
-				}
 				/*
 				 * Отрисовка данного столба
 				 */
@@ -1764,10 +1864,12 @@ public:
 		 */
 		void resizeTarget(const sf::Vector2<unsigned> target_size)
 		{
-			this->window_size_.x = static_cast<int>(target_size.x);
-			this->window_size_.y = static_cast<int>(target_size.y);
-			this->window_size_2_.x = static_cast<float>(target_size.x) / 2.f;
-			this->window_size_2_.y = static_cast<float>(target_size.y) / 2.f;
+			window_size_.x = static_cast<int>(target_size.x);
+			window_size_.y = static_cast<int>(target_size.y);
+			window_size__PI_.x = static_cast<float>(target_size.x) * background_repeating_fov_;
+			window_size__PI_.y = static_cast<float>(target_size.y) * background_repeating_fov_;
+			window_size_2_.x = static_cast<float>(target_size.x) / 2.f;
+			window_size_2_.y = static_cast<float>(target_size.y) / 2.f;
 		}
 
 		void change_render_constant()
@@ -1777,7 +1879,7 @@ public:
 			 * Используется для определения размера стены
 			 */
 			this->render_constant_ = static_cast<float>(this->window_size_.x)
-				/ abs(2 * (tanf(this->fov_) * math::PI_180))
+				/ abs(2 * (tanf(this->fov_)))
 				* static_cast<float>(this->window_size_.y) * this->zoom_;
 		}
 
@@ -1786,7 +1888,8 @@ public:
 		 * FOV - Field Of View.
 		 * FOV - Угол Обзора.
 		 */
-		sf::Vector2<int> window_size_;
+		sf::Vector2<unsigned> window_size_;
+		sf::Vector2<float> window_size__PI_;
 		sf::Vector2<float> window_size_2_;
 		sf::Vector2<float> position_;
 		float rotation_;
@@ -1795,17 +1898,21 @@ public:
 		float render_constant_{};
 		float wwf_;
 		float shading_coefficient_;
+		float background_repeating_fov_ = math::PI_2;
 	
 	public:
 		explicit Camera(const sf::RenderTarget& target,
-		                const sf::Vector2<float> position = sf::Vector2<float>(),
+		                const sf::Vector2<float> position = {},
 		                const float fov = 60,
 		                const float rotation = 0,
-		                const float zoom = 4.f,
+		                const float zoom = 0.075f,
 		                const float shading_coefficient = 40.f) :
 
 			window_size_(target.getSize()),
-			window_size_2_(sf::Vector2<int>(target.getSize().x / 2, target.getSize().y / 2)),
+			window_size__PI_({ static_cast<float>(target.getSize().x) * math::PI_2 ,
+				static_cast<float>(target.getSize().y) * math::PI_2 }),
+			window_size_2_({ static_cast<float>(target.getSize().x) / 2.f,
+				static_cast<float>(target.getSize().y) / 2}),
 			position_(position),
 			rotation_(math::toRad(rotation)),
 			fov_(math::toRad(fov)),
@@ -1821,7 +1928,9 @@ public:
 		/*
 		 * Радиус камеры
 		 */
-		float radius_;
+		float radius_ = 5;
+
+		float window_delta_y_ = 400;
 
 	public:
 
@@ -1851,6 +1960,17 @@ public:
 			return this->shading_coefficient_;
 		}
 
+		void setBackgroundRepeatingFov(const float background_repeating_fov)
+		{
+			background_repeating_fov_ = math::toRad(background_repeating_fov);
+			resizeTarget(window_size_);
+		}
+
+		float getBackgroundRepeatingFov() const
+		{
+			return math::toDeg(background_repeating_fov_);
+		}
+		
 		/*
 		 * Установить поворот камеры
 		 */
@@ -1922,8 +2042,8 @@ public:
 		 */
 		void setFov(const float fov)
 		{
-			this->fov_ = fov;
-			this->wwf_ = this->window_size_.x / fov;
+			this->fov_ = math::toRad(fov);
+			this->wwf_ = this->window_size_.x / fov_;
 			change_render_constant();
 		}
 
@@ -1984,9 +2104,20 @@ public:
 			return radius_;
 		}
 
-		/*
-		 * Сохранить состояние камеры
-		 */
+		void setWindowDeltaY(const float window_delta_y)
+		{
+			window_delta_y_ = window_delta_y;
+		}
+
+		float getWindowDeltaY() const
+		{
+			return window_delta_y_;
+		}
+
+		void windowDeltaY_unary(const float window_delta_y)
+		{
+			window_delta_y_ += window_delta_y;
+		}
 
 	public:
 		/*

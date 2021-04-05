@@ -94,7 +94,7 @@ namespace gui
 			return size_;
 		}
 
-		virtual void events(Events events) = 0;
+		virtual void events(const Events events) = 0;
 
 	protected:
 
@@ -104,29 +104,13 @@ namespace gui
 
 	class Button;
 
-	class Text : public GuiElement
-	{
-	private:
-		sf::Text text_;
-
-		void draw(sf::RenderTarget& target, sf::RenderStates states) const override
-		{
-			
-		}
-
-
-		void events(Events events) override
-		{
-			
-		}
-	};
-
 	class Button final : public GuiElement
 	{
 	private:
 
 		sf::Sprite button_sprite_;
 		sf::Texture button_texture_;
+		sf::Text text_;
 
 	public:
 
@@ -172,7 +156,7 @@ namespace gui
 			this->onOut_function_ = function;
 		}
 
-		void events(Events events) override
+		void events(const Events events) override
 		{
 			button_sprite_.setPosition(this->position_);
 			button_sprite_.setScale(this->size_.x / button_texture_.getSize().x, this->size_.y / button_texture_.getSize().y);
@@ -199,6 +183,7 @@ namespace gui
 		void draw(sf::RenderTarget& target, sf::RenderStates states) const override
 		{
 			target.draw(button_sprite_);
+			target.draw(text_);
 		}
 
 	};
@@ -232,11 +217,11 @@ namespace gui
 				Events events{};
 				if (sf::Mouse::getPosition(window).x > it->q_position_.x.x)
 				{
-					if (sf::Mouse::getPosition(window).x < it->q_position_.y.y)
+					if (sf::Mouse::getPosition(window).y < it->q_position_.y.y)
 					{
 						if (sf::Mouse::getPosition(window).y > it->q_position_.x.y)
 						{
-							if (sf::Mouse::getPosition(window).y < it->q_position_.y.x)
+							if (sf::Mouse::getPosition(window).x < it->q_position_.y.x)
 							{
 								events.is_mouse_move = true;
 								if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
