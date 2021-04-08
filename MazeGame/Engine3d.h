@@ -40,6 +40,11 @@ std::is_same<Type, float>::value ||
 std::is_same<Type, double>::value ||
 std::is_same<Type, long double>::value;
 
+inline float operator "" _deg(const long double deg)
+{
+	return math::toRad(static_cast<float>(deg));
+}
+
 /*
  * Класс Vailder's 3D
  */
@@ -643,7 +648,7 @@ public:
 			}
 			else
 			{
-				ofstream.write((char*)&this->matrix_, sizeof(Matrix));
+				ofstream.write(reinterpret_cast<char*>(&this->matrix_), sizeof(Matrix));
 			}
 			ofstream.close();
 		}
@@ -663,7 +668,7 @@ public:
 			else
 			{
 				Matrix matrix;
-				ifstream.read((char*)&matrix, sizeof(Matrix));
+				ifstream.read(reinterpret_cast<char*>(&matrix), sizeof(Matrix));
 				this->matrix_ = matrix;
 			}
 			ifstream.close();
@@ -841,6 +846,7 @@ public:
 
 			/*
 			 * Процедура бросания лучей
+			 * Old API (2020)
 			 */
 			for (auto r = 0; r < camera->window_size_.x; r++)
 			{
@@ -1377,7 +1383,7 @@ public:
 	{
 	public:
 
-		explicit MainWall(const std::string& texture_path = "data/tex/mainall.jpg") :
+		explicit MainWall(const std::string& texture_path = "data/tex/wall5.png") :
 			Wall_api()
 		{
 			texture.loadFromFile(texture_path);
@@ -1387,12 +1393,13 @@ public:
 
 		void wall_states(const RayCaster_api::RayData& data) override
 		{
-			
-		};
+			this->texture = this->texture;
+		}
+		
 		void wall_states_center_ray(const RayCaster_api::RayData& data,
 			const sf::Vector2<float> center_ray) override
 		{
-			
+			this->texture = this->texture;
 		}
 
 	};
@@ -1403,12 +1410,16 @@ public:
 	 * Можно отрисовать средствами самого SFMl.
 	 * Подчиняется класслу FileManager
 	 */
+
+
+	
 	class World :
-		public sf::Drawable
+		public sf::Drawable,
+		public sf::Transformable
 	{
 
 		friend  std::vector<RayCaster_api::RayData> RayCaster_api::RayCast(Camera* camera, const World* world) const;
-
+	
 	public:
 
 		sf::Vector2<float> getSize() const
@@ -1627,9 +1638,9 @@ public:
 										->render_constant_ /
 										(ray_data[static_cast<int>
 											(camera_->window_size_2_.x)].length
-											* cosf(ray_data[static_cast<int>(camera_
-												->window_size_2_.x)].rotation - camera_
-												->rotation_))) / 2.f)) *
+									* cosf(ray_data[static_cast<int>(camera_
+										->window_size_2_.x)].rotation - camera_
+											->rotation_))) / 2.f)) *
 								(static_cast<float>(wall_[ray_data
 									[static_cast<int>(camera_
 										->window_size_2_.x)].wall_number]
@@ -1637,9 +1648,9 @@ public:
 										->render_constant_ /
 										(ray_data[static_cast<int>(camera_
 											->window_size_2_.x)].length *
-											cosf(ray_data[static_cast<int>(camera_
-												->window_size_2_.x)].rotation - camera_
-												->rotation_))))) });
+										cosf(ray_data[static_cast<int>(camera_
+											->window_size_2_.x)].rotation -
+											camera_->rotation_))))) });
 
 
 
@@ -1677,7 +1688,7 @@ public:
 					sf::Color(it * delta_color_r,
 					it * delta_color_g, it * delta_color_b));
 
-				target.draw(rectangle_shape_floor_);
+				target.draw(rectangle_shape_floor_, this->getTransform());
 			}
 
 			/*
@@ -1686,7 +1697,10 @@ public:
 			sf::Sprite background_sprite{};
 			background_sprite.setTexture(*background_texture_);
 			
-			background_sprite.setScale(1, (static_cast<float>(camera_->window_size_.y) + camera_->window_size_2_.y) / static_cast<float>(background_texture_->getSize().y));
+			background_sprite.setScale(1, 
+				(static_cast<float>(camera_->window_size_.y)
+					+ camera_->window_size_2_.y) /
+				static_cast<float>(background_texture_->getSize().y));
 
 			float a;
 
@@ -1694,17 +1708,28 @@ public:
 			{
 				if (ray_data[i].rotation < 0)
 				{
-					a = camera_->background_repeating_fov_ - abs(fmodf(ray_data[i].rotation, camera_->background_repeating_fov_));
+					a = camera_->background_repeating_fov_
+					- abs(fmodf(ray_data[i].rotation,
+						camera_->background_repeating_fov_));
 				}
 				else
 				{
-					a = abs(fmodf(ray_data[i].rotation, camera_->background_repeating_fov_));
+					a = abs(fmodf(ray_data[i].rotation,
+						camera_->background_repeating_fov_));
 				}
 				
-				background_sprite.setPosition(sf::Vector2f(i, -static_cast<float>(camera_->window_size_.y) + camera_->window_delta_y_ - camera_->window_size_2_.y));
-				background_sprite.setTextureRect(sf::IntRect( a * (static_cast<float>(background_texture_->getSize().x) / camera_->background_repeating_fov_), 0, 1, background_texture_->getSize().y));
+				background_sprite.setPosition(sf::Vector2f(i,
+					-static_cast<float>(camera_->window_size_.y)
+					+ camera_->window_delta_y_ - 
+					camera_->window_size_2_.y));
+				background_sprite.setTextureRect(
+					sf::IntRect( a * 
+						(static_cast<float>(background_texture_->getSize().x)
+							/ camera_->background_repeating_fov_),
+						0, 1, 
+						background_texture_->getSize().y));
 
-				target.draw(background_sprite);
+				target.draw(background_sprite, this->getTransform());
 			}
 			
 
@@ -1806,7 +1831,7 @@ public:
 				/*
 				 * Отрисовка данного столба
 				 */
-				target.draw(sprite);
+				target.draw(sprite, this->getTransform());
 			}
 		}
 
@@ -1848,6 +1873,7 @@ public:
 	/*
 	 * Класс камеры.
 	 */
+	
 	class Camera
 	{
 		/*
@@ -1858,6 +1884,10 @@ public:
 
 		friend class World;
 
+
+	public:
+
+
 	private:
 		/*
 		 * Переопределение размеров холста
@@ -1866,8 +1896,10 @@ public:
 		{
 			window_size_.x = static_cast<int>(target_size.x);
 			window_size_.y = static_cast<int>(target_size.y);
-			window_size__PI_.x = static_cast<float>(target_size.x) * background_repeating_fov_;
-			window_size__PI_.y = static_cast<float>(target_size.y) * background_repeating_fov_;
+			window_size_pi_.x = static_cast<float>(target_size.x) *
+				background_repeating_fov_;
+			window_size_pi_.y = static_cast<float>(target_size.y) *
+				background_repeating_fov_;
 			window_size_2_.x = static_cast<float>(target_size.x) / 2.f;
 			window_size_2_.y = static_cast<float>(target_size.y) / 2.f;
 		}
@@ -1889,7 +1921,7 @@ public:
 		 * FOV - Угол Обзора.
 		 */
 		sf::Vector2<unsigned> window_size_;
-		sf::Vector2<float> window_size__PI_;
+		sf::Vector2<float> window_size_pi_;
 		sf::Vector2<float> window_size_2_;
 		sf::Vector2<float> position_;
 		float rotation_;
@@ -1903,19 +1935,19 @@ public:
 	public:
 		explicit Camera(const sf::RenderTarget& target,
 		                const sf::Vector2<float> position = {},
-		                const float fov = 60,
-		                const float rotation = 0,
+		                const float fov = 60._deg,
+		                const float rotation = 0.1_deg,
 		                const float zoom = 0.075f,
 		                const float shading_coefficient = 40.f) :
 
 			window_size_(target.getSize()),
-			window_size__PI_({ static_cast<float>(target.getSize().x) * math::PI_2 ,
+			window_size_pi_({ static_cast<float>(target.getSize().x) * math::PI_2 ,
 				static_cast<float>(target.getSize().y) * math::PI_2 }),
 			window_size_2_({ static_cast<float>(target.getSize().x) / 2.f,
 				static_cast<float>(target.getSize().y) / 2}),
 			position_(position),
-			rotation_(math::toRad(rotation)),
-			fov_(math::toRad(fov)),
+			rotation_(rotation),
+			fov_(fov),
 			zoom_(zoom),
 			wwf_(window_size_.x / fov),
 			shading_coefficient_(shading_coefficient * 0.00001f)
@@ -1962,13 +1994,13 @@ public:
 
 		void setBackgroundRepeatingFov(const float background_repeating_fov)
 		{
-			background_repeating_fov_ = math::toRad(background_repeating_fov);
+			background_repeating_fov_ = background_repeating_fov;
 			resizeTarget(window_size_);
 		}
 
 		float getBackgroundRepeatingFov() const
 		{
-			return math::toDeg(background_repeating_fov_);
+			return background_repeating_fov_;
 		}
 		
 		/*
@@ -1976,7 +2008,7 @@ public:
 		 */
 		void setRotation(const float rotation_degrees)
 		{
-			this->rotation_ = math::toRad(rotation_degrees);
+			this->rotation_ = rotation_degrees;
 		}
 
 		/*
@@ -1984,7 +2016,7 @@ public:
 		 */
 		float getRotation() const
 		{
-			return math::toDeg(this->rotation_);
+			return this->rotation_;
 		}
 
 		/*
@@ -1992,7 +2024,7 @@ public:
 		 */
 		void rotate(const float rotation_degrees)
 		{
-			this->rotation_ += math::toRad(rotation_degrees);
+			this->rotation_ += rotation_degrees;
 		}
 
 		/*
@@ -2042,7 +2074,7 @@ public:
 		 */
 		void setFov(const float fov)
 		{
-			this->fov_ = math::toRad(fov);
+			this->fov_ = fov;
 			this->wwf_ = this->window_size_.x / fov_;
 			change_render_constant();
 		}
@@ -2052,7 +2084,7 @@ public:
 		 */
 		float getFov() const
 		{
-			return math::toDeg(this->fov_);
+			return this->fov_;
 		}
 
 		/*
@@ -2060,7 +2092,7 @@ public:
 		 */
 		void fov_unary(const float fov)
 		{
-			setFov(this->fov_ + math::toRad(fov));
+			setFov(this->fov_ + fov);
 		}
 
 		/*
@@ -2174,3 +2206,7 @@ public:
 		}
 	};
 };
+
+
+
+

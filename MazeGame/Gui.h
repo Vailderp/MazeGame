@@ -33,7 +33,7 @@ namespace gui
 	protected:
 		sf::Vector2f size_;
 		sf::Vector2f position_;
-		sf::Vector2<sf::Vector2f> q_position_;
+		sf::Vector2<sf::Vector2i> q_position_;
 
 		std::function<void()> onClick_function_ = [](){};
 		std::function<void()> onMove_function_ = []() {};
@@ -49,7 +49,7 @@ namespace gui
 		GuiElement(const float x, const float y, const float width, const float height) :
 			size_(width, height),
 			position_(x, y),
-			q_position_(sf::Vector2f(x, y), sf::Vector2f(x + width, y + height))
+			q_position_(sf::Vector2i(x, y), sf::Vector2i(x + width, y + height))
 		{
 
 		}
@@ -57,7 +57,7 @@ namespace gui
 		GuiElement(const sf::Vector2f position, const sf::Vector2f size) :
 			size_(size),
 			position_(position),
-			q_position_(position, sf::Vector2f(position.x + size.x, position.y + size.y))
+			q_position_(sf::Vector2i( position.x, position.y ), sf::Vector2i(position.x + size.x, position.y + size.y))
 		{
 
 		}
@@ -188,19 +188,16 @@ namespace gui
 
 	};
 
-	class Drawable
+	class Drawable : public sf::Drawable
 	{
 	private:
 		std::vector<GuiElement *> gui_elements_;
+		sf::Vector2i *position_;
 
 	public:
 
 		Drawable() = default;
 
-		Drawable(const sf::Window& window)
-		{
-
-		}
 
 
 		void addGuiElement(GuiElement* element)
@@ -208,20 +205,24 @@ namespace gui
 			gui_elements_.emplace_back(element);
 		}
 
-		void draw(sf::RenderWindow& window)
+		void setPositionStates(sf::Vector2i *position)
 		{
+			position_ = position;
+		}
 
-			for (const auto& it : gui_elements_)
+		void draw(sf::RenderTarget& target, sf::RenderStates states) const override
+		{
+			for (GuiElement *const &it : gui_elements_)
 			{
-				window.draw(*it);
+				target.draw( *it);
 				Events events{};
-				if (sf::Mouse::getPosition(window).x > it->q_position_.x.x)
+				if (position_->x > it->q_position_.x.x)
 				{
-					if (sf::Mouse::getPosition(window).y < it->q_position_.y.y)
+					if (position_->y < it->q_position_.y.y)
 					{
-						if (sf::Mouse::getPosition(window).y > it->q_position_.x.y)
+						if (position_->y > it->q_position_.x.y)
 						{
-							if (sf::Mouse::getPosition(window).x < it->q_position_.y.x)
+							if (position_->x < it->q_position_.y.x)
 							{
 								events.is_mouse_move = true;
 								if (sf::Mouse::isButtonPressed(sf::Mouse::Left))

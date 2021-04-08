@@ -1,12 +1,14 @@
 #include "Walls.h"
 #include <iostream>
 #include <iomanip>
-#include <windows.h>
 #include "Gui.h"
+#include "WallGameGenerator.h"
+#include <windows.h>
 int main()
 {
+	ShowCursor(false);
 	//sf::RenderWindow window0(sf::VideoMode(800, 800), "Rays", sf::Style::Default);
-	sf::RenderWindow window(sf::VideoMode(), "3D", sf::Style::Fullscreen);
+	sf::RenderWindow window(sf::VideoMode(800, 800), "3D", sf::Style::Fullscreen);
 	window.setPosition({ 10, 10 });
 	//window0.close();
 	sf::View view0;
@@ -35,11 +37,11 @@ int main()
 		{1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	};*/
 	
-	v3d::World world(window, sf::Vector2f(200, 200), lab);
+	v3d::World world(window, sf::Vector2f(250, 250), lab);
 	v3d::Camera camera(window);
 	world.setCamera(&camera);
 	camera.setRadius(1);
-	camera.setShadingCoefficient(50);
+	camera.setShadingCoefficient(10);
 	camera.setBackgroundRepeatingFov(360);
 
 	sf::Vector2f spawn_position;
@@ -62,7 +64,7 @@ int main()
 		{
 			if (world[i][l] == 1)
 			{
-				world[i][l] = math::rand(3, 6, i * l);
+				world[i][l] = math::rand(1, 4, i * l);
 			}
 		}
 	}
@@ -97,19 +99,17 @@ int main()
 	FPStext.setFont(font);
 
 	world << new CircleWall;
-	world << new v3d::MainWall("data/tex/wall2.png");
-	world << new v3d::MainWall("data/tex/wall3.png");
-	world << new v3d::MainWall("data/tex/wall4.png");
 	world << new v3d::MainWall("data/tex/wall5.png");
+	world << new v3d::MainWall("data/tex/wall2.png");
 
 	const int fps_i = 3;
 	int fps_ii = 0;
 	float fps_data = 0;
 
-	const float speed = 1.3f;
+	const float speed = 0.15f;
 
 
-	gui::Drawable drawable;
+	gui::Drawable drawable_esc;
 	
 	gui::Button button(100, 100, 100, 50, "data/tex/4.png");
 
@@ -128,17 +128,9 @@ int main()
 		button.setTexture("data/tex/4.png");
 	});
 	
-	drawable.addGuiElement(&button);
-
-
-
-
+	drawable_esc.addGuiElement(&button);
 
 	v3d::RayCaster_api ray_caster;
-
-
-
-	
 	
 	while (window.isOpen())
 	{
@@ -156,19 +148,19 @@ int main()
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 		{
-			world.camera_move_with_cls(camera, math::cos180(camera.getRotation()) * speed, math::sin180(camera.getRotation()) * speed);
+			world.camera_move_with_cls(camera, cosf(camera.getRotation()) * speed, sinf(camera.getRotation()) * speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 		{
-			world.camera_move_with_cls(camera, -math::cos180(camera.getRotation()) * speed, -math::sin180(camera.getRotation()) * speed);
+			world.camera_move_with_cls(camera, -cosf(camera.getRotation()) * speed, -sinf(camera.getRotation()) * speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 		{
-			world.camera_move_with_cls(camera, math::cos180(camera.getRotation() + 90) * speed, math::sin180(camera.getRotation() + 90) * speed);
+			world.camera_move_with_cls(camera, cosf(camera.getRotation() + 90) * speed, sinf(camera.getRotation() + 90) * speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 		{
-			world.camera_move_with_cls(camera, math::cos180(camera.getRotation() - 90) * speed, math::sin180(camera.getRotation() - 90) * speed);
+			world.camera_move_with_cls(camera, cosf(camera.getRotation() - 90) * speed, sinf(camera.getRotation() - 90) * speed);
 		}
 		//if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
 //{
@@ -179,13 +171,8 @@ int main()
 		//window0.clear();
 
 		circle.setPosition(camera.getPosition());
-		window.draw(world);
 		//drawable.draw(window);
 		
-		sf::Vector2i mouse_pos0 = sf::Mouse::getPosition(window);
-
-		ShowCursor(false);
-
 		/*for (int i = 0; i < world.getMatrixSize().x; i++)
 		{
 			for (int l = 0; l < world.getMatrixSize().y; l++)
@@ -207,11 +194,12 @@ int main()
 			ray.setSize(sf::Vector2f(ray_data[i].length, 0.3f));
 			//window0.draw(ray);
 		}*/
-
+		
+		sf::Vector2i mouse_pos0 = sf::Mouse::getPosition(window);
+		window.draw(world);
 		sf::Vector2i mouse_pos1 = sf::Mouse::getPosition(window);
-		std::cout << static_cast<float>(mouse_pos1.x) - static_cast<float>(mouse_pos0.x) << std::endl;
-		camera.rotate(static_cast<float>(mouse_pos1.x - mouse_pos0.x));
-		camera.windowDeltaY_unary((static_cast<float>(mouse_pos0.y) - static_cast<float>(mouse_pos1.y)) * 2.f);
+		camera.rotate(math::toRad(static_cast<float>(mouse_pos1.x - mouse_pos0.x) * speed));
+		camera.windowDeltaY_unary((static_cast<float>(mouse_pos0.y) - static_cast<float>(mouse_pos1.y)) * speed * 10);
 		sf::Mouse::setPosition(sf::Vector2i(window.getSize().x / 2, window.getSize().y / 2));
 		
 		//FPS
