@@ -35,7 +35,7 @@
  * Проверяем тип имени на тип и мени с плавающей точкой
  */
 template<typename Type>
-constexpr bool IsFloatType =
+constexpr bool is_float_type =
 std::is_same<Type, float>::value ||
 std::is_same<Type, double>::value ||
 std::is_same<Type, long double>::value;
@@ -204,7 +204,7 @@ public:
 	template<typename Time>
 	class Clock
 	{
-		static_assert(IsFloatType<Time>,
+		static_assert(is_float_type<Time>,
 			"template's typename are not <float> or <double> or <long double>");
 
 	public:
@@ -243,7 +243,7 @@ public:
 	template<typename Time>
 	class Timer
 	{
-		static_assert(IsFloatType<Time>,
+		static_assert(is_float_type<Time>,
 			"template's typename are not <float> or <double> or <long double>");
 
 	protected:
@@ -391,7 +391,8 @@ public:
 										{
 											if (matrix[sdpX - 1][sdpY] != 0)
 											{
-												return ret(Rot::UP, sf::Vector2<int>(sdpX, sdpY));
+												return ret(Rot::UP,
+													sf::Vector2<int>(sdpX, sdpY));
 											}
 										}
 									}
@@ -422,7 +423,8 @@ public:
 										{
 											if (matrix[sdpX - 1][sdpY] != 0)
 											{
-												return ret(Rot::DOWN, sf::Vector2<int>(sdpX, sdpY));
+												return ret(Rot::DOWN,
+													sf::Vector2<int>(sdpX, sdpY));
 											}
 										}
 									}
@@ -453,7 +455,8 @@ public:
 										{
 											if (matrix[sdpX - 1][sdpY] != 0)
 											{
-												return ret(Rot::LEFT, sf::Vector2<int>(sdpX, sdpY));
+												return ret(Rot::LEFT,
+													sf::Vector2<int>(sdpX, sdpY));
 											}
 										}
 									}
@@ -484,7 +487,8 @@ public:
 										{
 											if (matrix[sdpX + 1][sdpY] != 0)
 											{
-												return ret(Rot::RIGHT, sf::Vector2<int>(sdpX, sdpY));
+												return ret(Rot::RIGHT,
+													sf::Vector2<int>(sdpX, sdpY));
 											}
 										}
 									}
@@ -677,7 +681,8 @@ public:
 			}
 			else
 			{
-				ofstream.write(reinterpret_cast<char*>(&this->matrix_), sizeof(Matrix));
+				ofstream.write(reinterpret_cast<char*>(&this->matrix_), 
+					sizeof(Matrix));
 			}
 			ofstream.close();
 		}
@@ -697,7 +702,8 @@ public:
 			else
 			{
 				Matrix matrix;
-				ifstream.read(reinterpret_cast<char*>(&matrix), sizeof(Matrix));
+				ifstream.read(reinterpret_cast<char*>(&matrix),
+					sizeof(Matrix));
 				this->matrix_ = matrix;
 			}
 			ifstream.close();
@@ -850,9 +856,11 @@ public:
 		/*
 		 * Возврацает состояния все лучей в виде массива
 		 */
-		std::vector<RayData> RayCast(Camera *camera, const World *world) const
+		std::vector<RayData> RayCast(Camera *camera,
+			const World *world) const
 		{
-			std::vector<RayData> t_ray_data_vec(static_cast<int>(camera->window_size_.x));
+			std::vector<RayData> t_ray_data_vec(
+				static_cast<int>(camera->window_size_.x));
 			/*Условные обозначения
 				up
 			 ________
@@ -866,7 +874,8 @@ public:
 			/*
 			 * Отношение угла обзора к количеству лучей
 			 */
-			float frn = camera->fov_ / static_cast<float>(camera->window_size_.x);
+			float frn = camera->fov_ / 
+				static_cast<float>(camera->window_size_.x);
 
 			/*
 			 * Счётчик лучей
@@ -1319,7 +1328,8 @@ public:
 						vcy -= vBB;
 						vjx = math::getMatrixPos(vcx - 0.1f, 
 							world->wall_size_.x);
-						vjy = math::getMatrixPos(vcy, world->wall_size_.y);
+						vjy = math::getMatrixPos(vcy, 
+							world->wall_size_.y);
 						if (vjx < world->matrix_size_.x && vjx >= 0 &&
 							vjy < world->matrix_size_.y && vjy >= 0)
 						{
@@ -1341,7 +1351,8 @@ public:
 					{
 						hcx -= hAA;
 						hcy -= hBB;
-						hjx = math::getMatrixPos(hcx, world->wall_size_.x);
+						hjx = math::getMatrixPos(hcx,
+							world->wall_size_.x);
 						hjy = math::getMatrixPos(hcy - 0.1f,
 							world->wall_size_.y);
 						if (hjx < world->matrix_size_.x && hjx >= 0 &&
@@ -1400,7 +1411,9 @@ public:
 		 */
 		virtual void wall_states(const RayCaster_api::RayData& data) = 0;
 
-		virtual void wall_states_center_ray(const RayCaster_api::RayData& data, const sf::Vector2<float> center_ray) = 0;
+		virtual void wall_states_center_ray(
+			const RayCaster_api::RayData& data,
+			const sf::Vector2<float> center_ray) = 0;
 
 		Wall_api() = default;
 	};
@@ -1412,7 +1425,8 @@ public:
 	{
 	public:
 
-		explicit MainWall(const std::string& texture_path = "data/tex/wall5.png") :
+		explicit MainWall(const std::string& texture_path =
+			"data/tex/wall5.png") :
 			Wall_api()
 		{
 			texture.loadFromFile(texture_path);
@@ -1425,7 +1439,8 @@ public:
 			this->texture = this->texture;
 		}
 		
-		void wall_states_center_ray(const RayCaster_api::RayData& data,
+		void wall_states_center_ray(
+			const RayCaster_api::RayData& data,
 			const sf::Vector2<float> center_ray) override
 		{
 			this->texture = this->texture;
@@ -1447,7 +1462,9 @@ public:
 		public sf::Transformable
 	{
 
-		friend  std::vector<RayCaster_api::RayData> RayCaster_api::RayCast(Camera* camera, const World* world) const;
+		friend  std::vector<RayCaster_api::RayData>
+		RayCaster_api::RayCast(Camera* camera,
+			const World* world) const;
 	
 	public:
 
@@ -1481,17 +1498,58 @@ public:
 			return this->matrix_[position_matrix.x][position_matrix.y];
 		}
 
-		void setCamera(Camera* camera)
+#ifdef V3D_FUNCTIONAL
+
+		World&
+
+#else
+		
+		void
+		
+#endif
+		setCamera(Camera* camera)
 		{
 			camera_ = camera;
+#ifdef V3D_FUNCTIONAL
+
+			return *this;
+
+#endif
 		}
 
-		void setBackgroundTexture(sf::Texture* texture)
+
+#ifdef V3D_FUNCTIONAL
+
+		World&
+
+#else
+
+		void
+
+#endif
+		
+		setBackgroundTexture(sf::Texture* texture)
 		{
+			
 			background_texture_ = texture;
+			
+#ifdef V3D_FUNCTIONAL
+
+			return *this;
+
+#endif
+			
 		}
+
+#ifdef V3D_DEVELOPER
+
+	public:
+
+#else
 
 	private:
+
+#endif
 
 		sf::Vector2<float> size_;
 		Matrix matrix_;
@@ -1526,9 +1584,9 @@ public:
 	public:
 
 		explicit World(sf::RenderTarget& target,
-			const sf::Vector2<float> size =
-			sf::Vector2<float>(1024, 1024),
-			Matrix matrix = generateMatrix(32, 32, 1)) :
+		               const sf::Vector2<float> size =
+			               sf::Vector2<float>(1024, 1024),
+		               Matrix matrix = generateMatrix(32, 32, 1)) :
 
 				size_(size),
 				matrix_(matrix),
@@ -1548,25 +1606,50 @@ public:
 		/*
 		 * Добавление новой стены в мир
 		 */
+#ifdef V3D_FUNCTIONAL
 
-		void addWallType(Wall_api* wall)
+		World&
+
+#else
+
+		void
+
+#endif
+		addWallType(Wall_api* wall)
 		{
 			wall_.push_back(wall);
+			
+#ifdef V3D_FUNCTIONAL
+
+			return *this;
+
+#endif
+			
 		}
 
 		/*
 		 * Перегрузка / переопределение оператора для вышеописанной функции
 		 */
-		void operator << (Wall_api* wall)
+		World operator << (Wall_api* wall)
 		{
 			addWallType(wall);
+			return *this;
 		}
 
 		/*
 		 * Переопределение виртуальной функции.
 		 * Для отрисовки средстсвами SFML.
 		 */
+#ifdef V3D_DEVELOPER
+
+	public:
+
+#else
+
 	protected:
+
+#endif
+		
 		void draw(sf::RenderTarget& target,
 			sf::RenderStates states) const override
 		{
@@ -1915,7 +1998,16 @@ public:
 
 
 
+#ifdef V3D_DEVELOPER
+	
+	public:
+		
+#else
+	
 	private:
+		
+#endif
+
 		/*
 		 * Переопределение размеров холста
 		 */
@@ -1942,7 +2034,16 @@ public:
 				* static_cast<float>(this->window_size_.y) * this->zoom_;
 		}
 
+#ifdef V3D_DEVELOPER
+	
+	public:
+		
+#else
+	
 	private:
+		
+#endif
+		
 		/*
 		 * FOV - Field Of View.
 		 * FOV - Угол Обзора.
@@ -1968,7 +2069,8 @@ public:
 		                const float shading_coefficient = 40.f) :
 
 			window_size_(target.getSize()),
-			window_size_pi_({ static_cast<float>(target.getSize().x) * math::PI_2 ,
+			window_size_pi_({ static_cast<float>(target.getSize().x)
+				* math::PI_2 ,
 				static_cast<float>(target.getSize().y) * math::PI_2 }),
 			window_size_2_({ static_cast<float>(target.getSize().x) / 2.f,
 				static_cast<float>(target.getSize().y) / 2}),
@@ -1982,7 +2084,15 @@ public:
 			change_render_constant();
 		}
 
+#ifdef V3D_DEVELOPER
+
+	public:
+
+#else
+
 	private:
+
+#endif
 
 		/*
 		 * Радиус камеры
@@ -1996,35 +2106,70 @@ public:
 		/*
 		 * Переопределение холста
 		 */
-		void setRenderTarget(const sf::RenderTarget& target)
+#ifdef V3D_FUNCTIONAL
+		Camera&
+#else
+		void
+#endif
+		setRenderTarget(const sf::RenderTarget& target)
 		{
 			resizeTarget(target.getSize());
 			this->wwf_ = this->window_size_.x / this->fov_;
 			change_render_constant();
+#ifdef V3D_FUNCTIONAL
+
+			return *this;
+
+#endif
 		}
 
 		/*
 		 * Установить коэффициент затенения
 		 */
-		void setShadingCoefficient(const float shading_coefficient)
+
+
+#ifdef V3D_FUNCTIONAL
+		Camera&
+#else
+		void
+#endif		
+		setShadingCoefficient(const float shading_coefficient)
 		{
 			this->shading_coefficient_ = shading_coefficient * 0.00001f;
+#ifdef V3D_FUNCTIONAL
+
+			return *this;
+
+#endif
 		}
 
 		/*
 		 * Получить коэффициент затенения
 		 */
+		[[nodiscard]]
 		float getShadingCoefficient() const
 		{
 			return this->shading_coefficient_;
 		}
 
-		void setBackgroundRepeatingFov(const float background_repeating_fov)
+#ifdef V3D_FUNCTIONAL
+		Camera&
+#else
+		void
+#endif
+		setBackgroundRepeatingFov(const float background_repeating_fov)
 		{
 			background_repeating_fov_ = background_repeating_fov;
 			resizeTarget(window_size_);
+#ifdef V3D_FUNCTIONAL
+
+			return *this;
+
+#endif
 		}
 
+
+		[[nodiscard]]
 		float getBackgroundRepeatingFov() const
 		{
 			return background_repeating_fov_;
@@ -2033,14 +2178,27 @@ public:
 		/*
 		 * Установить поворот камеры
 		 */
-		void setRotation(const float rotation_degrees)
+
+#ifdef V3D_FUNCTIONAL
+		Camera&
+#else
+		void
+#endif
+		setRotation(const float rotation_degrees)
 		{
 			this->rotation_ = rotation_degrees;
+#ifdef V3D_FUNCTIONAL
+
+			return *this;
+
+#endif
 		}
+		
 
 		/*
 		 * Получить поворот камеры
 		 */
+		[[nodiscard]]
 		float getRotation() const
 		{
 			return this->rotation_;
@@ -2049,26 +2207,61 @@ public:
 		/*
 		 * Повернуть камеру
 		 */
-		void rotate(const float rotation_degrees)
+
+#ifdef V3D_FUNCTIONAL
+		Camera&
+#else
+		void
+#endif
+		rotate(const float rotation_degrees)
 		{
 			this->rotation_ += rotation_degrees;
+#ifdef V3D_FUNCTIONAL
+
+			return *this;
+
+#endif
 		}
 
+		
 		/*
 		 * Установить позицию камеры
 		 */
-		void setPosition(const sf::Vector2<float> position)
+
+#ifdef V3D_FUNCTIONAL
+		Camera&
+#else
+		void
+#endif
+		setPosition(const sf::Vector2<float> position)
 		{
 			this->position_ = position;
+#ifdef V3D_FUNCTIONAL
+
+			return *this;
+
+#endif
 		}
+
 
 		/*
 		 * Установить позицию камеры
 		 */
-		void setPosition(const float x, const float y)
+
+#ifdef V3D_FUNCTIONAL
+		Camera&
+#else
+		void
+#endif
+		setPosition(const float x, const float y)
 		{
 			this->position_.x = x;
 			this->position_.y = y;
+#ifdef V3D_FUNCTIONAL
+
+			return *this;
+
+#endif
 		}
 
 		/*
@@ -2083,28 +2276,65 @@ public:
 		/*
 		 * Передвинуть камеру
 		 */
-		void move(const float x, const float y)
+
+#ifdef V3D_FUNCTIONAL
+		Camera&
+#else
+		void
+#endif
+		move(const float x, const float y)
 		{
 			this->position_.x += x;
 			this->position_.y += y;
+			
+#ifdef V3D_FUNCTIONAL
+			
+			return *this;
+			
+#endif
+			
 		}
 
 		/*
 		 * Передвинуть камеру
 		 */
-		void move(const sf::Vector2<float> position)
+#ifdef V3D_FUNCTIONAL
+		Camera&
+#else
+		void
+#endif
+		move(const sf::Vector2<float> position)
 		{
 			move(position.x, position.y);
+
+#ifdef V3D_FUNCTIONAL
+
+			return *this;
+
+#endif
+
 		}
 
 		/*
 		 * Установить угол обзора
 		 */
-		void setFov(const float fov)
+#ifdef V3D_FUNCTIONAL
+		Camera&
+#else
+		void
+#endif
+		setFov(const float fov)
 		{
 			this->fov_ = fov;
 			this->wwf_ = this->window_size_.x / fov_;
 			change_render_constant();
+
+#ifdef V3D_FUNCTIONAL
+
+			return *this;
+
+#endif
+
 		}
 
 		/*
@@ -2119,18 +2349,42 @@ public:
 		/*
 		 * Увеличить угол обзора
 		 */
-		void fov_unary(const float fov)
+#ifdef V3D_FUNCTIONAL
+		Camera&
+#else
+		void
+#endif
+		fov_unary(const float fov)
 		{
 			setFov(this->fov_ + fov);
+
+#ifdef V3D_FUNCTIONAL
+
+			return *this;
+
+#endif
+
 		}
 
 		/*
 		 * Установить зум камеры
 		 */
-		void setZoom(const float zoom)
+#ifdef V3D_FUNCTIONAL
+		Camera&
+#else
+		void
+#endif
+		setZoom(const float zoom)
 		{
 			this->zoom_ = zoom;
 			change_render_constant();
+
+#ifdef V3D_FUNCTIONAL
+
+			return *this;
+
+#endif
+
 		}
 
 		/*
@@ -2145,28 +2399,58 @@ public:
 		/*
 		 * Увеличить зум камеры
 		 */
-		void zoom_unary(const float zoom)
+#ifdef V3D_FUNCTIONAL
+		Camera&
+#else
+		void
+#endif
+		zoom_unary(const float zoom)
 		{
 			setZoom(this->zoom_ + zoom);
+
+#ifdef V3D_FUNCTIONAL
+
+			return *this;
+
+#endif
+
 		}
 
 		/*
 		 * Установить радиус камеры
 		 */
-		void setRadius(const float radius)
+#ifdef V3D_FUNCTIONAL
+		Camera&
+#else
+		void
+#endif
+		setRadius(const float radius)
 		{
 			radius_ = radius;
+
+#ifdef V3D_FUNCTIONAL
+
+			return *this;
+
+#endif
+
 		}
 
 		/*
 		 * Получить радиус камеры
 		 */
+		[[nodiscard]]
 		float getRadius() const
 		{
 			return radius_;
 		}
 
-		void setWindowDeltaY(const float window_delta_y)
+#ifdef V3D_FUNCTIONAL
+		Camera&
+#else
+		void
+#endif
+		setWindowDeltaY(const float window_delta_y)
 		{
 			window_delta_y_ = window_delta_y;
 		}
@@ -2176,12 +2460,32 @@ public:
 			return window_delta_y_;
 		}
 
-		void windowDeltaY_unary(const float window_delta_y)
+#ifdef V3D_FUNCTIONAL
+		Camera&
+#else
+		void
+#endif
+		windowDeltaY_unary(const float window_delta_y)
 		{
 			window_delta_y_ += window_delta_y;
+
+#ifdef V3D_FUNCTIONAL
+
+			return *this;
+
+#endif
+
 		}
 
+#ifdef V3D_DEVELOPER
+
+	public:
+
+#else
+
 	protected:
+
+#endif
 		/*
 		 * Запись сохранения
 		 */

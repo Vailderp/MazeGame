@@ -1,3 +1,4 @@
+#define V3D_FUNCTIONAL
 #include "Walls.h"
 #include <Windows.h>
 #include "GUI_inits.h"
