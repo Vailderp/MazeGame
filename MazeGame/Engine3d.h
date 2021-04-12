@@ -58,6 +58,25 @@ public:
 	 * Менеджер файлов - статический класс для сохранения классов,
 	 * унаследовавших абстрактный класс Saveable
 	 */
+
+	class FileManager;
+	
+	class Saveable
+	{
+	public:
+		virtual compl Saveable() = default;
+
+	private:
+		friend class FileManager;
+	
+	protected:
+
+		virtual void saveToFile(const std::string& name) = 0;
+		
+		virtual void openFromFile(const std::string& name) = 0;
+		
+	};
+	
 	class FileManager
 	{
 	public:
@@ -65,7 +84,7 @@ public:
 		/*
 		 * Читает файл и переводит его в std::map<std::string, std::string >
 		 */
-		static std::map<std::string, std::string>
+		static [[nodiscard]] std::map<std::string, std::string>
 			ReadConfFile(const std::string& path)
 		{
 			std::map <std::string, std::string> output;
@@ -150,6 +169,17 @@ public:
 			file << output;
 			file.close();
 		}
+
+		static void saveToFile(Saveable *saveable, const std::string& name)
+		{
+			saveable->saveToFile(name);
+		}
+
+		static void openFromFile(Saveable* saveable, const std::string& name)
+		{
+			saveable->openFromFile(name);
+		}
+		
 	};
 	
 public:
@@ -162,7 +192,7 @@ public:
 	/*
 	 * Функция, генерируящая матрицу
 	 */
-	static Matrix generateMatrix(const unsigned int sizeX,
+	static [[nodiscard]] Matrix generateMatrix(const unsigned int sizeX,
 		const unsigned int sizeY, const int val)
 	{
 		return Matrix(sizeX, std::vector<int>(sizeY, val));
@@ -263,7 +293,6 @@ public:
 	 * SizeX - размер матрицы по оси X,
 	 * SizeY - размер матрицы по оси Y,
 	 * Seed - ключ генерации - любое число в пределах типа имени unsigned.
-	 * Имеет возможность сохраняться с помощью класса FileManager.
 	 */
 	template<const unsigned int SizeX,
 		const unsigned int SizeY,
@@ -1874,7 +1903,7 @@ public:
 	 * Класс камеры.
 	 */
 	
-	class Camera
+	class Camera : protected Saveable
 	{
 		/*
 		 * Дружелюбные классы
@@ -1884,8 +1913,6 @@ public:
 
 		friend class World;
 
-
-	public:
 
 
 	private:
@@ -2047,6 +2074,7 @@ public:
 		/*
 		 * Получить позицию камеры
 		 */
+		[[nodiscard]]
 		sf::Vector2<float> getPosition() const
 		{
 			return this->position_;
@@ -2082,6 +2110,7 @@ public:
 		/*
 		 * Получить угол обзора
 		 */
+		[[nodiscard]]
 		float getFov() const
 		{
 			return this->fov_;
@@ -2107,6 +2136,7 @@ public:
 		/*
 		 * Получить зум камеры
 		 */
+		[[nodiscard]]
 		float getZoom() const
 		{
 			return this->zoom_;
@@ -2140,7 +2170,7 @@ public:
 		{
 			window_delta_y_ = window_delta_y;
 		}
-
+		[[nodiscard]]
 		float getWindowDeltaY() const
 		{
 			return window_delta_y_;
@@ -2151,11 +2181,11 @@ public:
 			window_delta_y_ += window_delta_y;
 		}
 
-	public:
+	protected:
 		/*
 		 * Запись сохранения
 		 */
-		void save(const std::string& name) const
+		virtual void saveToFile(const std::string& name) override
 		{
 			std::ofstream ofstream;
 			ofstream.open("data/saves/camera/" + name);
@@ -2167,9 +2197,13 @@ public:
 			}
 			else
 			{
-				CameraSave camera_save(this->fov_, this->zoom_,
-					this->shading_coefficient_, this->radius_);
-				ofstream.write((char*)&camera_save,  sizeof(CameraSave));
+				CameraSave camera_save(
+					this->fov_,
+					this->zoom_,
+					this->shading_coefficient_,
+					this->radius_);
+				ofstream.write(reinterpret_cast<char*>(&camera_save),
+					sizeof(CameraSave));
 			}
 			
 			ofstream.close();
@@ -2178,7 +2212,7 @@ public:
 		/*
 		 * Распаковка сохраения
 		 */
-		void open(const std::string& name)
+		virtual void openFromFile(const std::string& name) override
 		{
 			std::ifstream ifstream;
 			ifstream.open("data/saves/camera/" + name);
@@ -2192,7 +2226,8 @@ public:
 			{
 				CameraSave camera_save;
 				
-				ifstream.read((char*)&camera_save, sizeof(CameraSave));
+				ifstream.read(reinterpret_cast<char*>(&camera_save), 
+					sizeof(CameraSave));
 
 				this->fov_ = camera_save.fov;
 				this->shading_coefficient_ = camera_save.shading_coefficient;
@@ -2200,7 +2235,8 @@ public:
 				this->radius_ = camera_save.radius;
 
 				change_render_constant();
-				this->wwf_ = this->window_size_.x / this->fov_;
+				
+				this->wwf_ = math::scale(this->window_size_.x, this->fov_);
 			}
 			ifstream.close();
 		}
