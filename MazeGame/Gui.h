@@ -493,7 +493,7 @@ namespace gui
 						}
 					}
 				}
-
+				
 				events.release(it);
 				render_window_->draw(*it, transform);
 			}

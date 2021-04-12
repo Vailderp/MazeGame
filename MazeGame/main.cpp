@@ -6,7 +6,7 @@ int main()
 {
 	sf::RenderWindow window(sf::VideoMode(800, 800), "Maze Game!", sf::Style::Default);
 	window.setPosition({ 10, 10 });
-	//window.setVerticalSyncEnabled(true);
+	window.setVerticalSyncEnabled(true);
 	
 	const int sizeX = 10;
 	const int sizeY = 10;
@@ -28,10 +28,7 @@ int main()
 	
 	v3d::World world(window, sf::Vector2f(250, 250), lab);
 	v3d::Camera camera(window);
-	world.setCamera(&camera);
-	camera.setRadius(1);
-	camera.setShadingCoefficient(10);
-	camera.setBackgroundRepeatingFov(360);
+	world.setCamera(&camera.setRadius(1).setShadingCoefficient(10).setBackgroundRepeatingFov(360));
 
 	sf::Vector2f spawn_position;
 	
@@ -97,9 +94,10 @@ int main()
 	const float speed = 0.15f;
 
 
-	world << new CircleWall;
-	world << new v3d::MainWall("data/tex/wall5.png");
-	world << new v3d::MainWall("data/tex/wall2.png");
+	world
+	<< new CircleWall
+	<< new v3d::MainWall("data/tex/wall5.png")
+	<< new v3d::MainWall("data/tex/wall2.png");
 
 	v3d::Timer<float> timer_esc;
 	Menu menu(&window, &camera);
@@ -171,13 +169,25 @@ int main()
 			if (!menu.active())
 			{
 			sf::Vector2i mouse_pos1 = sf::Mouse::getPosition(window);
-			camera.rotate(math::toRad(static_cast<float>(mouse_pos1.x - mouse_pos0.x) * speed));
-			camera.windowDeltaY_unary((static_cast<float>(mouse_pos0.y) - static_cast<float>(mouse_pos1.y)) * speed * 10);
+				camera.rotate(math::toRad(static_cast<float>(mouse_pos1.x - mouse_pos0.x) * speed)).windowDeltaY_unary((static_cast<float>(mouse_pos0.y) - static_cast<float>(mouse_pos1.y)) * speed * 10);
 				sf::Mouse::setPosition(sf::Vector2i(window.getSize().x / 2, window.getSize().y / 2));
 			}
 		}
 
 		menu.draw();
+
+
+
+
+
+
+
+
+
+
+
+
+
 		
 		//FPS
 		Time = clock.getElapsedTime();

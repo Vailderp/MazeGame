@@ -1488,7 +1488,7 @@ public:
 			return this->matrix_;
 		}
 
-		std::vector<int>& operator [] (const int x)
+		std::vector<int>& operator [] (const int& x)
 		{
 			return this->matrix_[x];
 		}
@@ -1568,7 +1568,7 @@ public:
 		 */
 		std::vector<Wall_api*> wall_{};
 
-		Camera* camera_;
+		Camera* camera_ = nullptr;
 
 		/*
 		 * Цвет пола
@@ -1579,7 +1579,7 @@ public:
 		 * Текстура заднего плана
 		 */
 		sf::Texture background_texture_p;
-		sf::Texture* background_texture_{};
+		sf::Texture* background_texture_ = nullptr;
 
 	public:
 
@@ -1615,6 +1615,7 @@ public:
 		void
 
 #endif
+		
 		addWallType(Wall_api* wall)
 		{
 			wall_.push_back(wall);
@@ -1630,7 +1631,7 @@ public:
 		/*
 		 * Перегрузка / переопределение оператора для вышеописанной функции
 		 */
-		World operator << (Wall_api* wall)
+		World& operator << (Wall_api* wall)
 		{
 			addWallType(wall);
 			return *this;
@@ -1653,6 +1654,7 @@ public:
 		void draw(sf::RenderTarget& target,
 			sf::RenderStates states) const override
 		{
+			
 			std::vector<RayCaster_api::RayData> ray_data =
 				ray_caster_api_.RayCast(camera_, this);
 
@@ -1677,9 +1679,11 @@ public:
 			 * для уменьшения количества вызовав виртуальных функций стен
 			 * и их сортировка средствами STL
 			 */
-			std::unique_copy(used_walls_.begin(),
+			std::unique_copy(
+				used_walls_.begin(),
 				used_walls_.end(),
-				std::back_inserter(unique_walls_));
+				std::back_inserter(unique_walls_)
+			);
 
 			/*
 			 * Вызов виртуальных функций стен
@@ -1688,9 +1692,6 @@ public:
 			{
 				wall_[unique_walls_[i]]->wall_states(ray_data[i]);
 			}
-
-
-
 
 			float d{};
 
@@ -1834,6 +1835,7 @@ public:
 					-static_cast<float>(camera_->window_size_.y)
 					+ camera_->window_delta_y_ - 
 					camera_->window_size_2_.y));
+				
 				background_sprite.setTextureRect(
 					sf::IntRect( a * 
 						(static_cast<float>(background_texture_->getSize().x)
@@ -2107,20 +2109,27 @@ public:
 		 * Переопределение холста
 		 */
 #ifdef V3D_FUNCTIONAL
+		
 		Camera&
+
 #else
+		
 		void
+		
 #endif
+		
 		setRenderTarget(const sf::RenderTarget& target)
 		{
 			resizeTarget(target.getSize());
 			this->wwf_ = this->window_size_.x / this->fov_;
 			change_render_constant();
+			
 #ifdef V3D_FUNCTIONAL
 
 			return *this;
 
 #endif
+			
 		}
 
 		/*
@@ -2129,18 +2138,24 @@ public:
 
 
 #ifdef V3D_FUNCTIONAL
+		
 		Camera&
 #else
+		
 		void
-#endif		
+		
+#endif
+		
 		setShadingCoefficient(const float shading_coefficient)
 		{
 			this->shading_coefficient_ = shading_coefficient * 0.00001f;
+			
 #ifdef V3D_FUNCTIONAL
 
 			return *this;
 
 #endif
+			
 		}
 
 		/*
@@ -2153,19 +2168,26 @@ public:
 		}
 
 #ifdef V3D_FUNCTIONAL
+		
 		Camera&
+
 #else
+		
 		void
+		
 #endif
+		
 		setBackgroundRepeatingFov(const float background_repeating_fov)
 		{
 			background_repeating_fov_ = background_repeating_fov;
 			resizeTarget(window_size_);
+			
 #ifdef V3D_FUNCTIONAL
 
 			return *this;
 
 #endif
+			
 		}
 
 
@@ -2180,10 +2202,15 @@ public:
 		 */
 
 #ifdef V3D_FUNCTIONAL
+		
 		Camera&
+
 #else
+		
 		void
+		
 #endif
+		
 		setRotation(const float rotation_degrees)
 		{
 			this->rotation_ = rotation_degrees;
@@ -2209,18 +2236,25 @@ public:
 		 */
 
 #ifdef V3D_FUNCTIONAL
+		
 		Camera&
+
 #else
+		
 		void
+		
 #endif
+		
 		rotate(const float rotation_degrees)
 		{
 			this->rotation_ += rotation_degrees;
+			
 #ifdef V3D_FUNCTIONAL
 
 			return *this;
 
 #endif
+			
 		}
 
 		
@@ -2229,18 +2263,25 @@ public:
 		 */
 
 #ifdef V3D_FUNCTIONAL
+		
 		Camera&
+
 #else
+		
 		void
+		
 #endif
+		
 		setPosition(const sf::Vector2<float> position)
 		{
 			this->position_ = position;
+			
 #ifdef V3D_FUNCTIONAL
 
 			return *this;
 
 #endif
+			
 		}
 
 
@@ -2249,19 +2290,26 @@ public:
 		 */
 
 #ifdef V3D_FUNCTIONAL
+		
 		Camera&
+
 #else
+		
 		void
+		
 #endif
+		
 		setPosition(const float x, const float y)
 		{
 			this->position_.x = x;
 			this->position_.y = y;
+			
 #ifdef V3D_FUNCTIONAL
 
 			return *this;
 
 #endif
+			
 		}
 
 		/*
@@ -2278,10 +2326,15 @@ public:
 		 */
 
 #ifdef V3D_FUNCTIONAL
+		
 		Camera&
+
 #else
+		
 		void
+		
 #endif
+		
 		move(const float x, const float y)
 		{
 			this->position_.x += x;
@@ -2299,10 +2352,15 @@ public:
 		 * Передвинуть камеру
 		 */
 #ifdef V3D_FUNCTIONAL
+		
 		Camera&
+
 #else
+		
 		void
+		
 #endif
+		
 		move(const sf::Vector2<float> position)
 		{
 			move(position.x, position.y);
@@ -2319,10 +2377,15 @@ public:
 		 * Установить угол обзора
 		 */
 #ifdef V3D_FUNCTIONAL
+		
 		Camera&
+
 #else
+		
 		void
+		
 #endif
+		
 		setFov(const float fov)
 		{
 			this->fov_ = fov;
@@ -2350,10 +2413,15 @@ public:
 		 * Увеличить угол обзора
 		 */
 #ifdef V3D_FUNCTIONAL
+		
 		Camera&
+
 #else
+		
 		void
+		
 #endif
+		
 		fov_unary(const float fov)
 		{
 			setFov(this->fov_ + fov);
@@ -2370,10 +2438,15 @@ public:
 		 * Установить зум камеры
 		 */
 #ifdef V3D_FUNCTIONAL
+		
 		Camera&
+
 #else
+		
 		void
+		
 #endif
+		
 		setZoom(const float zoom)
 		{
 			this->zoom_ = zoom;
@@ -2400,10 +2473,15 @@ public:
 		 * Увеличить зум камеры
 		 */
 #ifdef V3D_FUNCTIONAL
+		
 		Camera&
+
 #else
+		
 		void
+		
 #endif
+		
 		zoom_unary(const float zoom)
 		{
 			setZoom(this->zoom_ + zoom);
@@ -2420,10 +2498,15 @@ public:
 		 * Установить радиус камеры
 		 */
 #ifdef V3D_FUNCTIONAL
+		
 		Camera&
+
 #else
+		
 		void
+		
 #endif
+		
 		setRadius(const float radius)
 		{
 			radius_ = radius;
@@ -2446,10 +2529,15 @@ public:
 		}
 
 #ifdef V3D_FUNCTIONAL
+		
 		Camera&
+
 #else
+		
 		void
+		
 #endif
+		
 		setWindowDeltaY(const float window_delta_y)
 		{
 			window_delta_y_ = window_delta_y;
@@ -2461,10 +2549,15 @@ public:
 		}
 
 #ifdef V3D_FUNCTIONAL
+		
 		Camera&
+
 #else
+		
 		void
+		
 #endif
+		
 		windowDeltaY_unary(const float window_delta_y)
 		{
 			window_delta_y_ += window_delta_y;
@@ -2540,13 +2633,10 @@ public:
 
 				change_render_constant();
 				
-				this->wwf_ = math::scale(this->window_size_.x, this->fov_);
+				this->wwf_ = math::scale( this->window_size_.x, this->fov_);
 			}
 			ifstream.close();
 		}
 	};
 };
-
-
-
 
