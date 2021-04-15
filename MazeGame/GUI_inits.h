@@ -22,7 +22,37 @@ public:
 		camera_(camera)
 	{
 		drawable_.setWindow(window);
-		drawable_ << &range_fov_ << &range_shading_coefficient_;
+		drawable_ << &range_fov_ << &range_shading_coefficient_ << &range_zoom_ << &range_radius_;
+
+		range_fov_.setMinValue(0.01_deg).setMaxValue(359.9_deg).setValue(camera_->getFov()).setOnChangeFunction(
+			[&](const float value) -> void
+			{
+				camera_->setFov(value);
+			}
+		);
+
+		range_shading_coefficient_
+		.setMinValue(0.01F).
+		setMaxValue(128.0F).
+		setValue(camera_->getShadingCoefficient()).
+		setOnChangeFunction(
+			[&](const float value) -> void
+			{
+				camera_->setShadingCoefficient(value);
+			}
+		);
+
+		range_zoom_.
+		setMinValue(0.0000075F)
+		.setMaxValue(7.5F)
+		.setValue(camera_->getZoom())
+		.setOnChangeFunction(
+			[&](const float value) -> void
+			{
+				camera_->setZoom(value);
+			}
+		);
+		
 	}
 
 	void setActive(const bool active)
@@ -83,50 +113,28 @@ public:
 		settings(window, camera)
 	{
 
-		drawable_.setWindow(window);
-
-		button_single_.onDown([&]() -> void
+		button_single_.setOnDownFunction([&]() -> void
 		{
 			active_ = false;
 			ShowCursor(true);
 		});
 
-		button_settings_.onDown([&]() -> void
+		button_settings_.setOnDownFunction([&]() -> void
 		{
 			settings_menu_active_ = true;
 			settings.setActive(true);
 		});
 
-		button_exit_.onDown([]() -> void
+		button_exit_.setOnDownFunction([]() -> void
 		{
 			exit(1);
 		});
 
 		drawable_ << &button_online_ << &button_single_ << &button_settings_ << &button_exit_;
 
-		drawable_.setWindow(window);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		
+		drawable_.setWindow(window);		
 	}
 
-
-
-
-
-	
 	void setActive(const bool active)
 	{
 		active_ = active;
@@ -145,6 +153,7 @@ public:
 	void setActiveSettings(const bool active_settings)
 	{
 		settings_menu_active_ = active_settings;
+		settings.setActive(active_settings);
 	}
 	
 	void draw() const

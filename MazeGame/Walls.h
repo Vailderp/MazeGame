@@ -9,7 +9,7 @@
  * можно создавать стены с неограниченными возможностями
  */
 
-class CircleWall final : public v3d::Wall_api
+class CircleWall final : public v3d::Wall
 {
 
 public:
@@ -51,7 +51,7 @@ public:
 	}
 	
 protected:
-	void wall_states(const v3d::RayCaster_api::RayData& data) override
+	void wall_states(const v3d::RayCaster::RayData& data) override
 	{
 		circle_shape_.move(speed_.x, speed_.y);
 
@@ -116,10 +116,10 @@ protected:
 			render_texture_.draw(player_x_);
 			render_texture_.draw(player_y_);
 			render_texture_.draw(score_text_);
-			this->texture = render_texture_.getTexture();
+			this->texture_ = render_texture_.getTexture();
 	}
 
-	void wall_states_center_ray(const v3d::RayCaster_api::RayData& data, const sf::Vector2<float> center_ray) override
+	void wall_states_center_ray(const v3d::RayCaster::RayData& data, const sf::Vector2<float> center_ray) override
 	{
 		//mouse_position_.x = center_ray.x;
 		//mouse_position_.y = center_ray.y;

@@ -2,11 +2,12 @@
 #include "Walls.h"
 #include <Windows.h>
 #include "GUI_inits.h"
+#include <algorithm>
 int main()
 {
 	sf::RenderWindow window(sf::VideoMode(800, 800), "Maze Game!", sf::Style::Default);
 	window.setPosition({ 10, 10 });
-	window.setVerticalSyncEnabled(true);
+	//window.setVerticalSyncEnabled(true);
 	
 	const int sizeX = 10;
 	const int sizeY = 10;
@@ -28,7 +29,7 @@ int main()
 	
 	v3d::World world(window, sf::Vector2f(250, 250), lab);
 	v3d::Camera camera(window);
-	world.setCamera(&camera.setRadius(1).setShadingCoefficient(10).setBackgroundRepeatingFov(360));
+	world.setCamera(&camera.setRadius(1).setShadingCoefficient(10).setBackgroundRepeatingFov(360.0_deg));
 
 	sf::Vector2f spawn_position;
 	
@@ -91,13 +92,14 @@ int main()
 	const int fps_i = 3;
 	int fps_ii = 0;
 	float fps_data = 0;
-	const float speed = 0.15f;
+	const float speed = 0.45f;
 
 
 	world
 	<< new CircleWall
 	<< new v3d::MainWall("data/tex/wall5.png")
 	<< new v3d::MainWall("data/tex/wall2.png");
+
 
 	v3d::Timer<float> timer_esc;
 	Menu menu(&window, &camera);
@@ -127,6 +129,7 @@ int main()
 			{
 				timer_esc.clear();
 				menu.setActive(true);
+				menu.setActiveSettings(false);
 			}
 			
 		}

@@ -8,6 +8,23 @@
 #define SFML_DYNAMIC
 #endif
 
+
+#ifdef V3D_DEVELOPER
+
+ //ОТКРЫТЫЙ МОДИФИКАТОР ДОСТУПА
+#define VAILDER_3D_API_ACCESS_MODIFER_1 public
+
+#define VAILDER_3D_API_ACCESS_MODIFER_2 public
+
+#else
+
+ //ПРИВАТНЫЙ МОДИФИКАТОР ДОСТУПА
+#define VAILDER_3D_API_ACCESS_MODIFER_1 private
+
+#define VAILDER_3D_API_ACCESS_MODIFER_2 protected
+
+#endif
+
 /*
  * Если конфигурация решения Debug, то выбираем -d .lib файлы 
  */
@@ -30,6 +47,7 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <amp.h>
 
 /*
  * Проверяем тип имени на тип и мени с плавающей точкой
@@ -66,10 +84,10 @@ public:
 	public:
 		virtual compl Saveable() = default;
 
-	private:
+	VAILDER_3D_API_ACCESS_MODIFER_1:
 		friend class FileManager;
 	
-	protected:
+	VAILDER_3D_API_ACCESS_MODIFER_2:
 
 		virtual void saveToFile(const std::string& name) = 0;
 		
@@ -246,7 +264,7 @@ public:
 		static_assert(is_float_type<Time>,
 			"template's typename are not <float> or <double> or <long double>");
 
-	protected:
+	VAILDER_3D_API_ACCESS_MODIFER_2:
 		Time d_time_;
 
 	public:
@@ -297,7 +315,7 @@ public:
 	template<const unsigned int SizeX,
 		const unsigned int SizeY,
 	const unsigned Seed>
-		class Maze
+		class Maze : public Saveable
 	{
 	public:
 
@@ -314,7 +332,7 @@ public:
 			return Seed;
 		}
 	
-	private:
+	VAILDER_3D_API_ACCESS_MODIFER_1:
 
 		/*
 		 * Развёрнутый ключ генерации, имеющий только 4 символа
@@ -323,7 +341,7 @@ public:
 		
 		Matrix matrix_;
 
-	private:
+	VAILDER_3D_API_ACCESS_MODIFER_1:
 		
 		/*
 		 * Энумераторы поворота
@@ -670,7 +688,7 @@ public:
 		/*
 		 * Сохранить лабиринт в файл
 		 */
-		void save(const std::string& name) const
+		void saveToFile(const std::string& name) override
 		{
 			std::ofstream ofstream;
 			ofstream.open("data/saves/camera/" + name);
@@ -690,7 +708,7 @@ public:
 	   /*
 		* Открыть лабиринт из файла
 		*/
-		void open(const std::string& name)
+		void openFromFile(const std::string& name) override
 		{
 			std::ifstream ifstream;
 			ifstream.open("data/saves/camera/" + name);
@@ -717,13 +735,13 @@ public:
 	 */
 	class Camera;
 
-private:
+VAILDER_3D_API_ACCESS_MODIFER_1:
 	
    /*
-	* Объявляем класс RayCaster_api,
+	* Объявляем класс RayCaster,
 	* чтобы обозначить его как friend class в других классах.
 	*/
-	class RayCaster_api;
+	class RayCaster;
 
    /*
 	* Объявляем класс World,
@@ -731,7 +749,7 @@ private:
 	*/
 	class World;
 
-private:
+VAILDER_3D_API_ACCESS_MODIFER_2:
 
 	class CameraSave
 	{
@@ -759,13 +777,13 @@ public:
 	/*
 	 * Каласс для удобного проведения процедуры бросания лучей.
 	 */
-	class RayCaster_api
+	class RayCaster
 	{
 
 	
 	public:
 
-		RayCaster_api()
+		RayCaster()
 		{
 			
 		}
@@ -779,7 +797,7 @@ public:
 		/*
 		 * При удалении класса удаляем массив лучей
 		 */
-		~RayCaster_api()
+		~RayCaster()
 		{
 			
 		}
@@ -826,7 +844,7 @@ public:
 				const float len,
 				const unsigned int wall_num,
 				const float rotation,
-				const RayCaster_api::dir dir) :
+				const RayCaster::dir dir) :
 
 				position_x(pos_x),
 				position_y(pos_y),
@@ -859,6 +877,7 @@ public:
 		std::vector<RayData> RayCast(Camera *camera,
 			const World *world) const
 		{
+			
 			std::vector<RayData> t_ray_data_vec(
 				static_cast<int>(camera->window_size_.x));
 			/*Условные обозначения
@@ -886,8 +905,12 @@ public:
 			 * Процедура бросания лучей
 			 * Old API (2020)
 			 */
-			for (auto r = 0; r < camera->window_size_.x; r++)
-			{
+			concurrency::array<RayData, 1> t_ray_data_vec_array_view(t_ray_data_vec.size(), t_ray_data_vec.begin(), t_ray_data_vec.end());
+			concurrency::parallel_for_each(
+				t_ray_data_vec_array_view.extent,
+				[&](concurrency::index<1> i) restrict(amp) {
+					t_ray_data_vec_array_view[i].rotation = 10;
+				
 				std::vector<RayData> ray_data_vec;
 				/*
 				 * Вектор состояний лучей.
@@ -1027,7 +1050,7 @@ public:
 							return a.length < b.length;
 						}
 					);
-					t_ray_data_vec[r] = ray_data_vec[0];
+					t_ray_data_vec[i] = ray_data_vec[0];
 				}
 
 				else if (cos_angle < 0 && sin_angle > 0)
@@ -1145,7 +1168,7 @@ public:
 						}
 					);
 
-					t_ray_data_vec[r] = ray_data_vec[0];
+					t_ray_data_vec[i] = ray_data_vec[0];
 
 				}
 
@@ -1265,7 +1288,7 @@ public:
 						}
 					);
 
-					t_ray_data_vec[r] = ray_data_vec[0];
+					t_ray_data_vec[i] = ray_data_vec[0];
 
 				}
 
@@ -1382,10 +1405,9 @@ public:
 							return a.length < b.length;
 						}
 					);
-					t_ray_data_vec[r] = ray_data_vec[0];
+					t_ray_data_vec[i] = ray_data_vec[0];
 				}
-
-			}
+			});
 
 			return t_ray_data_vec;
 
@@ -1393,59 +1415,224 @@ public:
 
 	};
 
-
 public:
-	class Wall_api
+	class Wall
 	{
+
+		friend class World;
+		
+	protected:
+		
+		sf::Texture texture_;
+	
 	public:
 
-		sf::Texture texture;
-
-		virtual ~Wall_api()
+		virtual compl Wall() = default;
+		
+		explicit Wall(const sf::Texture& texture = {}) :
+			texture_(texture)
 		{
-			std::cout << "wall api deleted" << std::endl;
+			
 		}
 
 		/*
 		 * Передаёт приватные состояния луча.
 		 */
-		virtual void wall_states(const RayCaster_api::RayData& data) = 0;
+
+		void setTexture(const sf::Texture& texture)
+		{
+			texture_ = texture;
+		}
+
+		sf::Texture getTexture() const
+		{
+			return texture_;
+		}
+		
+		virtual void wall_states(const RayCaster::RayData& data) = 0;
 
 		virtual void wall_states_center_ray(
-			const RayCaster_api::RayData& data,
+			const RayCaster::RayData& data,
 			const sf::Vector2<float> center_ray) = 0;
 
-		Wall_api() = default;
 	};
 
 	/*
 	 * Стена, самая обычная, без свойств, имеет номер 1
 	 */
-	class MainWall : public Wall_api
+	class MainWall : public Wall
 	{
 	public:
 
 		explicit MainWall(const std::string& texture_path =
 			"data/tex/wall5.png") :
-			Wall_api()
+			Wall()
 		{
-			texture.loadFromFile(texture_path);
+			texture_.loadFromFile(texture_path);
 		}
 
 		sf::RenderTexture render_texture;
 
-		void wall_states(const RayCaster_api::RayData& data) override
+		void wall_states(const RayCaster::RayData& data) override
 		{
-			this->texture = this->texture;
+			this->texture_ = this->texture_;
 		}
 		
 		void wall_states_center_ray(
-			const RayCaster_api::RayData& data,
+			const RayCaster::RayData& data,
 			const sf::Vector2<float> center_ray) override
 		{
-			this->texture = this->texture;
+			this->texture_ = this->texture_;
 		}
 
+	};
+
+	/*
+	 * Builder, Fabric pattern
+	 * Конструктор для создания клиентского класса спрайта
+	 */
+	class Sprite
+	{
+		
+		friend class World;
+
+#ifdef V3D_FUNCTIONAL
+
+		//РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ФУНККЦИИ
+#define VAILDER_3D_SPRITE_API_RESULT Sprite&
+
+//ВОЗВРАЩАЕМОЕ ФУНКЦИИ
+#define VAILDER_3D_SPRITE_API_RETURN return *this;
+
+#else
+
+		//РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ФУНККЦИИ
+#define VAILDER_3D_SPRITE_API_RESULT void
+
+//ВОЗВРАЩАЕМОЕ ФУНКЦИИ
+#define VAILDER_3D_SPRITE_API_RETURN
+
+#endif
+
+	public:
+		
+		virtual compl Sprite() = default;
+
+		explicit Sprite(
+			const sf::Vector3<float> position = {},
+			const sf::Vector2<float> size = {},
+			const sf::Texture& texture = {}) :
+		
+			position_(position),
+			size_(size),
+			texture_(texture)
+		{
+
+		}
+
+		Sprite(
+			const float x, 
+			const float y, 
+			const float z, 
+			const float width,
+			const float height, 
+			const sf::Texture& texture = {}) :
+		
+			position_({x, y, z}),
+			size_({width, height}),
+			texture_(texture)
+		{
+			
+		}
+
+		explicit Sprite(const sf::Texture& texture) :
+			texture_(texture)
+		{
+			
+		}
+	
+	VAILDER_3D_API_ACCESS_MODIFER_2:
+		
+		/*
+		 * X - in the World
+		 * Y - in the World
+		 * Z - on pseudo 3D World - uplift
+		 */
+		sf::Vector3<float> position_;
+
+		/*
+		 * X - on the Window
+		 * Y - on the Window
+		 */
+		sf::Vector2<float> size_;
+
+		/*
+		 * Texture, changeable.
+		 * For virtual void sprite_states(const RayCaster::RayData& data);
+		 */
+		sf::Texture texture_;
+	
+	public:
+
+		VAILDER_3D_SPRITE_API_RESULT
+		setTexture(const sf::Texture& texture)
+		{
+			texture_ = texture;
+			VAILDER_3D_SPRITE_API_RETURN
+		}
+
+		sf::Texture getTexture() const
+		{
+			return texture_;
+		}
+
+		VAILDER_3D_SPRITE_API_RESULT
+		setPosition(const sf::Vector3<float> position)
+		{
+			position_ = position;
+			VAILDER_3D_SPRITE_API_RETURN
+		}
+
+		VAILDER_3D_SPRITE_API_RESULT
+		setPosition(const float x, const float y, const float z)
+		{
+			position_ = { x, y, z };
+			VAILDER_3D_SPRITE_API_RETURN
+		}
+
+		sf::Vector3<float> getPosition() const
+		{
+			return position_;
+		}
+
+		VAILDER_3D_SPRITE_API_RESULT
+			setSize(const sf::Vector2<float> size)
+		{
+			size_ = size;
+			VAILDER_3D_SPRITE_API_RETURN
+		}
+
+		VAILDER_3D_SPRITE_API_RESULT
+			setSize(const float x, const float y)
+		{
+			size_ = { x, y };
+			VAILDER_3D_SPRITE_API_RETURN
+		}
+
+		sf::Vector2<float> getSize() const
+		{
+			return size_;
+		}
+
+		virtual void sprite_states(const RayCaster::RayData& data) = 0;
+
+		// Pattern builder
+		virtual Sprite* build()
+		{
+			return this;
+		}
+		
+		
 	};
 
 	/*
@@ -1454,19 +1641,35 @@ public:
 	 * Можно отрисовать средствами самого SFMl.
 	 * Подчиняется класслу FileManager
 	 */
-
-
-	
 	class World :
 		public sf::Drawable,
 		public sf::Transformable
 	{
 
-		friend  std::vector<RayCaster_api::RayData>
-		RayCaster_api::RayCast(Camera* camera,
+		friend  std::vector<RayCaster::RayData>
+		RayCaster::RayCast(Camera* camera,
 			const World* world) const;
 	
 	public:
+
+#ifdef V3D_FUNCTIONAL
+
+		//РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ФУНККЦИИ
+#define VAILDER_3D_WORLD_API_RESULT World&
+
+//ВОЗВРАЩАЕМОЕ ФУНКЦИИ
+#define VAILDER_3D_WORLD_API_RETURN return *this;
+
+#else
+
+		//РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ФУНККЦИИ
+#define VAILDER_3D_WORLD_API_RESULT void
+
+//ВОЗВРАЩАЕМОЕ ФУНКЦИИ
+#define VAILDER_3D_WORLD_API_RETURN
+
+#endif
+		
 
 		sf::Vector2<float> getSize() const
 		{
@@ -1498,75 +1701,47 @@ public:
 			return this->matrix_[position_matrix.x][position_matrix.y];
 		}
 
-#ifdef V3D_FUNCTIONAL
-
-		World&
-
-#else
-		
-		void
-		
-#endif
+		VAILDER_3D_WORLD_API_RESULT
 		setCamera(Camera* camera)
 		{
 			camera_ = camera;
-#ifdef V3D_FUNCTIONAL
-
-			return *this;
-
-#endif
+			
+			VAILDER_3D_WORLD_API_RETURN
 		}
 
 
-#ifdef V3D_FUNCTIONAL
-
-		World&
-
-#else
-
-		void
-
-#endif
-		
+		VAILDER_3D_WORLD_API_RESULT
 		setBackgroundTexture(sf::Texture* texture)
 		{
 			
 			background_texture_ = texture;
 			
-#ifdef V3D_FUNCTIONAL
-
-			return *this;
-
-#endif
-			
+			VAILDER_3D_WORLD_API_RETURN
 		}
 
-#ifdef V3D_DEVELOPER
-
-	public:
-
-#else
-
-	private:
-
-#endif
+		VAILDER_3D_API_ACCESS_MODIFER_2:
 
 		sf::Vector2<float> size_;
+		
 		Matrix matrix_;
+		
 		sf::Vector2<int> matrix_size_;
+		
 		sf::Vector2<float> wall_size_;
 
 		/*
 		 * Ксласс бросателя лучей
 		 */
-		RayCaster_api ray_caster_api_{};
+		RayCaster ray_caster_api_{};
 
 		/*
 		 * Вектор,
 		 * хранящий все классы,
-		 * которые унаследовали абстрактный класс Wall_api.
+		 * которые унаследовали абстрактный класс Wall.
 		 */
-		std::vector<Wall_api*> wall_{};
+		std::vector<Wall*> walls_{};
+		
+		std::vector<Sprite*> sprites_{};
 
 		Camera* camera_ = nullptr;
 
@@ -1578,7 +1753,8 @@ public:
 		/*
 		 * Текстура заднего плана
 		 */
-		sf::Texture background_texture_p;
+		sf::Texture background_texture_p_;
+		
 		sf::Texture* background_texture_ = nullptr;
 
 	public:
@@ -1596,44 +1772,60 @@ public:
 				size.y / static_cast<float>(matrix_size_.y) }),
 				floor_color_(0, 150, 0)
 		{
-			wall_.push_back(new MainWall);
-			wall_.push_back(new MainWall);
+			walls_.push_back(new MainWall);
+			walls_.push_back(new MainWall);
 
-			background_texture_p.loadFromFile("data/tex/bg.jpg");
-			setBackgroundTexture(&background_texture_p);
+			background_texture_p_.loadFromFile("data/tex/bg.jpg");
+			setBackgroundTexture(&background_texture_p_);
 		}
 
 		/*
 		 * Добавление новой стены в мир
 		 */
-#ifdef V3D_FUNCTIONAL
-
-		World&
-
-#else
-
-		void
-
-#endif
-		
-		addWallType(Wall_api* wall)
+		VAILDER_3D_WORLD_API_RESULT
+		addWallType(Wall* wall)
 		{
-			wall_.push_back(wall);
+			walls_.push_back(wall);
 			
-#ifdef V3D_FUNCTIONAL
+			VAILDER_3D_WORLD_API_RETURN
+		}
 
-			return *this;
+		VAILDER_3D_WORLD_API_RESULT
+		addSpriteType(Sprite* sprite)
+		{
+			sprites_.push_back(sprite);
 
-#endif
-			
+			VAILDER_3D_WORLD_API_RETURN
+		}
+
+		void addWallTypes(std::initializer_list<Wall*> wall_list)
+		{
+			for (Wall *const &wall : wall_list)
+			{
+				walls_.push_back(wall);
+			}
+		}
+
+		void addSpriteTypes(std::initializer_list<Sprite*> sprite_list)
+		{
+			for (Sprite* const& sprite : sprite_list)
+			{
+				sprites_.push_back(sprite);
+			}
 		}
 
 		/*
 		 * Перегрузка / переопределение оператора для вышеописанной функции
 		 */
-		World& operator << (Wall_api* wall)
+		World& operator << (Wall* wall)
 		{
 			addWallType(wall);
+			return *this;
+		}
+
+		World& operator << (Sprite* sprite)
+		{
+			addSpriteType(sprite);
 			return *this;
 		}
 
@@ -1641,21 +1833,14 @@ public:
 		 * Переопределение виртуальной функции.
 		 * Для отрисовки средстсвами SFML.
 		 */
-#ifdef V3D_DEVELOPER
 
-	public:
-
-#else
-
-	protected:
-
-#endif
+	VAILDER_3D_API_ACCESS_MODIFER_2:
 		
 		void draw(sf::RenderTarget& target,
 			sf::RenderStates states) const override
 		{
 			
-			std::vector<RayCaster_api::RayData> ray_data =
+			std::vector<RayCaster::RayData> ray_data =
 				ray_caster_api_.RayCast(camera_, this);
 
 
@@ -1690,7 +1875,7 @@ public:
 			 */
 			for (int i = 0; i < unique_walls_.size(); i++)
 			{
-				wall_[unique_walls_[i]]->wall_states(ray_data[i]);
+				walls_[unique_walls_[i]]->wall_states(ray_data[i]);
 			}
 
 			float d{};
@@ -1703,31 +1888,31 @@ public:
 			switch (ray_data[static_cast<int>(camera_
 				->window_size_2_.x)].direction) {
 
-			case RayCaster_api::dir::left:
+			case RayCaster::dir::left:
 				d = fmodf(ray_data[static_cast<int>(camera_
 					->window_size_2_.x)].position_y,
 					wall_size_.y);
 				break;
 
-			case RayCaster_api::dir::right:
+			case RayCaster::dir::right:
 				d = (wall_size_.y - fmodf(ray_data[static_cast<int>(camera_
 					->window_size_2_.x)].position_y,
 					wall_size_.y));
 				break;
 
-			case RayCaster_api::dir::down:
+			case RayCaster::dir::down:
 				d = (wall_size_.x - fmodf(ray_data[static_cast<int>(camera_
 					->window_size_2_.x)].position_x,
 					wall_size_.x));
 				break;
 
-			case RayCaster_api::dir::up:
+			case RayCaster::dir::up:
 				d = fmodf(ray_data[static_cast<int>(camera_
 					->window_size_2_.x)].position_x,
 					wall_size_.x);
 				break;
 
-			case RayCaster_api::dir::none:
+			case RayCaster::dir::none:
 				break;
 
 			default:
@@ -1735,17 +1920,17 @@ public:
 
 			}
 
-			wall_[ray_data[static_cast<int>(camera_
+			walls_[ray_data[static_cast<int>(camera_
 				->window_size_2_.x)].wall_number]
 				->wall_states_center_ray(ray_data
 					[static_cast<int>(camera_->window_size_2_.x)],
 					{ static_cast<float>(d *
-					((static_cast<float>(wall_[ray_data
+					((static_cast<float>(walls_[ray_data
 					[static_cast<int>(camera_->window_size_2_.x)].wall_number]
-					->texture.getSize().x) / wall_size_.x))),
-						static_cast<float>(wall_[ray_data[static_cast<int>
+					->texture_.getSize().x) / wall_size_.x))),
+						static_cast<float>(walls_[ray_data[static_cast<int>
 							(camera_->window_size_2_.x)].wall_number]
-							->texture.getSize().y) - ((camera_
+							->texture_.getSize().y) - ((camera_
 								->window_size_2_.y - (camera_
 									->window_delta_y_ - (camera_
 										->render_constant_ /
@@ -1754,10 +1939,10 @@ public:
 									* cosf(ray_data[static_cast<int>(camera_
 										->window_size_2_.x)].rotation - camera_
 											->rotation_))) / 2.f)) *
-								(static_cast<float>(wall_[ray_data
+								(static_cast<float>(walls_[ray_data
 									[static_cast<int>(camera_
 										->window_size_2_.x)].wall_number]
-									->texture.getSize().y) / (camera_
+									->texture_.getSize().y) / (camera_
 										->render_constant_ /
 										(ray_data[static_cast<int>(camera_
 											->window_size_2_.x)].length *
@@ -1801,7 +1986,8 @@ public:
 					sf::Color(it * delta_color_r,
 					it * delta_color_g, it * delta_color_b));
 
-				target.draw(rectangle_shape_floor_, this->getTransform());
+				target.draw(rectangle_shape_floor_,
+					this->getTransform());
 			}
 
 			/*
@@ -1862,27 +2048,27 @@ public:
 
 				switch (ray_data[i].direction) {
 
-				case RayCaster_api::dir::left:
+				case RayCaster::dir::left:
 					d = fmodf(ray_data[i].position_y,
 						wall_size_.y);
 					break;
 
-				case RayCaster_api::dir::right:
+				case RayCaster::dir::right:
 					d = (wall_size_.y - fmodf(ray_data[i].position_y,
 						wall_size_.y));
 					break;
 
-				case RayCaster_api::dir::down:
+				case RayCaster::dir::down:
 					d = (wall_size_.x - fmodf(ray_data[i].position_x,
 						wall_size_.x));
 					break;
 
-				case RayCaster_api::dir::up:
+				case RayCaster::dir::up:
 					d = fmodf(ray_data[i].position_x,
 						wall_size_.x);
 					break;
 
-				case RayCaster_api::dir::none:
+				case RayCaster::dir::none:
 					break;
 
 				default:
@@ -1893,7 +2079,7 @@ public:
 				/*
 				 * Берём текстуру у стены.
 				 */
-				sprite.setTexture(wall_[ray_data[i].wall_number]->texture);
+				sprite.setTexture(walls_[ray_data[i].wall_number]->texture_);
 
 				/*
 				 * Высота стены.
@@ -1915,7 +2101,7 @@ public:
 				sprite.setPosition(i, sprite_position_y);
 
 				const float tex_wall_scale = (static_cast<float>
-					(wall_[ray_data[i].wall_number]->texture.getSize().x)
+					(walls_[ray_data[i].wall_number]->texture_.getSize().x)
 					/ wall_size_.x);
 
 				const int texture_position_x = d * tex_wall_scale;
@@ -1923,14 +2109,14 @@ public:
 				sprite.setTextureRect(sf::IntRect(
 					texture_position_x,
 					0, 1,
-					wall_[ray_data[i].wall_number]
-					->texture.getSize().y));
+					walls_[ray_data[i].wall_number]
+					->texture_.getSize().y));
 
 				const float scale = 1.f / tex_wall_scale;
 
 				sprite.setScale(1, wall_height /
-					static_cast<float>(wall_[ray_data[i].wall_number]
-						->texture.getSize().y));
+					static_cast<float>(walls_[ray_data[i].wall_number]
+						->texture_.getSize().y));
 
 				/*
 				 * Определяем цвет стены,
@@ -1994,21 +2180,31 @@ public:
 		 * Дружелюбные классы
 		 */
 		
-		friend class RayCaster_api;
+		friend class RayCaster;
 
 		friend class World;
 
 
+#ifdef V3D_FUNCTIONAL
 
-#ifdef V3D_DEVELOPER
-	
-	public:
+//РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ФУНККЦИИ
+#define VAILDER_3D_CAMERA_API_RESULT Camera&
+
+//ВОЗВРАЩАЕМОЕ ФУНКЦИИ
+#define VAILDER_3D_CAMERA_API_RETURN return *this;
 		
 #else
-	
-	private:
+
+//РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ФУНККЦИИ
+#define VAILDER_3D_CAMERA_API_RESULT void
+
+//ВОЗВРАЩАЕМОЕ ФУНКЦИИ
+#define VAILDER_3D_CAMERA_API_RETURN
 		
 #endif
+
+
+		VAILDER_3D_API_ACCESS_MODIFER_1:
 
 		/*
 		 * Переопределение размеров холста
@@ -2021,8 +2217,8 @@ public:
 				background_repeating_fov_;
 			window_size_pi_.y = static_cast<float>(target_size.y) *
 				background_repeating_fov_;
-			window_size_2_.x = static_cast<float>(target_size.x) / 2.f;
-			window_size_2_.y = static_cast<float>(target_size.y) / 2.f;
+			window_size_2_.x = static_cast<float>(target_size.x) / 2.0F;
+			window_size_2_.y = static_cast<float>(target_size.y) / 2.0F;
 		}
 
 		void change_render_constant()
@@ -2032,19 +2228,11 @@ public:
 			 * Используется для определения размера стены
 			 */
 			this->render_constant_ = static_cast<float>(this->window_size_.x)
-				/ abs(2 * (tanf(this->fov_)))
+				/ fabs(2 * (tanf(this->fov_)))
 				* static_cast<float>(this->window_size_.y) * this->zoom_;
 		}
 
-#ifdef V3D_DEVELOPER
-	
-	public:
-		
-#else
-	
-	private:
-		
-#endif
+	VAILDER_3D_API_ACCESS_MODIFER_1:
 		
 		/*
 		 * FOV - Field Of View.
@@ -2065,36 +2253,30 @@ public:
 	public:
 		explicit Camera(const sf::RenderTarget& target,
 		                const sf::Vector2<float> position = {},
-		                const float fov = 60._deg,
-		                const float rotation = 0.1_deg,
-		                const float zoom = 0.075f,
-		                const float shading_coefficient = 40.f) :
+		                const float fov = 60.0_deg,
+		                const float rotation = 0.10_deg,
+		                const float zoom = 0.075F,
+		                const float shading_coefficient = 40.0F) :
 
 			window_size_(target.getSize()),
 			window_size_pi_({ static_cast<float>(target.getSize().x)
 				* math::PI_2 ,
 				static_cast<float>(target.getSize().y) * math::PI_2 }),
-			window_size_2_({ static_cast<float>(target.getSize().x) / 2.f,
+			window_size_2_({ static_cast<float>(target.getSize().x) / 2.0F,
 				static_cast<float>(target.getSize().y) / 2}),
 			position_(position),
 			rotation_(rotation),
 			fov_(fov),
 			zoom_(zoom),
-			wwf_(window_size_.x / fov),
-			shading_coefficient_(shading_coefficient * 0.00001f)
+			wwf_(static_cast<float>(window_size_.x) / fov),
+			shading_coefficient_(shading_coefficient * 0.00001F)
 		{
 			change_render_constant();
 		}
 
-#ifdef V3D_DEVELOPER
+		Camera() = default;
 
-	public:
-
-#else
-
-	private:
-
-#endif
+	VAILDER_3D_API_ACCESS_MODIFER_1:
 
 		/*
 		 * Радиус камеры
@@ -2105,31 +2287,22 @@ public:
 
 	public:
 
+
+		
 		/*
 		 * Переопределение холста
 		 */
-#ifdef V3D_FUNCTIONAL
 		
-		Camera&
-
-#else
-		
-		void
-		
-#endif
-		
+		VAILDER_3D_CAMERA_API_RESULT
 		setRenderTarget(const sf::RenderTarget& target)
 		{
 			resizeTarget(target.getSize());
+			
 			this->wwf_ = this->window_size_.x / this->fov_;
+			
 			change_render_constant();
-			
-#ifdef V3D_FUNCTIONAL
 
-			return *this;
-
-#endif
-			
+			VAILDER_3D_CAMERA_API_RETURN
 		}
 
 		/*
@@ -2137,24 +2310,12 @@ public:
 		 */
 
 
-#ifdef V3D_FUNCTIONAL
-		
-		Camera&
-#else
-		
-		void
-		
-#endif
-		
+		VAILDER_3D_CAMERA_API_RESULT
 		setShadingCoefficient(const float shading_coefficient)
 		{
 			this->shading_coefficient_ = shading_coefficient * 0.00001f;
 			
-#ifdef V3D_FUNCTIONAL
-
-			return *this;
-
-#endif
+			VAILDER_3D_CAMERA_API_RETURN
 			
 		}
 
@@ -2167,26 +2328,13 @@ public:
 			return this->shading_coefficient_;
 		}
 
-#ifdef V3D_FUNCTIONAL
-		
-		Camera&
-
-#else
-		
-		void
-		
-#endif
-		
+		VAILDER_3D_CAMERA_API_RESULT
 		setBackgroundRepeatingFov(const float background_repeating_fov)
 		{
 			background_repeating_fov_ = background_repeating_fov;
 			resizeTarget(window_size_);
 			
-#ifdef V3D_FUNCTIONAL
-
-			return *this;
-
-#endif
+			VAILDER_3D_CAMERA_API_RETURN
 			
 		}
 
@@ -2201,24 +2349,13 @@ public:
 		 * Установить поворот камеры
 		 */
 
-#ifdef V3D_FUNCTIONAL
-		
-		Camera&
-
-#else
-		
-		void
-		
-#endif
-		
+		VAILDER_3D_CAMERA_API_RESULT
 		setRotation(const float rotation_degrees)
 		{
 			this->rotation_ = rotation_degrees;
-#ifdef V3D_FUNCTIONAL
 
-			return *this;
-
-#endif
+			VAILDER_3D_CAMERA_API_RETURN
+			
 		}
 		
 
@@ -2235,25 +2372,12 @@ public:
 		 * Повернуть камеру
 		 */
 
-#ifdef V3D_FUNCTIONAL
-		
-		Camera&
-
-#else
-		
-		void
-		
-#endif
-		
+		VAILDER_3D_CAMERA_API_RESULT
 		rotate(const float rotation_degrees)
 		{
 			this->rotation_ += rotation_degrees;
 			
-#ifdef V3D_FUNCTIONAL
-
-			return *this;
-
-#endif
+			VAILDER_3D_CAMERA_API_RETURN
 			
 		}
 
@@ -2262,25 +2386,12 @@ public:
 		 * Установить позицию камеры
 		 */
 
-#ifdef V3D_FUNCTIONAL
-		
-		Camera&
-
-#else
-		
-		void
-		
-#endif
-		
+		VAILDER_3D_CAMERA_API_RESULT
 		setPosition(const sf::Vector2<float> position)
 		{
 			this->position_ = position;
 			
-#ifdef V3D_FUNCTIONAL
-
-			return *this;
-
-#endif
+			VAILDER_3D_CAMERA_API_RETURN
 			
 		}
 
@@ -2289,26 +2400,13 @@ public:
 		 * Установить позицию камеры
 		 */
 
-#ifdef V3D_FUNCTIONAL
-		
-		Camera&
-
-#else
-		
-		void
-		
-#endif
-		
+		VAILDER_3D_CAMERA_API_RESULT
 		setPosition(const float x, const float y)
 		{
 			this->position_.x = x;
 			this->position_.y = y;
 			
-#ifdef V3D_FUNCTIONAL
-
-			return *this;
-
-#endif
+			VAILDER_3D_CAMERA_API_RETURN
 			
 		}
 
@@ -2325,78 +2423,39 @@ public:
 		 * Передвинуть камеру
 		 */
 
-#ifdef V3D_FUNCTIONAL
-		
-		Camera&
-
-#else
-		
-		void
-		
-#endif
-		
+		VAILDER_3D_CAMERA_API_RESULT
 		move(const float x, const float y)
 		{
 			this->position_.x += x;
 			this->position_.y += y;
 			
-#ifdef V3D_FUNCTIONAL
-			
-			return *this;
-			
-#endif
+			VAILDER_3D_CAMERA_API_RETURN
 			
 		}
 
 		/*
 		 * Передвинуть камеру
 		 */
-#ifdef V3D_FUNCTIONAL
-		
-		Camera&
-
-#else
-		
-		void
-		
-#endif
-		
+		VAILDER_3D_CAMERA_API_RESULT
 		move(const sf::Vector2<float> position)
 		{
 			move(position.x, position.y);
 
-#ifdef V3D_FUNCTIONAL
-
-			return *this;
-
-#endif
+			VAILDER_3D_CAMERA_API_RETURN
 
 		}
 
 		/*
 		 * Установить угол обзора
 		 */
-#ifdef V3D_FUNCTIONAL
-		
-		Camera&
-
-#else
-		
-		void
-		
-#endif
-		
+		VAILDER_3D_CAMERA_API_RESULT
 		setFov(const float fov)
 		{
 			this->fov_ = fov;
 			this->wwf_ = this->window_size_.x / fov_;
 			change_render_constant();
 
-#ifdef V3D_FUNCTIONAL
-
-			return *this;
-
-#endif
+			VAILDER_3D_CAMERA_API_RETURN
 
 		}
 
@@ -2412,51 +2471,25 @@ public:
 		/*
 		 * Увеличить угол обзора
 		 */
-#ifdef V3D_FUNCTIONAL
-		
-		Camera&
-
-#else
-		
-		void
-		
-#endif
-		
+		VAILDER_3D_CAMERA_API_RESULT
 		fov_unary(const float fov)
 		{
 			setFov(this->fov_ + fov);
 
-#ifdef V3D_FUNCTIONAL
-
-			return *this;
-
-#endif
-
+			VAILDER_3D_CAMERA_API_RETURN
+			
 		}
 
 		/*
 		 * Установить зум камеры
 		 */
-#ifdef V3D_FUNCTIONAL
-		
-		Camera&
-
-#else
-		
-		void
-		
-#endif
-		
+		VAILDER_3D_CAMERA_API_RESULT
 		setZoom(const float zoom)
 		{
 			this->zoom_ = zoom;
 			change_render_constant();
 
-#ifdef V3D_FUNCTIONAL
-
-			return *this;
-
-#endif
+			VAILDER_3D_CAMERA_API_RETURN
 
 		}
 
@@ -2472,51 +2505,25 @@ public:
 		/*
 		 * Увеличить зум камеры
 		 */
-#ifdef V3D_FUNCTIONAL
-		
-		Camera&
-
-#else
-		
-		void
-		
-#endif
-		
+		VAILDER_3D_CAMERA_API_RESULT
 		zoom_unary(const float zoom)
 		{
 			setZoom(this->zoom_ + zoom);
 
-#ifdef V3D_FUNCTIONAL
-
-			return *this;
-
-#endif
+			VAILDER_3D_CAMERA_API_RETURN
 
 		}
 
 		/*
 		 * Установить радиус камеры
 		 */
-#ifdef V3D_FUNCTIONAL
-		
-		Camera&
-
-#else
-		
-		void
-		
-#endif
-		
+		VAILDER_3D_CAMERA_API_RESULT
 		setRadius(const float radius)
 		{
 			radius_ = radius;
 
-#ifdef V3D_FUNCTIONAL
-
-			return *this;
-
-#endif
-
+			VAILDER_3D_CAMERA_API_RETURN
+			
 		}
 
 		/*
@@ -2528,57 +2535,32 @@ public:
 			return radius_;
 		}
 
-#ifdef V3D_FUNCTIONAL
-		
-		Camera&
-
-#else
-		
-		void
-		
-#endif
-		
+		VAILDER_3D_CAMERA_API_RESULT
 		setWindowDeltaY(const float window_delta_y)
 		{
 			window_delta_y_ = window_delta_y;
+
+			VAILDER_3D_CAMERA_API_RETURN
+			
 		}
+		
 		[[nodiscard]]
 		float getWindowDeltaY() const
 		{
 			return window_delta_y_;
 		}
 
-#ifdef V3D_FUNCTIONAL
-		
-		Camera&
-
-#else
-		
-		void
-		
-#endif
-		
+		VAILDER_3D_CAMERA_API_RESULT	
 		windowDeltaY_unary(const float window_delta_y)
 		{
 			window_delta_y_ += window_delta_y;
 
-#ifdef V3D_FUNCTIONAL
-
-			return *this;
-
-#endif
+			VAILDER_3D_CAMERA_API_RETURN
 
 		}
 
-#ifdef V3D_DEVELOPER
-
-	public:
-
-#else
-
-	protected:
-
-#endif
+		VAILDER_3D_API_ACCESS_MODIFER_2:
+		
 		/*
 		 * Запись сохранения
 		 */
@@ -2633,10 +2615,31 @@ public:
 
 				change_render_constant();
 				
-				this->wwf_ = math::scale( this->window_size_.x, this->fov_);
+				this->wwf_ = math::scale(
+					static_cast<float>(this->window_size_.x),
+					this->fov_);
 			}
 			ifstream.close();
 		}
+
+	public:
+
+#ifdef V3D_FUNCTIONAL
+
+		static Camera build()
+		{
+			return Camera();
+		}
+
+		[[nodiscard]]
+		Camera copy() const
+		{
+			return Camera(*this);
+		}
+		
+#endif
+		
 	};
 };
+
 

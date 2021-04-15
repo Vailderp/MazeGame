@@ -50,5 +50,8 @@
     <ClInclude Include="Gui.h">
       <Filter>Файлы заголовков\Library</Filter>
     </ClInclude>
+    <ClInclude Include="gui_core.h">
+      <Filter>Файлы заголовков\Library</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
