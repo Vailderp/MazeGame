@@ -5,9 +5,9 @@
 #include <algorithm>
 int main()
 {
-	sf::RenderWindow window(sf::VideoMode(800, 800), "Maze Game!", sf::Style::Default);
+	sf::RenderWindow window(sf::VideoMode(800, 800), "Maze Game!", sf::Style::Fullscreen);
 	window.setPosition({ 10, 10 });
-	//window.setVerticalSyncEnabled(true);
+	window.setVerticalSyncEnabled(true);
 	
 	const int sizeX = 10;
 	const int sizeY = 10;

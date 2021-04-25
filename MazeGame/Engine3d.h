@@ -871,15 +871,31 @@ public:
 			}
 		};
 
-		/*
-		 * Возврацает состояния все лучей в виде массива
-		 */
-		std::vector<RayData> RayCast(Camera *camera,
-			const World *world) const
+		typedef std::vector<RayData> pixel_depth;
+		typedef std::vector<pixel_depth> pixel_depth_vector;
+		
+		VAILDER_3D_API_ACCESS_MODIFER_1:
+
+		bool sort_enable_ = true;
+	
+		public:
+
+			void setSortEnable(const bool sort_enable) 
+			{
+				sort_enable_ = sort_enable;
+			}
+
+			bool getSortEnable() const
+			{
+				return sort_enable_;
+			}
+		
+		void __fastcall RayCast(
+			Camera * const camera,
+			const World *world,
+			pixel_depth_vector* t_ray_data_vec) const
 		{
 			
-			std::vector<RayData> t_ray_data_vec(
-				static_cast<int>(camera->window_size_.x));
 			/*Условные обозначения
 				up
 			 ________
@@ -905,12 +921,8 @@ public:
 			 * Процедура бросания лучей
 			 * Old API (2020)
 			 */
-			concurrency::array<RayData, 1> t_ray_data_vec_array_view(t_ray_data_vec.size(), t_ray_data_vec.begin(), t_ray_data_vec.end());
-			concurrency::parallel_for_each(
-				t_ray_data_vec_array_view.extent,
-				[&](concurrency::index<1> i) restrict(amp) {
-					t_ray_data_vec_array_view[i].rotation = 10;
-				
+			for (auto r = 0; r < camera->window_size_.x; r++)
+			{
 				std::vector<RayData> ray_data_vec;
 				/*
 				 * Вектор состояний лучей.
@@ -1041,16 +1053,20 @@ public:
 						}
 					}
 
-					std::sort
-					(
-						ray_data_vec.begin(),
-						ray_data_vec.end(),
-						[](RayData const& a, RayData const& b) -> bool
-						{
-							return a.length < b.length;
-						}
-					);
-					t_ray_data_vec[i] = ray_data_vec[0];
+					if (sort_enable_)
+					{
+						std::sort
+						(
+							ray_data_vec.begin(),
+							ray_data_vec.end(),
+							[](RayData const& a, RayData const& b) -> bool
+							{
+								return a.length < b.length;
+							}
+						);
+					}
+					
+					t_ray_data_vec->at(r) = ray_data_vec;
 				}
 
 				else if (cos_angle < 0 && sin_angle > 0)
@@ -1158,17 +1174,20 @@ public:
 						}
 					}
 
-					std::sort
-					(
-						ray_data_vec.begin(),
-						ray_data_vec.end(),
-						[](RayData const& a, RayData const& b) -> bool
-						{
-							return a.length < b.length;
-						}
-					);
+					if (sort_enable_)
+					{
+						std::sort
+						(
+							ray_data_vec.begin(),
+							ray_data_vec.end(),
+							[](RayData const& a, RayData const& b) -> bool
+							{
+								return a.length < b.length;
+							}
+						);
+					}
 
-					t_ray_data_vec[i] = ray_data_vec[0];
+					t_ray_data_vec->at(r) = ray_data_vec;
 
 				}
 
@@ -1278,17 +1297,20 @@ public:
 						}
 					}
 
-					std::sort
-					(
-						ray_data_vec.begin(),
-						ray_data_vec.end(),
-						[](RayData const& a, RayData const& b) -> bool
-						{
-							return a.length < b.length;
-						}
-					);
+					if (sort_enable_)
+					{
+						std::sort
+						(
+							ray_data_vec.begin(),
+							ray_data_vec.end(),
+							[](RayData const& a, RayData const& b) -> bool
+							{
+								return a.length < b.length;
+							}
+						);
+					}
 
-					t_ray_data_vec[i] = ray_data_vec[0];
+					t_ray_data_vec->at(r) = ray_data_vec;
 
 				}
 
@@ -1395,21 +1417,25 @@ public:
 							break;
 						}
 					}
-					//SORT BUFFER
-					std::sort
-					(
-						ray_data_vec.begin(),
-						ray_data_vec.end(),
-						[](RayData const& a, RayData const& b) -> bool
-						{
-							return a.length < b.length;
-						}
-					);
-					t_ray_data_vec[i] = ray_data_vec[0];
-				}
-			});
 
-			return t_ray_data_vec;
+					if (sort_enable_)
+					{
+						//SORT BUFFER
+						std::sort
+						(
+							ray_data_vec.begin(),
+							ray_data_vec.end(),
+							[](RayData const& a, RayData const& b) -> bool
+							{
+								return a.length < b.length;
+							}
+						);
+					}
+					
+					t_ray_data_vec->at(r) = ray_data_vec;
+				}
+
+			}
 
 		}
 
@@ -1646,9 +1672,10 @@ public:
 		public sf::Transformable
 	{
 
-		friend  std::vector<RayCaster::RayData>
-		RayCaster::RayCast(Camera* camera,
-			const World* world) const;
+		friend void __fastcall RayCaster::RayCast(
+			Camera* const camera,
+			const World* world,
+			RayCaster::pixel_depth_vector* t_ray_data_vec) const;
 	
 	public:
 
@@ -1777,6 +1804,8 @@ public:
 
 			background_texture_p_.loadFromFile("data/tex/bg.jpg");
 			setBackgroundTexture(&background_texture_p_);
+
+			ray_caster_api_.setSortEnable(true);
 		}
 
 		/*
@@ -1834,14 +1863,21 @@ public:
 		 * Для отрисовки средстсвами SFML.
 		 */
 
+	VAILDER_3D_API_ACCESS_MODIFER_1:
+		RayCaster::pixel_depth_vector *ray_data_ = new RayCaster::pixel_depth_vector;
+
 	VAILDER_3D_API_ACCESS_MODIFER_2:
 		
 		void draw(sf::RenderTarget& target,
 			sf::RenderStates states) const override
 		{
-			
-			std::vector<RayCaster::RayData> ray_data =
-				ray_caster_api_.RayCast(camera_, this);
+
+			if (camera_->window_size_.x != ray_data_->size())
+			{
+				ray_data_->resize(camera_->window_size_.x);
+			}
+		
+			ray_caster_api_.RayCast(camera_, this, ray_data_);
 
 
 			/*
@@ -1856,7 +1892,7 @@ public:
 
 			for (int i = 1; i < camera_->window_size_.x; i++)
 			{
-				used_walls_.push_back(ray_data[i].wall_number);
+				used_walls_.push_back(ray_data_->at(i)[0].wall_number);
 			}
 
 			/*
@@ -1875,7 +1911,7 @@ public:
 			 */
 			for (int i = 0; i < unique_walls_.size(); i++)
 			{
-				walls_[unique_walls_[i]]->wall_states(ray_data[i]);
+				walls_[unique_walls_[i]]->wall_states(ray_data_->at(i)[0]);
 			}
 
 			float d{};
@@ -1885,30 +1921,30 @@ public:
 			 * находим столб текстуры
 			 */
 
-			switch (ray_data[static_cast<int>(camera_
-				->window_size_2_.x)].direction) {
+			switch (ray_data_->at(static_cast<int>(camera_
+				->window_size_2_.x))[0].direction) {
 
 			case RayCaster::dir::left:
-				d = fmodf(ray_data[static_cast<int>(camera_
-					->window_size_2_.x)].position_y,
+				d = fmodf(ray_data_->at(static_cast<int>(camera_
+					->window_size_2_.x))[0].position_y,
 					wall_size_.y);
 				break;
 
 			case RayCaster::dir::right:
-				d = (wall_size_.y - fmodf(ray_data[static_cast<int>(camera_
-					->window_size_2_.x)].position_y,
+				d = (wall_size_.y - fmodf(ray_data_->at(static_cast<int>(camera_
+					->window_size_2_.x))[0].position_y,
 					wall_size_.y));
 				break;
 
 			case RayCaster::dir::down:
-				d = (wall_size_.x - fmodf(ray_data[static_cast<int>(camera_
-					->window_size_2_.x)].position_x,
+				d = (wall_size_.x - fmodf(ray_data_->at(static_cast<int>(camera_
+					->window_size_2_.x))[0].position_x,
 					wall_size_.x));
 				break;
 
 			case RayCaster::dir::up:
-				d = fmodf(ray_data[static_cast<int>(camera_
-					->window_size_2_.x)].position_x,
+				d = fmodf(ray_data_->at(static_cast<int>(camera_
+					->window_size_2_.x))[0].position_x,
 					wall_size_.x);
 				break;
 
@@ -1920,35 +1956,49 @@ public:
 
 			}
 
-			walls_[ray_data[static_cast<int>(camera_
-				->window_size_2_.x)].wall_number]
-				->wall_states_center_ray(ray_data
-					[static_cast<int>(camera_->window_size_2_.x)],
-					{ static_cast<float>(d *
-					((static_cast<float>(walls_[ray_data
-					[static_cast<int>(camera_->window_size_2_.x)].wall_number]
-					->texture_.getSize().x) / wall_size_.x))),
-						static_cast<float>(walls_[ray_data[static_cast<int>
-							(camera_->window_size_2_.x)].wall_number]
-							->texture_.getSize().y) - ((camera_
-								->window_size_2_.y - (camera_
-									->window_delta_y_ - (camera_
-										->render_constant_ /
-										(ray_data[static_cast<int>
-											(camera_->window_size_2_.x)].length
-									* cosf(ray_data[static_cast<int>(camera_
-										->window_size_2_.x)].rotation - camera_
-											->rotation_))) / 2.f)) *
-								(static_cast<float>(walls_[ray_data
-									[static_cast<int>(camera_
-										->window_size_2_.x)].wall_number]
-									->texture_.getSize().y) / (camera_
-										->render_constant_ /
-										(ray_data[static_cast<int>(camera_
-											->window_size_2_.x)].length *
-										cosf(ray_data[static_cast<int>(camera_
-											->window_size_2_.x)].rotation -
-											camera_->rotation_))))) });
+			/*
+			 * Определение позиции курсора на текстуре.
+			 * Позиция конвертикуется в позицию курсора на текстуре.
+			 * И вызывает виртуальную функцию классам,
+			 * которые унаследовали абстрактный класс - Wall.
+			 */
+			walls_[ray_data_->at(static_cast<int>(camera_->window_size_2_.x))
+				[0].wall_number]->wall_states_center_ray(
+				ray_data_->at(static_cast<int>(camera_->window_size_2_.x))
+					[0], {
+					static_cast<float>(d * ((static_cast<float>(walls_
+					[ray_data_->at(
+							static_cast<int>(camera_->window_size_2_.x))
+						[0].wall_number]->texture_.getSize().x) /
+						wall_size_
+						.x))),
+					static_cast<float>(walls_
+						[ray_data_->at(
+							static_cast<int>(camera_->window_size_2_.x))
+						[0].wall_number]
+					                   ->texture_.getSize().y) - 
+					((camera_->window_size_2_.y - 
+						(camera_->window_delta_y_ - 
+							(camera_->render_constant_ / (ray_data_->at(
+							static_cast<int>(camera_->window_size_2_.x))
+							[0].length *
+							cosf(ray_data_->at(
+								static_cast<int>(camera_->window_size_2_.x))
+								[0].rotation - camera_->
+								rotation_))) / 2.f)) * 
+						(static_cast<float>(walls_
+							[ray_data_->
+						at(static_cast<int>(camera_->window_size_2_.x))
+							[0].wall_number]->texture_.getSize().y) / (
+						camera_->render_constant_ / 
+								(ray_data_->at(
+									static_cast<int>(camera_->window_size_2_.x))
+									[0].length * cosf(
+								ray_data_->at(
+									static_cast<int>(camera_->window_size_2_.x))
+										[0].rotation - camera_->
+								rotation_)))))
+				});
 
 
 
@@ -2005,15 +2055,15 @@ public:
 
 			for (int i = 0; i < camera_->window_size_.x; i++)
 			{
-				if (ray_data[i].rotation < 0)
+				if (ray_data_->at(i)[0].rotation < 0)
 				{
 					a = camera_->background_repeating_fov_
-					- abs(fmodf(ray_data[i].rotation,
+					- abs(fmodf(ray_data_->at(i)[0].rotation,
 						camera_->background_repeating_fov_));
 				}
 				else
 				{
-					a = abs(fmodf(ray_data[i].rotation,
+					a = abs(fmodf(ray_data_->at(i)[0].rotation,
 						camera_->background_repeating_fov_));
 				}
 				
@@ -2046,25 +2096,25 @@ public:
 				 * находим столб текстуры
 				 */
 
-				switch (ray_data[i].direction) {
+				switch (ray_data_->at(i)[0].direction) {
 
 				case RayCaster::dir::left:
-					d = fmodf(ray_data[i].position_y,
+					d = fmodf(ray_data_->at(i)[0].position_y,
 						wall_size_.y);
 					break;
 
 				case RayCaster::dir::right:
-					d = (wall_size_.y - fmodf(ray_data[i].position_y,
+					d = (wall_size_.y - fmodf(ray_data_->at(i)[0].position_y,
 						wall_size_.y));
 					break;
 
 				case RayCaster::dir::down:
-					d = (wall_size_.x - fmodf(ray_data[i].position_x,
+					d = (wall_size_.x - fmodf(ray_data_->at(i)[0].position_x,
 						wall_size_.x));
 					break;
 
 				case RayCaster::dir::up:
-					d = fmodf(ray_data[i].position_x,
+					d = fmodf(ray_data_->at(i)[0].position_x,
 						wall_size_.x);
 					break;
 
@@ -2079,14 +2129,14 @@ public:
 				/*
 				 * Берём текстуру у стены.
 				 */
-				sprite.setTexture(walls_[ray_data[i].wall_number]->texture_);
+				sprite.setTexture(walls_[ray_data_->at(i)[0].wall_number]->texture_);
 
 				/*
 				 * Высота стены.
 				 */
 				const float wall_height = camera_->render_constant_ /
-					(ray_data[i].length * cosf(
-						ray_data[i].rotation -
+					(ray_data_->at(i)[0].length * cosf(
+						ray_data_->at(i)[0].rotation -
 						camera_->rotation_));
 
 				/*
@@ -2101,7 +2151,7 @@ public:
 				sprite.setPosition(i, sprite_position_y);
 
 				const float tex_wall_scale = (static_cast<float>
-					(walls_[ray_data[i].wall_number]->texture_.getSize().x)
+					(walls_[ray_data_->at(i)[0].wall_number]->texture_.getSize().x)
 					/ wall_size_.x);
 
 				const int texture_position_x = d * tex_wall_scale;
@@ -2109,13 +2159,13 @@ public:
 				sprite.setTextureRect(sf::IntRect(
 					texture_position_x,
 					0, 1,
-					walls_[ray_data[i].wall_number]
+					walls_[ray_data_->at(i)[0].wall_number]
 					->texture_.getSize().y));
 
 				const float scale = 1.f / tex_wall_scale;
 
 				sprite.setScale(1, wall_height /
-					static_cast<float>(walls_[ray_data[i].wall_number]
+					static_cast<float>(walls_[ray_data_->at(i)[0].wall_number]
 						->texture_.getSize().y));
 
 				/*
@@ -2123,7 +2173,7 @@ public:
 				 * в зависимости от её расстояния до камеры.
 				 */
 				const sf::Uint8 wall_clr = 255.f / (1.f +
-					powf(ray_data[i].length, 2.f) *
+					powf(ray_data_->at(i)[0].length, 2.f) *
 					camera_->shading_coefficient_);
 
 				sprite.setColor(sf::Color(wall_clr,

@@ -11,12 +11,12 @@ namespace math
 	const float PI180 = PI / 180.f;
 	const float PI_180 = 180.f / PI;
 
-	inline float __fastcall toDeg(const float rad)
+	inline float toDeg(const float rad)
 	{
 		return rad * PI_180;
 	}
 
-	inline float __fastcall toRad(const float deg)
+	inline float toRad(const float deg)
 	{
 		return deg * PI180;
 	}
@@ -39,7 +39,7 @@ namespace math
 	}
 
 	//ГСПЧ алгоритм рандома по сиду
-	inline int rand(const int min, const int max, unsigned int seed)
+	inline int  __fastcall rand(const int min, const int max, unsigned int seed)
 	{
 		seed = 8253729 * seed + 2396403;
 		int rand = (8253729 * seed + 2396403) % (max + min + 1) - min;
@@ -54,7 +54,7 @@ namespace math
 	}
 
 	//ГСПЧ алгоритм рандома без сида
-	inline int rand(const int min, const int max)
+	inline int  __fastcall rand(const int min, const int max)
 	{
 		return rand(min, max, static_cast<int>(8253729 * (std::clock() / static_cast<float>(CLOCKS_PER_SEC))));
 	}
