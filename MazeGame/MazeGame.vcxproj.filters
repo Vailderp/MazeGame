@@ -29,9 +29,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Math.h">
-      <Filter>Исходные файлы</Filter>
-    </ClInclude>
     <ClInclude Include="Walls.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
@@ -51,6 +48,9 @@
       <Filter>Файлы заголовков\Library</Filter>
     </ClInclude>
     <ClInclude Include="gui_core.h">
+      <Filter>Файлы заголовков\Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Math.h">
       <Filter>Файлы заголовков\Library</Filter>
     </ClInclude>
   </ItemGroup>

@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <functional>
 #include "Math.h"
+#include "Time.h"
 
 namespace gui
 {
@@ -9,10 +10,10 @@ namespace gui
 	class GuiElement;
 
 	class Drawable;
-	
+
 	class Events
 	{
-		
+
 	public:
 		bool mouse_move;
 		bool mouse_down;
@@ -52,19 +53,25 @@ namespace gui
 	private:
 		void release(GuiElement* element) const;
 	};
-	
+
 	class GuiElement :
 		public sf::Drawable
 	{
 
 		friend class gui::Drawable;
-		
+
 		friend class gui::Events;
+
 	protected:
 		sf::Vector2f size_;
 		sf::Vector2f position_;
 		sf::Vector2f scale_;
 		sf::Vector2<sf::Vector2f> q_position_;
+
+		bool press_delay_enable_ = false;
+		long double press_delay_ = 1000;
+
+		bool is_active_ = true;
 
 		std::function<void()> on_down_function_ = []()->void
 		{
@@ -134,10 +141,43 @@ namespace gui
 			return *this;
 		}
 
+		GuiElement& setPressDelayEnable(const bool enable)
+		{
+			press_delay_enable_ = enable;
+			return *this;
+		}
+
+		bool getPressDelayEnable() const
+		{
+			return press_delay_enable_;
+		}
+
+		GuiElement& setPressDelay(const long double delay)
+		{
+			press_delay_ = delay;
+			return *this;
+		}
+
+		long double getPressDelay() const
+		{
+			return press_delay_;
+		}
+
 		[[nodiscard]]
 		sf::Vector2f getSize() const
 		{
 			return size_;
+		}
+
+		GuiElement& setActive(const bool enable)
+		{
+			is_active_ = enable;
+			return *this;
+		}
+
+		bool getActive() const
+		{
+			return  is_active_;
 		}
 
 		GuiElement& setOnDownFunction(const std::function<void()>& function)
@@ -152,7 +192,7 @@ namespace gui
 			return *this;
 		}
 
-		GuiElement& setOnOutFunctiont(const std::function<void()>& function)
+		GuiElement& setOnOutFunction(const std::function<void()>& function)
 		{
 			this->on_out_function_ = function;
 			return *this;
@@ -172,9 +212,9 @@ namespace gui
 		{
 			return this->on_out_function_;
 		}
-	
+
 	private:
-		
+
 		virtual void events(const Events events) = 0;
 
 	protected:
@@ -196,10 +236,15 @@ namespace gui
 		sf::Vector2f size_ = {};
 		sf::RenderWindow* render_window_;
 		sf::Texture background_texture_;
-
 		bool background_bool_ = false;
+	private:
 
 	public:
+
+		compl Drawable()
+		{
+
+		}
 
 		Drawable& setWindow(sf::RenderWindow* render_window)
 		{
@@ -319,43 +364,53 @@ namespace gui
 
 			for (GuiElement* const& it : gui_elements_)
 			{
-				Events events{};
 
-				events.position.x =
-					static_cast<float>(sf::Mouse::getPosition(*render_window_).x);
-				events.position.y =
-					static_cast<float>(sf::Mouse::getPosition(*render_window_).y);
-
-				if (events.position.x > it->q_position_.x.x * scale.x)
+				if (it->is_active_)
 				{
-					if (events.position.y < it->q_position_.y.y * scale.y)
+					Events events{};
+
+					events.position.x =
+						static_cast<float>(sf::Mouse::getPosition(*render_window_).x);
+					events.position.y =
+						static_cast<float>(sf::Mouse::getPosition(*render_window_).y);
+
+					if (events.position.x > it->q_position_.x.x * scale.x)
 					{
-						if (events.position.y > it->q_position_.x.y * scale.y)
+						if (events.position.y < it->q_position_.y.y * scale.y)
 						{
-							if (events.position.x < it->q_position_.y.x * scale.x)
+							if (events.position.y > it->q_position_.x.y * scale.y)
 							{
-								events.mouse_move = true;
-
-								events.inter_position.x = (events.position.x -
-									it->q_position_.x.x * scale.x) / scale.x;
-
-								events.inter_position.y = (events.position.y -
-									it->q_position_.x.y * scale.y) / scale.y;
-
-								if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+								if (events.position.x < it->q_position_.y.x * scale.x)
 								{
-									events.mouse_down = true;
+									events.mouse_move = true;
+
+									events.inter_position.x = (events.position.x -
+										it->q_position_.x.x * scale.x) / scale.x;
+
+									events.inter_position.y = (events.position.y -
+										it->q_position_.x.y * scale.y) / scale.y;
+
+									if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+									{
+										if (it->press_delay_enable_)
+										{
+												events.mouse_down = true;
+										}
+										else
+										{
+											events.mouse_down = true;
+										}
+									}
 								}
 							}
 						}
 					}
-				}
 
-				events.release(it);
-				
-				render_window_->draw(*it, transform);
-				
+					events.release(it);
+					render_window_->draw(*it, transform);
+				}
 			}
 		}
+
 	};
 }

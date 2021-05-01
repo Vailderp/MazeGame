@@ -93,5 +93,4 @@ namespace math
 	{
 		return a / b;
 	}
-
 };

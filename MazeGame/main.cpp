@@ -5,16 +5,16 @@
 #include <algorithm>
 int main()
 {
-	sf::RenderWindow window(sf::VideoMode(800, 800), "Maze Game!", sf::Style::Fullscreen);
+	sf::RenderWindow window(sf::VideoMode(800, 800), "Maze Game!", sf::Style::Default);
 	window.setPosition({ 10, 10 });
 	window.setVerticalSyncEnabled(true);
-	
+
 	const int sizeX = 10;
 	const int sizeY = 10;
 
 	v3d::Maze<sizeX, sizeY, 2> maze{};
 	v3d::Matrix lab = maze.generate();
-	/*v3d::Matrix lab = 
+	/*v3d::Matrix lab =
 	{   {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -26,28 +26,28 @@ int main()
 		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 		{1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	};*/
-	
+
 	v3d::World world(window, sf::Vector2f(250, 250), lab);
 	v3d::Camera camera(window);
 	world.setCamera(&camera.setRadius(1).setShadingCoefficient(10).setBackgroundRepeatingFov(360.0_deg));
 
 	sf::Vector2f spawn_position;
-	
+
 	for (int i = 0; i < world.getMatrixSize().x; i++)
 	{
 		for (int l = 0; l < world.getMatrixSize().y; l++)
 		{
-			if(world[i][l] == 0)
+			if (world[i][l] == 0)
 			{
 				spawn_position = { i * world.getWallSize().x
 					+ world.getWallSize().x / 2,
-					l * world.getWallSize().y + 
-					world.getWallSize().y / 2};
+					l * world.getWallSize().y +
+					world.getWallSize().y / 2 };
 				break;
 			}
 		}
 	}
-	
+
 	for (int i = 0; i < world.getMatrixSize().x; i++)
 	{
 		for (int l = 0; l < world.getMatrixSize().y; l++)
@@ -58,7 +58,7 @@ int main()
 			}
 		}
 	}
-	
+
 	camera.setPosition(spawn_position.x, spawn_position.y);
 
 	sf::Vector2f r_size(world.getSize().x / sizeX,
@@ -94,16 +94,14 @@ int main()
 	float fps_data = 0;
 	const float speed = 0.45f;
 
-
 	world
-	<< new CircleWall
-	<< new v3d::MainWall("data/tex/wall5.png")
-	<< new v3d::MainWall("data/tex/wall2.png");
-
+		<< new CircleWall
+		<< new v3d::MainWall("data/tex/wall5.png")
+		<< new v3d::MainWall("data/tex/wall2.png");
 
 	v3d::Timer<float> timer_esc;
 	Menu menu(&window, &camera);
-	
+
 	while (window.isOpen())
 	{
 		//FPS
@@ -131,30 +129,29 @@ int main()
 				menu.setActive(true);
 				menu.setActiveSettings(false);
 			}
-			
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 		{
-			world.camera_move_with_cls(camera, 
-				cosf(camera.getRotation()) * speed, 
+			world.camera_move_with_cls(camera,
+				cosf(camera.getRotation()) * speed,
 				sinf(camera.getRotation()) * speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 		{
-			world.camera_move_with_cls(camera, 
-				-cosf(camera.getRotation()) * speed, 
+			world.camera_move_with_cls(camera,
+				-cosf(camera.getRotation()) * speed,
 				-sinf(camera.getRotation()) * speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 		{
-			world.camera_move_with_cls(camera, 
-				cosf(camera.getRotation() + 90) * speed, 
+			world.camera_move_with_cls(camera,
+				cosf(camera.getRotation() + 90) * speed,
 				sinf(camera.getRotation() + 90) * speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 		{
 			world.camera_move_with_cls(camera,
-				cosf(camera.getRotation() - 90) * speed, 
+				cosf(camera.getRotation() - 90) * speed,
 				sinf(camera.getRotation() - 90) * speed);
 		}
 		//window_position = window.getPosition();
@@ -171,7 +168,7 @@ int main()
 			window.draw(world);
 			if (!menu.active())
 			{
-			sf::Vector2i mouse_pos1 = sf::Mouse::getPosition(window);
+				sf::Vector2i mouse_pos1 = sf::Mouse::getPosition(window);
 				camera.rotate(math::toRad(static_cast<float>(mouse_pos1.x - mouse_pos0.x) * speed)).windowDeltaY_unary((static_cast<float>(mouse_pos0.y) - static_cast<float>(mouse_pos1.y)) * speed * 10);
 				sf::Mouse::setPosition(sf::Vector2i(window.getSize().x / 2, window.getSize().y / 2));
 			}
@@ -179,19 +176,6 @@ int main()
 
 		menu.draw();
 
-
-
-
-
-
-
-
-
-
-
-
-
-		
 		//FPS
 		Time = clock.getElapsedTime();
 		float lastTime = Time.asSeconds();
@@ -207,7 +191,6 @@ int main()
 		window.draw(FPStext);
 		//window0.display();
 		window.display();
-		
 	}
 
 	return EXIT_SUCCESS;

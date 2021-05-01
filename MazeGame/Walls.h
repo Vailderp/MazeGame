@@ -3,7 +3,6 @@
 #include "Engine3d.h"
 #include "Gui.h"
 
-
 /*
  * С помощью Engine3d.h
  * можно создавать стены с неограниченными возможностями
@@ -11,7 +10,6 @@
 
 class CircleWall final : public v3d::Wall
 {
-
 public:
 	CircleWall()
 	{
@@ -49,7 +47,7 @@ public:
 				button_play_.setTexture("data/tex/8.png");
 			});*/
 	}
-	
+
 protected:
 	void wall_states(const v3d::RayCaster::RayData& data) override
 	{
@@ -71,7 +69,7 @@ protected:
 			score_text_.setString(std::to_string(score_.x) + " : " + std::to_string(score_.y));
 			circle_shape_.setPosition(500, 500);
 		}
-		
+
 		if (circle_shape_.getPosition().y + radius_ > 1000)
 		{
 			speed_.y = -speed_.y;
@@ -109,14 +107,14 @@ protected:
 				player_y_.move(0, -powf(abs(player_y_.getPosition().y + 100 - circle_shape_.getPosition().y) / 2, 0.5f));
 			}
 		}
-		
-			render_texture_.clear(sf::Color::Blue);
-			render_texture_.draw(mouse_cursor_shape_);
-			render_texture_.draw(circle_shape_);
-			render_texture_.draw(player_x_);
-			render_texture_.draw(player_y_);
-			render_texture_.draw(score_text_);
-			this->texture_ = render_texture_.getTexture();
+
+		render_texture_.clear(sf::Color::Blue);
+		render_texture_.draw(mouse_cursor_shape_);
+		render_texture_.draw(circle_shape_);
+		render_texture_.draw(player_x_);
+		render_texture_.draw(player_y_);
+		render_texture_.draw(score_text_);
+		this->texture_ = render_texture_.getTexture();
 	}
 
 	void wall_states_center_ray(const v3d::RayCaster::RayData& data, const sf::Vector2<float> center_ray) override
@@ -142,7 +140,7 @@ protected:
 	}
 
 private:
-	sf::Vector2f speed_ = { 35.5f, 0};
+	sf::Vector2f speed_ = { 35.5f, 0 };
 	v3d::Timer<float> timer_;
 	sf::CircleShape circle_shape_;
 	sf::RenderTexture render_texture_;
@@ -159,4 +157,3 @@ private:
 	gui::Drawable drawable_;
 	gui::Button button_play_;*/
 };
-

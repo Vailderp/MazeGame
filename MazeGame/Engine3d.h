@@ -8,7 +8,6 @@
 #define SFML_DYNAMIC
 #endif
 
-
 #ifdef V3D_DEVELOPER
 
  //ОТКРЫТЫЙ МОДИФИКАТОР ДОСТУПА
@@ -26,7 +25,7 @@
 #endif
 
 /*
- * Если конфигурация решения Debug, то выбираем -d .lib файлы 
+ * Если конфигурация решения Debug, то выбираем -d .lib файлы
  */
 #ifdef _DEBUG
 #pragma comment(lib, "lib/sfml-graphics-d.lib")
@@ -49,9 +48,9 @@
 #include <fstream>
 #include <amp.h>
 
-/*
- * Проверяем тип имени на тип и мени с плавающей точкой
- */
+ /*
+  * Проверяем тип имени на тип и мени с плавающей точкой
+  */
 template<typename Type>
 constexpr bool is_float_type =
 std::is_same<Type, float>::value ||
@@ -68,9 +67,7 @@ inline float operator "" _deg(const long double deg)
  */
 class v3d
 {
-	
 public:
-
 
 	/*
 	 * Менеджер файлов - статический класс для сохранения классов,
@@ -78,7 +75,7 @@ public:
 	 */
 
 	class FileManager;
-	
+
 	class Saveable
 	{
 	public:
@@ -86,15 +83,14 @@ public:
 
 	VAILDER_3D_API_ACCESS_MODIFER_1:
 		friend class FileManager;
-	
+
 	VAILDER_3D_API_ACCESS_MODIFER_2:
 
 		virtual void saveToFile(const std::string& name) = 0;
-		
+
 		virtual void openFromFile(const std::string& name) = 0;
-		
 	};
-	
+
 	class FileManager
 	{
 	public:
@@ -188,7 +184,7 @@ public:
 			file.close();
 		}
 
-		static void saveToFile(Saveable *saveable, const std::string& name)
+		static void saveToFile(Saveable* saveable, const std::string& name)
 		{
 			saveable->saveToFile(name);
 		}
@@ -197,9 +193,8 @@ public:
 		{
 			saveable->openFromFile(name);
 		}
-		
 	};
-	
+
 public:
 
 	/*
@@ -232,7 +227,7 @@ public:
 		 */
 		static Time seconds()
 		{
-			return static_cast<Time>(std::clock()) / 
+			return static_cast<Time>(std::clock()) /
 				static_cast<Time>(CLOCKS_PER_SEC);
 		}
 
@@ -272,7 +267,6 @@ public:
 		Timer() :
 			d_time_(Clock<Time>::seconds())
 		{
-
 		}
 
 		Time seconds()
@@ -314,7 +308,7 @@ public:
 	 */
 	template<const unsigned int SizeX,
 		const unsigned int SizeY,
-	const unsigned Seed>
+		const unsigned Seed>
 		class Maze : public Saveable
 	{
 	public:
@@ -331,18 +325,18 @@ public:
 		{
 			return Seed;
 		}
-	
+
 	VAILDER_3D_API_ACCESS_MODIFER_1:
 
 		/*
 		 * Развёрнутый ключ генерации, имеющий только 4 символа
 		 */
 		unsigned __int8 seed_[64] = {};
-		
+
 		Matrix matrix_;
 
 	VAILDER_3D_API_ACCESS_MODIFER_1:
-		
+
 		/*
 		 * Энумераторы поворота
 		 */
@@ -367,13 +361,11 @@ public:
 				rot(Rot::RotNull),
 				pos(sf::Vector2<int>())
 			{
-
 			}
 			ret(const Rot rot, const sf::Vector2<int> pos) :
 				rot(rot),
 				pos(pos)
 			{
-
 			}
 		};
 
@@ -670,7 +662,7 @@ public:
 							}
 						}
 					}
-					
+
 					maze_time++;
 					if (maze_time == 64)
 					{
@@ -678,13 +670,13 @@ public:
 					}
 				}
 			}
-			
+
 			matrix_ = matrix;
 			return matrix_;
 		}
 
 	public:
-		
+
 		/*
 		 * Сохранить лабиринт в файл
 		 */
@@ -699,15 +691,15 @@ public:
 			}
 			else
 			{
-				ofstream.write(reinterpret_cast<char*>(&this->matrix_), 
+				ofstream.write(reinterpret_cast<char*>(&this->matrix_),
 					sizeof(Matrix));
 			}
 			ofstream.close();
 		}
 
-	   /*
-		* Открыть лабиринт из файла
-		*/
+		/*
+		 * Открыть лабиринт из файла
+		 */
 		void openFromFile(const std::string& name) override
 		{
 			std::ifstream ifstream;
@@ -726,7 +718,6 @@ public:
 			}
 			ifstream.close();
 		}
-		
 	};
 
 	/*
@@ -736,17 +727,17 @@ public:
 	class Camera;
 
 VAILDER_3D_API_ACCESS_MODIFER_1:
-	
-   /*
-	* Объявляем класс RayCaster,
-	* чтобы обозначить его как friend class в других классах.
-	*/
+
+	/*
+	 * Объявляем класс RayCaster,
+	 * чтобы обозначить его как friend class в других классах.
+	 */
 	class RayCaster;
 
-   /*
-	* Объявляем класс World,
-	* чтобы обозначить его как friend class в других классах.
-	*/
+	/*
+	 * Объявляем класс World,
+	 * чтобы обозначить его как friend class в других классах.
+	 */
 	class World;
 
 VAILDER_3D_API_ACCESS_MODIFER_2:
@@ -760,15 +751,14 @@ VAILDER_3D_API_ACCESS_MODIFER_2:
 		const float radius;
 
 		explicit CameraSave(const float fov = 60.f,
-			const float zoom = 3.f, 
+			const float zoom = 3.f,
 			const float shading_coefficient = 40.f,
 			const float radius = 16.f) :
-		fov(fov),
-		zoom(zoom),
-		shading_coefficient(shading_coefficient),
-		radius(16.f)
+			fov(fov),
+			zoom(zoom),
+			shading_coefficient(shading_coefficient),
+			radius(16.f)
 		{
-			
 		}
 	};
 
@@ -779,19 +769,16 @@ public:
 	 */
 	class RayCaster
 	{
-
-	
 	public:
 
 		RayCaster()
 		{
-			
 		}
 
-	   /*
-		* Объявляем класс RayData,
-		* чтобы обозначить его как friend class в других классах.
-		*/
+		/*
+		 * Объявляем класс RayData,
+		 * чтобы обозначить его как friend class в других классах.
+		 */
 		class RayData;
 
 		/*
@@ -799,9 +786,7 @@ public:
 		 */
 		~RayCaster()
 		{
-			
 		}
-
 
 		/*
 		 * Энумераторы сторон стены
@@ -836,7 +821,6 @@ public:
 				rotation(0),
 				direction(dir::none)
 			{
-
 			}
 
 			RayData(const float pos_x,
@@ -853,7 +837,6 @@ public:
 				rotation(rotation),
 				direction(dir)
 			{
-
 			}
 
 			/*
@@ -873,29 +856,28 @@ public:
 
 		typedef std::vector<RayData> pixel_depth;
 		typedef std::vector<pixel_depth> pixel_depth_vector;
-		
-		VAILDER_3D_API_ACCESS_MODIFER_1:
+
+	VAILDER_3D_API_ACCESS_MODIFER_1:
 
 		bool sort_enable_ = true;
-	
-		public:
 
-			void setSortEnable(const bool sort_enable) 
-			{
-				sort_enable_ = sort_enable;
-			}
+	public:
 
-			bool getSortEnable() const
-			{
-				return sort_enable_;
-			}
-		
+		void setSortEnable(const bool sort_enable)
+		{
+			sort_enable_ = sort_enable;
+		}
+
+		bool getSortEnable() const
+		{
+			return sort_enable_;
+		}
+
 		void __fastcall RayCast(
-			Camera * const camera,
-			const World *world,
+			Camera* const camera,
+			const World* world,
 			pixel_depth_vector* t_ray_data_vec) const
 		{
-			
 			/*Условные обозначения
 				up
 			 ________
@@ -909,7 +891,7 @@ public:
 			/*
 			 * Отношение угла обзора к количеству лучей
 			 */
-			float frn = camera->fov_ / 
+			float frn = camera->fov_ /
 				static_cast<float>(camera->window_size_.x);
 
 			/*
@@ -929,10 +911,10 @@ public:
 				 * Для дальнейшей его сортировки
 				 */
 
-				/*
-				 * Угол данного луча
-				 */
-				const float angle = camera->rotation_ + 
+				 /*
+				  * Угол данного луча
+				  */
+				const float angle = camera->rotation_ +
 					(static_cast<float>(f) * (frn));
 
 				/*
@@ -966,9 +948,9 @@ public:
 					{
 						if (world->matrix_[vjx][vjy] != 0)
 						{
-							ray_data_vec.emplace_back(vcx, vcy, 
-								math::fast_hypot(vcx - camera->position_.x, 
-									vcy - camera->position_.y), 
+							ray_data_vec.emplace_back(vcx, vcy,
+								math::fast_hypot(vcx - camera->position_.x,
+									vcy - camera->position_.y),
 								world->matrix_[vjx][vjy], angle, dir::left);
 						}
 					}
@@ -1006,7 +988,7 @@ public:
 					{
 						vcx += vAA;
 						vcy += vBB;
-						vjx = math::getMatrixPos(vcx, 
+						vjx = math::getMatrixPos(vcx,
 							world->wall_size_.x);
 						vjy = math::getMatrixPos(vcy,
 							world->wall_size_.y);
@@ -1065,17 +1047,17 @@ public:
 							}
 						);
 					}
-					
+
 					t_ray_data_vec->at(r) = ray_data_vec;
 				}
 
 				else if (cos_angle < 0 && sin_angle > 0)
 				{
 					//Ver
-					const float vA = camera->position_.x - 
+					const float vA = camera->position_.x -
 						math::getMatrixPos(camera->position_.x,
 							world->wall_size_.x) * world
-					->wall_size_.x;
+						->wall_size_.x;
 					const float vB = vA * tan_angle;
 					float vcx = camera->position_.x - vA;
 					float vcy = camera->position_.y - vB;
@@ -1116,7 +1098,7 @@ public:
 						{
 							ray_data_vec.emplace_back(hcx, hcy,
 								math::fast_hypot(hcx - camera->position_.x,
-									hcy - camera->position_.y), 
+									hcy - camera->position_.y),
 								world->matrix_[hjx][hjy], angle, dir::up);
 						}
 					}
@@ -1152,7 +1134,7 @@ public:
 					{
 						hcx += hAA;
 						hcy += hBB;
-						hjx = math::getMatrixPos(hcx, 
+						hjx = math::getMatrixPos(hcx,
 							world->wall_size_.x);
 						hjy = math::getMatrixPos(hcy,
 							world->wall_size_.y);
@@ -1163,7 +1145,7 @@ public:
 							{
 								ray_data_vec.emplace_back(hcx, hcy,
 									math::fast_hypot(hcx - camera->position_.x,
-										hcy - camera->position_.y), 
+										hcy - camera->position_.y),
 									world->matrix_[hjx][hjy], angle, dir::up);
 								break;
 							}
@@ -1188,7 +1170,6 @@ public:
 					}
 
 					t_ray_data_vec->at(r) = ray_data_vec;
-
 				}
 
 				else if (cos_angle > 0 && sin_angle < 0)
@@ -1196,13 +1177,13 @@ public:
 					//Ver
 					const float vA = world->wall_size_.x - (camera
 						->position_.x -
-						math::getMatrixPos(camera->position_.x, 
+						math::getMatrixPos(camera->position_.x,
 							world->wall_size_.x) *
 						world->wall_size_.x);
 					const float vB = vA * tan_angle;
 					float vcx = camera->position_.x + vA;
 					float vcy = camera->position_.y + vB;
-					int vjx = math::getMatrixPos(vcx, 
+					int vjx = math::getMatrixPos(vcx,
 						world->wall_size_.x);
 					int vjy = math::getMatrixPos(vcy,
 						world->wall_size_.y);
@@ -1224,7 +1205,7 @@ public:
 					const float hB = camera->position_.y -
 						math::getMatrixPos(camera->position_.y,
 							world->wall_size_.y)
-					* world->wall_size_.y;
+						* world->wall_size_.y;
 					const float hA = hB * ctg_angle;
 					float hcx = camera->position_.x - hA;
 					float hcy = camera->position_.y - hB;
@@ -1237,7 +1218,7 @@ public:
 					{
 						if (world->matrix_[hjx][hjy] != 0)
 						{
-							ray_data_vec.emplace_back(hcx, hcy, 
+							ray_data_vec.emplace_back(hcx, hcy,
 								math::fast_hypot(hcx - camera->position_.x,
 									hcy - camera->position_.y),
 								world->matrix_[hjx][hjy], angle, dir::down);
@@ -1311,7 +1292,6 @@ public:
 					}
 
 					t_ray_data_vec->at(r) = ray_data_vec;
-
 				}
 
 				else if (cos_angle < 0 && sin_angle < 0)
@@ -1334,8 +1314,8 @@ public:
 						if (world->matrix_[vjx][vjy] != 0)
 						{
 							ray_data_vec.emplace_back(vcx, vcy,
-								math::fast_hypot(vcx - camera->position_.x, 
-									vcy - camera->position_.y), 
+								math::fast_hypot(vcx - camera->position_.x,
+									vcy - camera->position_.y),
 								world->matrix_[vjx][vjy], angle, dir::right);
 						}
 					}
@@ -1358,9 +1338,9 @@ public:
 					{
 						if (world->matrix_[hjx][hjy] != 0)
 						{
-							ray_data_vec.emplace_back(hcx, hcy, 
-								math::fast_hypot(hcx - camera->position_.x, 
-									hcy - camera->position_.y), 
+							ray_data_vec.emplace_back(hcx, hcy,
+								math::fast_hypot(hcx - camera->position_.x,
+									hcy - camera->position_.y),
 								world->matrix_[hjx][hjy], angle, dir::down);
 						}
 					}
@@ -1371,9 +1351,9 @@ public:
 					{
 						vcx -= vAA;
 						vcy -= vBB;
-						vjx = math::getMatrixPos(vcx - 0.1f, 
+						vjx = math::getMatrixPos(vcx - 0.1f,
 							world->wall_size_.x);
-						vjy = math::getMatrixPos(vcy, 
+						vjy = math::getMatrixPos(vcy,
 							world->wall_size_.y);
 						if (vjx < world->matrix_size_.x && vjx >= 0 &&
 							vjy < world->matrix_size_.y && vjy >= 0)
@@ -1381,8 +1361,8 @@ public:
 							if (world->matrix_[vjx][vjy] != 0)
 							{
 								ray_data_vec.emplace_back(vcx, vcy,
-									math::fast_hypot(vcx - camera->position_.x, 
-										vcy - camera->position_.y), 
+									math::fast_hypot(vcx - camera->position_.x,
+										vcy - camera->position_.y),
 									world->matrix_[vjx][vjy], angle, dir::right);
 								break;
 							}
@@ -1431,34 +1411,29 @@ public:
 							}
 						);
 					}
-					
+
 					t_ray_data_vec->at(r) = ray_data_vec;
 				}
-
 			}
-
 		}
-
 	};
 
 public:
 	class Wall
 	{
-
 		friend class World;
-		
+
 	protected:
-		
+
 		sf::Texture texture_;
-	
+
 	public:
 
 		virtual compl Wall() = default;
-		
+
 		explicit Wall(const sf::Texture& texture = {}) :
 			texture_(texture)
 		{
-			
 		}
 
 		/*
@@ -1474,13 +1449,12 @@ public:
 		{
 			return texture_;
 		}
-		
+
 		virtual void wall_states(const RayCaster::RayData& data) = 0;
 
 		virtual void wall_states_center_ray(
 			const RayCaster::RayData& data,
 			const sf::Vector2<float> center_ray) = 0;
-
 	};
 
 	/*
@@ -1503,14 +1477,13 @@ public:
 		{
 			this->texture_ = this->texture_;
 		}
-		
+
 		void wall_states_center_ray(
 			const RayCaster::RayData& data,
 			const sf::Vector2<float> center_ray) override
 		{
 			this->texture_ = this->texture_;
 		}
-
 	};
 
 	/*
@@ -1519,7 +1492,6 @@ public:
 	 */
 	class Sprite
 	{
-		
 		friend class World;
 
 #ifdef V3D_FUNCTIONAL
@@ -1541,48 +1513,45 @@ public:
 #endif
 
 	public:
-		
+
 		virtual compl Sprite() = default;
 
 		explicit Sprite(
 			const sf::Vector3<float> position = {},
 			const sf::Vector2<float> size = {},
 			const sf::Texture& texture = {}) :
-		
+
 			position_(position),
 			size_(size),
 			texture_(texture)
 		{
-
 		}
 
 		Sprite(
-			const float x, 
-			const float y, 
-			const float z, 
+			const float x,
+			const float y,
+			const float z,
 			const float width,
-			const float height, 
+			const float height,
 			const sf::Texture& texture = {}) :
-		
-			position_({x, y, z}),
-			size_({width, height}),
+
+			position_({ x, y, z }),
+			size_({ width, height }),
 			texture_(texture)
 		{
-			
 		}
 
 		explicit Sprite(const sf::Texture& texture) :
 			texture_(texture)
 		{
-			
 		}
-	
+
 	VAILDER_3D_API_ACCESS_MODIFER_2:
-		
+
 		/*
 		 * X - in the World
 		 * Y - in the World
-		 * Z - on pseudo 3D World - uplift
+		 * Z - in pseudo 3D World - uplift
 		 */
 		sf::Vector3<float> position_;
 
@@ -1597,11 +1566,11 @@ public:
 		 * For virtual void sprite_states(const RayCaster::RayData& data);
 		 */
 		sf::Texture texture_;
-	
+
 	public:
 
 		VAILDER_3D_SPRITE_API_RESULT
-		setTexture(const sf::Texture& texture)
+			setTexture(const sf::Texture& texture)
 		{
 			texture_ = texture;
 			VAILDER_3D_SPRITE_API_RETURN
@@ -1613,14 +1582,14 @@ public:
 		}
 
 		VAILDER_3D_SPRITE_API_RESULT
-		setPosition(const sf::Vector3<float> position)
+			setPosition(const sf::Vector3<float> position)
 		{
 			position_ = position;
 			VAILDER_3D_SPRITE_API_RETURN
 		}
 
 		VAILDER_3D_SPRITE_API_RESULT
-		setPosition(const float x, const float y, const float z)
+			setPosition(const float x, const float y, const float z)
 		{
 			position_ = { x, y, z };
 			VAILDER_3D_SPRITE_API_RETURN
@@ -1657,8 +1626,6 @@ public:
 		{
 			return this;
 		}
-		
-		
 	};
 
 	/*
@@ -1671,12 +1638,11 @@ public:
 		public sf::Drawable,
 		public sf::Transformable
 	{
-
 		friend void __fastcall RayCaster::RayCast(
 			Camera* const camera,
 			const World* world,
 			RayCaster::pixel_depth_vector* t_ray_data_vec) const;
-	
+
 	public:
 
 #ifdef V3D_FUNCTIONAL
@@ -1696,7 +1662,6 @@ public:
 #define VAILDER_3D_WORLD_API_RETURN
 
 #endif
-		
 
 		sf::Vector2<float> getSize() const
 		{
@@ -1729,31 +1694,29 @@ public:
 		}
 
 		VAILDER_3D_WORLD_API_RESULT
-		setCamera(Camera* camera)
+			setCamera(Camera* camera)
 		{
 			camera_ = camera;
-			
+
 			VAILDER_3D_WORLD_API_RETURN
 		}
-
 
 		VAILDER_3D_WORLD_API_RESULT
-		setBackgroundTexture(sf::Texture* texture)
+			setBackgroundTexture(sf::Texture* texture)
 		{
-			
 			background_texture_ = texture;
-			
+
 			VAILDER_3D_WORLD_API_RETURN
 		}
 
-		VAILDER_3D_API_ACCESS_MODIFER_2:
+	VAILDER_3D_API_ACCESS_MODIFER_2:
 
 		sf::Vector2<float> size_;
-		
+
 		Matrix matrix_;
-		
+
 		sf::Vector2<int> matrix_size_;
-		
+
 		sf::Vector2<float> wall_size_;
 
 		/*
@@ -1767,7 +1730,7 @@ public:
 		 * которые унаследовали абстрактный класс Wall.
 		 */
 		std::vector<Wall*> walls_{};
-		
+
 		std::vector<Sprite*> sprites_{};
 
 		Camera* camera_ = nullptr;
@@ -1781,23 +1744,23 @@ public:
 		 * Текстура заднего плана
 		 */
 		sf::Texture background_texture_p_;
-		
+
 		sf::Texture* background_texture_ = nullptr;
 
 	public:
 
 		explicit World(sf::RenderTarget& target,
-		               const sf::Vector2<float> size =
-			               sf::Vector2<float>(1024, 1024),
-		               Matrix matrix = generateMatrix(32, 32, 1)) :
+			const sf::Vector2<float> size =
+			sf::Vector2<float>(1024, 1024),
+			Matrix matrix = generateMatrix(32, 32, 1)) :
 
-				size_(size),
-				matrix_(matrix),
-				matrix_size_({ static_cast<int>(matrix.size()),
-				static_cast<int>(matrix[0].size()) }),
-				wall_size_({ size.x / static_cast<float>(matrix_size_.x),
-				size.y / static_cast<float>(matrix_size_.y) }),
-				floor_color_(0, 150, 0)
+			size_(size),
+			matrix_(matrix),
+			matrix_size_({ static_cast<int>(matrix.size()),
+			static_cast<int>(matrix[0].size()) }),
+			wall_size_({ size.x / static_cast<float>(matrix_size_.x),
+			size.y / static_cast<float>(matrix_size_.y) }),
+			floor_color_(0, 150, 0)
 		{
 			walls_.push_back(new MainWall);
 			walls_.push_back(new MainWall);
@@ -1812,15 +1775,15 @@ public:
 		 * Добавление новой стены в мир
 		 */
 		VAILDER_3D_WORLD_API_RESULT
-		addWallType(Wall* wall)
+			addWallType(Wall* wall)
 		{
 			walls_.push_back(wall);
-			
+
 			VAILDER_3D_WORLD_API_RETURN
 		}
 
 		VAILDER_3D_WORLD_API_RESULT
-		addSpriteType(Sprite* sprite)
+			addSpriteType(Sprite* sprite)
 		{
 			sprites_.push_back(sprite);
 
@@ -1829,7 +1792,7 @@ public:
 
 		void addWallTypes(std::initializer_list<Wall*> wall_list)
 		{
-			for (Wall *const &wall : wall_list)
+			for (Wall* const& wall : wall_list)
 			{
 				walls_.push_back(wall);
 			}
@@ -1864,21 +1827,20 @@ public:
 		 */
 
 	VAILDER_3D_API_ACCESS_MODIFER_1:
-		RayCaster::pixel_depth_vector *ray_data_ = new RayCaster::pixel_depth_vector;
+		RayCaster::pixel_depth_vector* ray_data_ =
+			new RayCaster::pixel_depth_vector;
 
 	VAILDER_3D_API_ACCESS_MODIFER_2:
-		
+
 		void draw(sf::RenderTarget& target,
 			sf::RenderStates states) const override
 		{
-
 			if (camera_->window_size_.x != ray_data_->size())
 			{
 				ray_data_->resize(camera_->window_size_.x);
 			}
-		
-			ray_caster_api_.RayCast(camera_, this, ray_data_);
 
+			ray_caster_api_.RayCast(camera_, this, ray_data_);
 
 			/*
 			* Вектор использованых номеров стен
@@ -1897,7 +1859,7 @@ public:
 
 			/*
 			 * Процедура отбора уникальных номеров стен,
-			 * для уменьшения количества вызовав виртуальных функций стен
+			 * для уменьшения количества вызовов виртуальных функций стен
 			 * и их сортировка средствами STL
 			 */
 			std::unique_copy(
@@ -1923,7 +1885,6 @@ public:
 
 			switch (ray_data_->at(static_cast<int>(camera_
 				->window_size_2_.x))[0].direction) {
-
 			case RayCaster::dir::left:
 				d = fmodf(ray_data_->at(static_cast<int>(camera_
 					->window_size_2_.x))[0].position_y,
@@ -1953,7 +1914,6 @@ public:
 
 			default:
 				break;
-
 			}
 
 			/*
@@ -1964,7 +1924,7 @@ public:
 			 */
 			walls_[ray_data_->at(static_cast<int>(camera_->window_size_2_.x))
 				[0].wall_number]->wall_states_center_ray(
-				ray_data_->at(static_cast<int>(camera_->window_size_2_.x))
+					ray_data_->at(static_cast<int>(camera_->window_size_2_.x))
 					[0], {
 					static_cast<float>(d * ((static_cast<float>(walls_
 					[ray_data_->at(
@@ -1976,21 +1936,21 @@ public:
 						[ray_data_->at(
 							static_cast<int>(camera_->window_size_2_.x))
 						[0].wall_number]
-					                   ->texture_.getSize().y) - 
-					((camera_->window_size_2_.y - 
-						(camera_->window_delta_y_ - 
+									   ->texture_.getSize().y) -
+					((camera_->window_size_2_.y -
+						(camera_->window_delta_y_ -
 							(camera_->render_constant_ / (ray_data_->at(
 							static_cast<int>(camera_->window_size_2_.x))
 							[0].length *
 							cosf(ray_data_->at(
 								static_cast<int>(camera_->window_size_2_.x))
 								[0].rotation - camera_->
-								rotation_))) / 2.f)) * 
+								rotation_))) / 2.f)) *
 						(static_cast<float>(walls_
 							[ray_data_->
 						at(static_cast<int>(camera_->window_size_2_.x))
 							[0].wall_number]->texture_.getSize().y) / (
-						camera_->render_constant_ / 
+						camera_->render_constant_ /
 								(ray_data_->at(
 									static_cast<int>(camera_->window_size_2_.x))
 									[0].length * cosf(
@@ -1998,9 +1958,7 @@ public:
 									static_cast<int>(camera_->window_size_2_.x))
 										[0].rotation - camera_->
 								rotation_)))))
-				});
-
-
+					});
 
 			unique_walls_.clear();
 
@@ -2024,7 +1982,6 @@ public:
 			const float delta_color_b(static_cast<float>(floor_color_.b)
 				/ floor_delta);
 
-
 			for (auto i = camera_->window_delta_y_;
 				i < camera_->window_size_.y; i++)
 			{
@@ -2034,7 +1991,7 @@ public:
 
 				rectangle_shape_floor_.setFillColor(
 					sf::Color(it * delta_color_r,
-					it * delta_color_g, it * delta_color_b));
+						it * delta_color_g, it * delta_color_b));
 
 				target.draw(rectangle_shape_floor_,
 					this->getTransform());
@@ -2045,8 +2002,8 @@ public:
 			 */
 			sf::Sprite background_sprite{};
 			background_sprite.setTexture(*background_texture_);
-			
-			background_sprite.setScale(1, 
+
+			background_sprite.setScale(1,
 				(static_cast<float>(camera_->window_size_.y)
 					+ camera_->window_size_2_.y) /
 				static_cast<float>(background_texture_->getSize().y));
@@ -2058,30 +2015,29 @@ public:
 				if (ray_data_->at(i)[0].rotation < 0)
 				{
 					a = camera_->background_repeating_fov_
-					- abs(fmodf(ray_data_->at(i)[0].rotation,
-						camera_->background_repeating_fov_));
+						- abs(fmodf(ray_data_->at(i)[0].rotation,
+							camera_->background_repeating_fov_));
 				}
 				else
 				{
 					a = abs(fmodf(ray_data_->at(i)[0].rotation,
 						camera_->background_repeating_fov_));
 				}
-				
+
 				background_sprite.setPosition(sf::Vector2f(i,
 					-static_cast<float>(camera_->window_size_.y)
-					+ camera_->window_delta_y_ - 
+					+ camera_->window_delta_y_ -
 					camera_->window_size_2_.y));
-				
+
 				background_sprite.setTextureRect(
-					sf::IntRect( a * 
+					sf::IntRect(a *
 						(static_cast<float>(background_texture_->getSize().x)
 							/ camera_->background_repeating_fov_),
-						0, 1, 
+						0, 1,
 						background_texture_->getSize().y));
 
 				target.draw(background_sprite, this->getTransform());
 			}
-			
 
 			/*
 			 * Отрисовка стен
@@ -2090,14 +2046,12 @@ public:
 
 			for (auto i = 0; i < camera_->window_size_.x; i++)
 			{
-
 				/*
 				 * В зависимости от того, на какую сторону падает луч,
 				 * находим столб текстуры
 				 */
 
 				switch (ray_data_->at(i)[0].direction) {
-
 				case RayCaster::dir::left:
 					d = fmodf(ray_data_->at(i)[0].position_y,
 						wall_size_.y);
@@ -2123,7 +2077,6 @@ public:
 
 				default:
 					break;
-
 				}
 
 				/*
@@ -2182,6 +2135,22 @@ public:
 				 * Отрисовка данного столба
 				 */
 				target.draw(sprite, this->getTransform());
+
+
+				
+				  /*
+				    ╔═══╗░░░░░░╔╗░░░░░░░░░░░░
+					║╔═╗║░░░░░╔╝╚╗░░░░░░░░░░░
+					║╚══╦══╦═╦╬╗╔╬══╗ ╔══╦══╦╗
+					╚══╗║╔╗║╔╬╣║║║║═╣ ║╔╗║╔╗╠╣
+					║╚═╝║╚╝║║║║║╚╣║═╣ ║╔╗║╚╝║║
+					╚═══╣╔═╩╝╚╝╚═╩══╝ ╚╝╚╣╔═╩╝
+					░░░░║║░░░░░░░░░░░░░░ ║║░░░
+					░░░░╚╝░░░░░░░░░░░░░░ ╚╝░░░
+					(SPRITE SCRIPT)
+					*/
+
+
 			}
 		}
 
@@ -2217,44 +2186,41 @@ public:
 				camera_->move(0, step_y);
 			}
 		}
-
 	};
 
 	/*
 	 * Класс камеры.
 	 */
-	
+
 	class Camera : protected Saveable
 	{
 		/*
 		 * Дружелюбные классы
 		 */
-		
+
 		friend class RayCaster;
 
 		friend class World;
 
-
 #ifdef V3D_FUNCTIONAL
 
-//РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ФУНККЦИИ
+		//РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ФУНККЦИИ
 #define VAILDER_3D_CAMERA_API_RESULT Camera&
 
 //ВОЗВРАЩАЕМОЕ ФУНКЦИИ
 #define VAILDER_3D_CAMERA_API_RETURN return *this;
-		
+
 #else
 
-//РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ФУНККЦИИ
+		//РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ФУНККЦИИ
 #define VAILDER_3D_CAMERA_API_RESULT void
 
 //ВОЗВРАЩАЕМОЕ ФУНКЦИИ
 #define VAILDER_3D_CAMERA_API_RETURN
-		
+
 #endif
 
-
-		VAILDER_3D_API_ACCESS_MODIFER_1:
+	VAILDER_3D_API_ACCESS_MODIFER_1:
 
 		/*
 		 * Переопределение размеров холста
@@ -2271,19 +2237,19 @@ public:
 			window_size_2_.y = static_cast<float>(target_size.y) / 2.0F;
 		}
 
+		/*
+		* Важная константа.
+		* Используется для определения размера стены
+		*/
 		void change_render_constant()
 		{
-			/*
-			 * Важная константа.
-			 * Используется для определения размера стены
-			 */
 			this->render_constant_ = static_cast<float>(this->window_size_.x)
 				/ fabs(2 * (tanf(this->fov_)))
 				* static_cast<float>(this->window_size_.y) * this->zoom_;
 		}
 
 	VAILDER_3D_API_ACCESS_MODIFER_1:
-		
+
 		/*
 		 * FOV - Field Of View.
 		 * FOV - Угол Обзора.
@@ -2299,21 +2265,31 @@ public:
 		float wwf_;
 		float shading_coefficient_;
 		float background_repeating_fov_ = math::PI_2;
-	
+
 	public:
+
+		/**
+		 * \brief Создаёт камеру
+		 * \param target it is sf::Window or sf::RenderTexture
+		 * \param position float position of camera (x, y)
+		 * \param fov угол обзора камеры
+		 * \param rotation угол поворота камеры по координате X
+		 * \param zoom увеличение видимости
+		 * \param shading_coefficient коэффициент затенения
+		 */
 		explicit Camera(const sf::RenderTarget& target,
-		                const sf::Vector2<float> position = {},
-		                const float fov = 60.0_deg,
-		                const float rotation = 0.10_deg,
-		                const float zoom = 0.075F,
-		                const float shading_coefficient = 40.0F) :
+			const sf::Vector2<float> position = {},
+			const float fov = 60.0_deg,
+			const float rotation = 0.10_deg,
+			const float zoom = 0.075F,
+			const float shading_coefficient = 40.0F) :
 
 			window_size_(target.getSize()),
 			window_size_pi_({ static_cast<float>(target.getSize().x)
 				* math::PI_2 ,
 				static_cast<float>(target.getSize().y) * math::PI_2 }),
 			window_size_2_({ static_cast<float>(target.getSize().x) / 2.0F,
-				static_cast<float>(target.getSize().y) / 2}),
+				static_cast<float>(target.getSize().y) / 2 }),
 			position_(position),
 			rotation_(rotation),
 			fov_(fov),
@@ -2327,50 +2303,49 @@ public:
 		Camera() = default;
 
 	VAILDER_3D_API_ACCESS_MODIFER_1:
-
-		/*
-		 * Радиус камеры
-		 */
+		
 		float radius_ = 5;
 
 		float window_delta_y_ = 400;
 
 	public:
 
-
-		
-		/*
-		 * Переопределение холста
-		 */
-		
-		VAILDER_3D_CAMERA_API_RESULT
-		setRenderTarget(const sf::RenderTarget& target)
+			/**
+			 * \brief Переопределить окно или другой холст
+			 * \param target сам холст или окно
+			 * \return Если определён препроцессор V3D_FUNCTIONAL,
+			 * то возвращает класс Camera, иначе ничего
+			 */
+			VAILDER_3D_CAMERA_API_RESULT
+			setRenderTarget(const sf::RenderTarget& target)
 		{
 			resizeTarget(target.getSize());
-			
+
 			this->wwf_ = this->window_size_.x / this->fov_;
-			
+
 			change_render_constant();
 
 			VAILDER_3D_CAMERA_API_RETURN
 		}
 
-		/*
-		 * Установить коэффициент затенения
+
+		/**
+		 * \brief Установить коэффициент затенения
+		 * \param shading_coefficient коэффициент затенения
+		 * \return Если определён препроцессор V3D_FUNCTIONAL,
+		 * то возвращает класс Camera, иначе ничего
 		 */
-
-
-		VAILDER_3D_CAMERA_API_RESULT
-		setShadingCoefficient(const float shading_coefficient)
+			VAILDER_3D_CAMERA_API_RESULT
+			setShadingCoefficient(const float shading_coefficient)
 		{
 			this->shading_coefficient_ = shading_coefficient * 0.00001f;
-			
+
 			VAILDER_3D_CAMERA_API_RETURN
-			
 		}
 
-		/*
-		 * Получить коэффициент затенения
+		/**
+		 * \brief Получить коэффициент затенения
+		 * \return float коэффициент затенения
 		 */
 		[[nodiscard]]
 		float getShadingCoefficient() const
@@ -2378,206 +2353,252 @@ public:
 			return this->shading_coefficient_;
 		}
 
-		VAILDER_3D_CAMERA_API_RESULT
-		setBackgroundRepeatingFov(const float background_repeating_fov)
+			/**
+			* \brief Установить угол растяжения заднего фона
+			* на определённый угол
+			* \param background_repeating_fov угол растяжения заднего фона
+			* \return Если определён препроцессор V3D_FUNCTIONAL,
+			* то возвращает класс Camera, иначе ничего
+			*/
+			VAILDER_3D_CAMERA_API_RESULT
+			setBackgroundRepeatingFov(const float background_repeating_fov)
 		{
 			background_repeating_fov_ = background_repeating_fov;
 			resizeTarget(window_size_);
-			
+
 			VAILDER_3D_CAMERA_API_RETURN
-			
 		}
 
-
+		/**
+		* \brief Получить угол растяжения заднего фона
+		* \return float угол растяжения заднего фона
+		*/
 		[[nodiscard]]
 		float getBackgroundRepeatingFov() const
 		{
 			return background_repeating_fov_;
 		}
-		
-		/*
-		 * Установить поворот камеры
-		 */
+
+
+		/**
+		* \brief Установить угол поворота камеры
+		* \param rotation угол поворота камеры
+		* \return Если определён препроцессор V3D_FUNCTIONAL,
+		* то возвращает класс Camera, иначе ничего
+		*/
 
 		VAILDER_3D_CAMERA_API_RESULT
-		setRotation(const float rotation_degrees)
+			setRotation(const float rotation)
 		{
-			this->rotation_ = rotation_degrees;
+			this->rotation_ = rotation;
 
 			VAILDER_3D_CAMERA_API_RETURN
-			
 		}
-		
 
-		/*
-		 * Получить поворот камеры
-		 */
+
+		/**
+		* \brief Получить угол поворота камеры
+		* \return float угол поворота камеры
+		*/
 		[[nodiscard]]
 		float getRotation() const
 		{
 			return this->rotation_;
 		}
 
-		/*
-		 * Повернуть камеру
-		 */
 
+		/**
+		* \brief Повернуть камеру
+		* \param rotation угол поворота камеры
+		* \return Если определён препроцессор V3D_FUNCTIONAL,
+		* то возвращает класс Camera, иначе ничего
+		*/
 		VAILDER_3D_CAMERA_API_RESULT
-		rotate(const float rotation_degrees)
+			rotate(const float rotation)
 		{
-			this->rotation_ += rotation_degrees;
-			
+			this->rotation_ += rotation;
+
 			VAILDER_3D_CAMERA_API_RETURN
-			
 		}
 
-		
-		/*
-		 * Установить позицию камеры
-		 */
-
+		/**
+		* \brief Установить позицию камеры
+		* \param position позиция камеры
+		* \return Если определён препроцессор V3D_FUNCTIONAL,
+		* то возвращает класс Camera, иначе ничего
+		*/
 		VAILDER_3D_CAMERA_API_RESULT
-		setPosition(const sf::Vector2<float> position)
+			setPosition(const sf::Vector2<float> position)
 		{
 			this->position_ = position;
-			
+
 			VAILDER_3D_CAMERA_API_RETURN
-			
 		}
 
 
-		/*
-		 * Установить позицию камеры
-		 */
-
+		/**
+		* \brief Установить позицию камеры
+		* \param x позиция по координате Х
+		* \param y позиция по координате У
+		* \return Если определён препроцессор V3D_FUNCTIONAL,
+		* то возвращает класс Camera, иначе ничего
+		*/
 		VAILDER_3D_CAMERA_API_RESULT
-		setPosition(const float x, const float y)
+			setPosition(const float x, const float y)
 		{
 			this->position_.x = x;
 			this->position_.y = y;
-			
+
 			VAILDER_3D_CAMERA_API_RETURN
-			
 		}
 
-		/*
-		 * Получить позицию камеры
-		 */
+
+		/**
+		* \brief Получить позицию камеры
+		* \return float позиция камеры
+		*/
+
 		[[nodiscard]]
 		sf::Vector2<float> getPosition() const
 		{
 			return this->position_;
 		}
 
-		/*
-		 * Передвинуть камеру
-		 */
 
+		/**
+		* \brief Сдвинуть камеру
+		* \param x сдвиг по координате Х
+		* \param y сдвиг по координате У
+		* \return Если определён препроцессор V3D_FUNCTIONAL,
+		* то возвращает класс Camera, иначе ничего
+		*/
 		VAILDER_3D_CAMERA_API_RESULT
-		move(const float x, const float y)
+			move(const float x, const float y)
 		{
 			this->position_.x += x;
 			this->position_.y += y;
-			
+
 			VAILDER_3D_CAMERA_API_RETURN
-			
 		}
 
-		/*
-		 * Передвинуть камеру
-		 */
+
+		/**
+		* \brief Сдвинуть камеру
+		* \param position сдвиг
+		* \return Если определён препроцессор V3D_FUNCTIONAL,
+		* то возвращает класс Camera, иначе ничего
+		*/
 		VAILDER_3D_CAMERA_API_RESULT
-		move(const sf::Vector2<float> position)
+			move(const sf::Vector2<float> position)
 		{
 			move(position.x, position.y);
 
 			VAILDER_3D_CAMERA_API_RETURN
-
 		}
 
-		/*
-		 * Установить угол обзора
-		 */
+
+		/**
+		* \brief Установить угол обзора
+		* \param fov угол обзора
+		* \return Если определён препроцессор V3D_FUNCTIONAL,
+		* то возвращает класс Camera, иначе ничего
+		*/
 		VAILDER_3D_CAMERA_API_RESULT
-		setFov(const float fov)
+			setFov(const float fov)
 		{
 			this->fov_ = fov;
 			this->wwf_ = this->window_size_.x / fov_;
 			change_render_constant();
 
 			VAILDER_3D_CAMERA_API_RETURN
-
 		}
 
-		/*
-		 * Получить угол обзора
-		 */
+
+		/**
+		* \brief Получить угол обзора камеры
+		* \return float угол обзора камеры
+		*/
 		[[nodiscard]]
 		float getFov() const
 		{
 			return this->fov_;
 		}
 
-		/*
-		 * Увеличить угол обзора
-		 */
+
+		/**
+		* \brief увеличить угол обзора
+		* \param fov угол обзора
+		* \return Если определён препроцессор V3D_FUNCTIONAL,
+		* то возвращает класс Camera, иначе ничего
+		*/
 		VAILDER_3D_CAMERA_API_RESULT
-		fov_unary(const float fov)
+			fov_unary(const float fov)
 		{
 			setFov(this->fov_ + fov);
 
 			VAILDER_3D_CAMERA_API_RETURN
-			
 		}
 
-		/*
-		 * Установить зум камеры
-		 */
+
+		/**
+		* \brief Установить зум камеры
+		* \param zoom зум
+		* \return Если определён препроцессор V3D_FUNCTIONAL,
+		* то возвращает класс Camera, иначе ничего
+		*/
 		VAILDER_3D_CAMERA_API_RESULT
-		setZoom(const float zoom)
+			setZoom(const float zoom)
 		{
 			this->zoom_ = zoom;
 			change_render_constant();
 
 			VAILDER_3D_CAMERA_API_RETURN
-
 		}
 
-		/*
-		 * Получить зум камеры
-		 */
+
+		/**
+		* \brief Получить зум камеры
+		* \return float зум камеры
+		*/
 		[[nodiscard]]
 		float getZoom() const
 		{
 			return this->zoom_;
 		}
 
-		/*
-		 * Увеличить зум камеры
-		 */
+
+		/**
+		* \brief Увеличить зум камеры
+		* \param zoom зум
+		* \return Если определён препроцессор V3D_FUNCTIONAL,
+		* то возвращает класс Camera, иначе ничего
+		*/
 		VAILDER_3D_CAMERA_API_RESULT
-		zoom_unary(const float zoom)
+			zoom_unary(const float zoom)
 		{
 			setZoom(this->zoom_ + zoom);
 
 			VAILDER_3D_CAMERA_API_RETURN
-
 		}
 
-		/*
-		 * Установить радиус камеры
-		 */
+
+		/**
+		* \brief Установить радиус камеры, влияет на коллизию
+		* \param radius радиус
+		* \return Если определён препроцессор V3D_FUNCTIONAL,
+		* то возвращает класс Camera, иначе ничего
+		*/
 		VAILDER_3D_CAMERA_API_RESULT
-		setRadius(const float radius)
+			setRadius(const float radius)
 		{
 			radius_ = radius;
 
 			VAILDER_3D_CAMERA_API_RETURN
-			
 		}
 
-		/*
-		 * Получить радиус камеры
+		 /**
+		 * \brief Получить радиус камеры
+		 * \return float радиус камеры
 		 */
 		[[nodiscard]]
 		float getRadius() const
@@ -2585,40 +2606,67 @@ public:
 			return radius_;
 		}
 
+
+		/**
+		* \brief Установить угол поворота камеры по оси Y
+		* на экране
+		* \param window_delta_y угол по оси Y
+		* \return Если определён препроцессор V3D_FUNCTIONAL,
+		* то возвращает класс Camera, иначе ничего
+		*/
 		VAILDER_3D_CAMERA_API_RESULT
-		setWindowDeltaY(const float window_delta_y)
+			setWindowDeltaY(const float window_delta_y)
 		{
 			window_delta_y_ = window_delta_y;
 
 			VAILDER_3D_CAMERA_API_RETURN
-			
 		}
-		
+
+		 /**
+		 * \brief Получить угол поворота камеры по оси Y
+		 * на экране
+		 * \return float угол поворота камеры по оси Y
+		 * на экране
+		 */
 		[[nodiscard]]
 		float getWindowDeltaY() const
 		{
 			return window_delta_y_;
 		}
 
-		VAILDER_3D_CAMERA_API_RESULT	
-		windowDeltaY_unary(const float window_delta_y)
+		/**
+		* \brief Увеличить угол поворота камеры по оси Y
+		* на экране
+		* \param window_delta_y угол по оси Y
+		* \return Если определён препроцессор V3D_FUNCTIONAL,
+		* то возвращает класс Camera, иначе ничего
+		*/
+		VAILDER_3D_CAMERA_API_RESULT
+			windowDeltaY_unary(const float window_delta_y)
 		{
 			window_delta_y_ += window_delta_y;
 
 			VAILDER_3D_CAMERA_API_RETURN
-
 		}
 
-		VAILDER_3D_API_ACCESS_MODIFER_2:
-		
-		/*
-		 * Запись сохранения
+	VAILDER_3D_API_ACCESS_MODIFER_2:
+
+		/**
+		 * \brief загрузить характеристики
+		 * и настройки камеры
+		 * в файл по адресу
+		 * "data/saves/camera/
+		 * в вашем проекте
+		 * \param name имя файла,
+		 * который размещён по адресу
+		 * "data/saves/camera/
+		 * в вашем проекте"
 		 */
 		virtual void saveToFile(const std::string& name) override
 		{
 			std::ofstream ofstream;
 			ofstream.open("data/saves/camera/" + name);
-			
+
 			if (!ofstream.is_open())
 			{
 				std::cout << "Camera >> save >> error >> -0" << std::endl;
@@ -2634,18 +2682,27 @@ public:
 				ofstream.write(reinterpret_cast<char*>(&camera_save),
 					sizeof(CameraSave));
 			}
-			
+
 			ofstream.close();
 		}
 
-		/*
-		 * Распаковка сохраения
+
+		/**
+		 * \brief загрузить характеристики
+		 * и настройки камеры
+		 * из файла по адресу
+		 * "data/saves/camera/
+		 * в вашем проекте
+		 * \param name имя файла,
+		 * который размещён по адресу
+		 * "data/saves/camera/
+		 * в вашем проекте"
 		 */
 		virtual void openFromFile(const std::string& name) override
 		{
 			std::ifstream ifstream;
 			ifstream.open("data/saves/camera/" + name);
-			
+
 			if (!ifstream.is_open())
 			{
 				std::cout << "Camera >> open >> error >> -6" << std::endl;
@@ -2654,8 +2711,8 @@ public:
 			else
 			{
 				CameraSave camera_save;
-				
-				ifstream.read(reinterpret_cast<char*>(&camera_save), 
+
+				ifstream.read(reinterpret_cast<char*>(&camera_save),
 					sizeof(CameraSave));
 
 				this->fov_ = camera_save.fov;
@@ -2664,7 +2721,7 @@ public:
 				this->radius_ = camera_save.radius;
 
 				change_render_constant();
-				
+
 				this->wwf_ = math::scale(
 					static_cast<float>(this->window_size_.x),
 					this->fov_);
@@ -2676,20 +2733,39 @@ public:
 
 #ifdef V3D_FUNCTIONAL
 
+		/**
+		 * \brief построить камеру,
+		 * возможно использовать только если
+		 * определён препроцессор V3D_FUNCTIONAL.
+		 * Сама функцию относится к типу
+		 * паттернов проектирования,
+		 * а именно паттерну-строителю.
+		 * Функция является статической
+		 * \return Возвращат результат
+		 * постройки камеры
+		 */
 		static Camera build()
 		{
 			return Camera();
 		}
-
+		
+		/**
+		 * \brief скопировать эту камеру,
+		 * возможно использовать только если
+		 * определён препроцессор V3D_FUNCTIONAL.
+		 * Сама функцию относится к типу
+		 * паттернов проектирования,
+		 * а именно паттерну-строителю.
+		 * Функция является статической
+		 * \return Возвращат результат
+		 * постройки камеры
+		 */
 		[[nodiscard]]
 		Camera copy() const
 		{
 			return Camera(*this);
 		}
-		
+
 #endif
-		
 	};
 };
-
-

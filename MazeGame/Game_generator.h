@@ -5,6 +5,4 @@ class GameGenerator
 private:
 	int size_x_;
 	int size_y_;
-	
 };
-
