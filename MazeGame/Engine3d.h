@@ -1519,12 +1519,12 @@ public:
 		explicit Sprite(
 			const sf::Vector3<float> position = {},
 			const sf::Vector2<float> size = {},
-			const sf::Texture& texture = {}) :
+			const std::string& texture_path = {}) :
 
 			position_(position),
-			size_(size),
-			texture_(texture)
+			size_(size)
 		{
+			texture_.loadFromFile(texture_path);
 		}
 
 		Sprite(
@@ -1533,18 +1533,20 @@ public:
 			const float z,
 			const float width,
 			const float height,
-			const sf::Texture& texture = {}) :
+			const std::string& texture_path = {}) :
 
 			position_({ x, y, z }),
-			size_({ width, height }),
-			texture_(texture)
+			size_({ width, height })
 		{
+			texture_.loadFromFile(texture_path);
 		}
 
-		explicit Sprite(const sf::Texture& texture) :
-			texture_(texture)
+		explicit Sprite(const std::string& texture_path = {})
 		{
+			texture_.loadFromFile(texture_path);
 		}
+		
+		Sprite() = default;
 
 	VAILDER_3D_API_ACCESS_MODIFER_2:
 
@@ -1625,6 +1627,44 @@ public:
 		virtual Sprite* build()
 		{
 			return this;
+		}
+	};
+
+	class MainSprite : public Sprite
+	{
+	public:
+		MainSprite() = default;
+
+		explicit MainSprite
+		(
+			const sf::Vector3<float> position = {},
+			const sf::Vector2<float> size = {},
+			const std::string& texture_path = {}
+		) :
+			Sprite(position, size, texture)
+		{
+			
+		}
+
+		MainSprite
+		(
+			const float x,
+			const float y,
+			const float z,
+			const float width,
+			const float height,
+			const sf::Texture& texture = {}
+		) :
+			Sprite({ x, y, z }, {width, height}, texture)
+		{
+			
+		}
+
+		void sprite_states(const RayCaster::RayData& data) override
+		{
+			/*
+			 * ...code...
+			 */
 		}
 	};
 
@@ -2148,9 +2188,25 @@ public:
 					░░░░║║░░░░░░░░░░░░░░ ║║░░░
 					░░░░╚╝░░░░░░░░░░░░░░ ╚╝░░░
 					(SPRITE SCRIPT)
-					*/
+				   */
 
+				for (auto i = 0; i < sprites_.size(); i++)
+				{
+					if (ray_data_->at(i)[0].rotation < 0)
+					{
+						a = camera_->background_repeating_fov_
+							- abs(fmodf(ray_data_->at(i)[0].rotation,
+								camera_->background_repeating_fov_));
+					}
+					else
+					{
+						a = abs(fmodf(ray_data_->at(i)[0].rotation,
+							camera_->background_repeating_fov_));
+					}
 
+					std::cout << a << std::endl;
+				}
+				
 			}
 		}
 

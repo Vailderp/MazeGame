@@ -97,7 +97,10 @@ int main()
 	world
 		<< new CircleWall
 		<< new v3d::MainWall("data/tex/wall5.png")
-		<< new v3d::MainWall("data/tex/wall2.png");
+		<< new v3d::MainWall("data/tex/wall2.png")
+		<< new v3d::MainSprite(30, 30, 0, 10, 10, );
+
+		world.addSpriteType(new v3d::MainSprite());
 
 	v3d::Timer<float> timer_esc;
 	Menu menu(&window, &camera);
