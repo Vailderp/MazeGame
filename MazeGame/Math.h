@@ -2,6 +2,8 @@
 #include <iostream>
 
 //Trigonometric math
+static int rand_i = 2;
+
 namespace math
 {
 	const float PI = acosf(-1.f);
@@ -31,24 +33,23 @@ namespace math
 		}
 		return sa;
 	}
-
+	
 	//Котангенс float
 	inline float ctg(const float angle)
 	{
 		return std::tanf(PI2 - angle);
 	}
-
+	
 	//ГСПЧ алгоритм рандома по сиду
 	inline int  __fastcall rand(const int min, const int max, unsigned int seed)
 	{
 		seed = 8253729 * seed + 2396403;
 		int rand = (8253729 * seed + 2396403) % (max + min + 1) - min;
-		int i = 2;
 		//Редко, но бывает, что не генерируется нужное число, поэтому:
 		while (rand < min || rand > max)
 		{
-			rand = (8253729 * seed * i + 2396403) % (max + min) - min;
-			i++;
+			rand = (8253729 * seed * rand_i + 2396403) % (max + min) - min;
+			rand_i++;
 		}
 		return rand;
 	}

@@ -154,6 +154,7 @@
     <ClCompile Include="WallGameGenerator.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DataImpl.h" />
     <ClInclude Include="Engine3d.h" />
     <ClInclude Include="Game_generator.h" />
     <ClInclude Include="Gui.h" />

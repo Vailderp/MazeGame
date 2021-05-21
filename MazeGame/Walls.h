@@ -49,7 +49,7 @@ public:
 	}
 
 protected:
-	void wall_states(const v3d::RayCaster::RayData& data) override
+	void wall_states(const v3d::RayData& data) override
 	{
 		circle_shape_.move(speed_.x, speed_.y);
 
@@ -117,7 +117,7 @@ protected:
 		this->texture_ = render_texture_.getTexture();
 	}
 
-	void wall_states_center_ray(const v3d::RayCaster::RayData& data, const sf::Vector2<float> center_ray) override
+	void wall_states_center_ray(const v3d::RayData& data, const sf::Vector2<float> center_ray) override
 	{
 		//mouse_position_.x = center_ray.x;
 		//mouse_position_.y = center_ray.y;

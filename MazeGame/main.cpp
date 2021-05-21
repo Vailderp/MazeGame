@@ -3,18 +3,24 @@
 #include <Windows.h>
 #include "GUI_inits.h"
 #include <algorithm>
+#include <amp.h>
+#include <amp_math.h>
+
+
 int main()
 {
-	sf::RenderWindow window(sf::VideoMode(800, 800), "Maze Game!", sf::Style::Default);
+	std::ios_base::sync_with_stdio(false);
+	sf::RenderWindow window(sf::VideoMode(400, 400), "Maze Game!", sf::Style::Default);
 	window.setPosition({ 10, 10 });
-	window.setVerticalSyncEnabled(true);
+	//window.setFramerateLimit(60);
+	//window.setVerticalSyncEnabled(true);
 
 	const int sizeX = 10;
 	const int sizeY = 10;
 
 	v3d::Maze<sizeX, sizeY, 2> maze{};
 	v3d::Matrix lab = maze.generate();
-	/*v3d::Matrix lab =
+	v3d::Matrix lab =
 	{   {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -25,12 +31,42 @@ int main()
 		{1, 1, 1, 1, 1, 1, 1, 2, 1, 1},
 		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 		{1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-	};*/
-
-	v3d::World world(window, sf::Vector2f(250, 250), lab);
+	};
+	
+	concurrency::array_view<>
+	v3d::CPURayCaster ray_caster();
+	v3d::CPUWorld world(v3d::World(sf::Vector2f(250, 250), lab));
 	v3d::Camera camera(window);
-	world.setCamera(&camera.setRadius(1).setShadingCoefficient(10).setBackgroundRepeatingFov(360.0_deg));
 
+
+	v3d::RayCaster caster(&camera, &world);
+
+	
+	world.setCamera(&camera.setRadius(1).setShadingCoefficient(10).setBackgroundRepeatingFov(360.0_deg)).setPixelDepthMax(10);
+
+	std::vector<float> a = 
+	{
+	2, 2, 9, 7, 1, 4,
+	4, 4, 8, 8, 3, 4,
+	1, 5, 1, 2, 5, 2,
+	6, 8, 3, 2, 7, 2
+	};
+	
+	concurrency::array<float, 2> h_a(4, 6, a.begin(), a.end());
+
+	concurrency::parallel_for_each(
+		h_a.extent,
+		[&h_a](concurrency::index<2> idx) restrict(amp)
+		{
+			for (int i = 0; i < 100000; i++)
+			{
+				h_a[0][0] += 0.01;
+			}
+		}
+	);
+
+	std::cout << h_a[0][0] << std::endl;
+	
 	sf::Vector2f spawn_position;
 
 	for (int i = 0; i < world.getMatrixSize().x; i++)
@@ -97,14 +133,25 @@ int main()
 	world
 		<< new CircleWall
 		<< new v3d::MainWall("data/tex/wall5.png")
-		<< new v3d::MainWall("data/tex/wall2.png")
-		<< new v3d::MainSprite(30, 30, 0, 10, 10, );
+		<< new v3d::MainWall("data/tex/flowers/1.png")
+		<< new v3d::MainWall("data/tex/flowers/1.png")
+		<< new v3d::MainSprite(30, 30, 0, 10, 10, "data/tex/flowers/1.png");
 
-		world.addSpriteType(new v3d::MainSprite());
 
 	v3d::Timer<float> timer_esc;
 	Menu menu(&window, &camera);
 
+	v3d::GPU_RayCaster gpu_ray_caster(&camera, &world, window.getSize().x);
+	gpu_ray_caster.start_gpgpu_parallel_raycasting();
+	v3d::RayData* data = gpu_ray_caster.getDataPtr();
+
+	while (true)
+	{
+	
+		std::cout << data[45].rotation << std::endl;
+		Sleep(100);
+	}
+	
 	while (window.isOpen())
 	{
 		//FPS
@@ -164,7 +211,6 @@ int main()
 
 		circle.setPosition(camera.getPosition());
 
-		std::cout << menu.activeSettings() << std::endl;
 		if (!menu.active() || menu.activeSettings())
 		{
 			sf::Vector2i mouse_pos0 = sf::Mouse::getPosition(window);
@@ -172,7 +218,8 @@ int main()
 			if (!menu.active())
 			{
 				sf::Vector2i mouse_pos1 = sf::Mouse::getPosition(window);
-				camera.rotate(math::toRad(static_cast<float>(mouse_pos1.x - mouse_pos0.x) * speed)).windowDeltaY_unary((static_cast<float>(mouse_pos0.y) - static_cast<float>(mouse_pos1.y)) * speed * 10);
+				camera.rotate(math::toRad(static_cast<float>(mouse_pos1.x - mouse_pos0.x) * speed))
+				.windowDeltaY_unary((static_cast<float>(mouse_pos0.y) - static_cast<float>(mouse_pos1.y)) * speed * 10);
 				sf::Mouse::setPosition(sf::Vector2i(window.getSize().x / 2, window.getSize().y / 2));
 			}
 		}
@@ -180,6 +227,8 @@ int main()
 		menu.draw();
 
 		//FPS
+
+		
 		Time = clock.getElapsedTime();
 		float lastTime = Time.asSeconds();
 		float fps = 1 / (lastTime - currentTime);

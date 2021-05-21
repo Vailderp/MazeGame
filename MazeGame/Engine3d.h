@@ -8,6 +8,10 @@
 #define SFML_DYNAMIC
 #endif
 
+#ifndef V3D_GPU_RAYCASTING_MAX_PIXEL_DEPTH
+#define V3D_GPU_RAYCASTING_MAX_PIXEL_DEPTH (((1 << 4) * (1 << 4)) * (1 << 1))
+#endif
+
 #ifdef V3D_DEVELOPER
 
  //ОТКРЫТЫЙ МОДИФИКАТОР ДОСТУПА
@@ -24,9 +28,32 @@
 
 #endif
 
+#ifdef V3D_FUNCTIONAL
+
+		//РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ФУНККЦИИ
+#define VAILDER_3D_WORLD_API_RESULT World&
+
+//ВОЗВРАЩАЕМОЕ ФУНКЦИИ
+#define VAILDER_3D_WORLD_API_RETURN return *this;
+
+#else
+
+		//РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ФУНККЦИИ
+#define VAILDER_3D_WORLD_API_RESULT void
+
+//ВОЗВРАЩАЕМОЕ ФУНКЦИИ
+#define VAILDER_3D_WORLD_API_RETURN
+
+#endif
+
 /*
  * Если конфигурация решения Debug, то выбираем -d .lib файлы
  */
+
+
+
+
+
 #ifdef _DEBUG
 #pragma comment(lib, "lib/sfml-graphics-d.lib")
 #pragma comment(lib, "lib/sfml-audio-d.lib")
@@ -39,6 +66,7 @@
 #pragma comment(lib, "lib/sfml-network.lib")
 #pragma comment(lib, "lib/sfml-system.lib")
 #pragma comment(lib, "lib/sfml-window.lib")
+#pragma comment(lib, "winmm.lib")
 #endif
 
 #include <SFML/Graphics.hpp>
@@ -46,7 +74,17 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <utility>
 #include <amp.h>
+#include "DataImpl.h"
+
+
+
+
+
+
+
+
 
  /*
   * Проверяем тип имени на тип и мени с плавающей точкой
@@ -68,7 +106,10 @@ inline float operator "" _deg(const long double deg)
 class v3d
 {
 public:
-
+	
+	class Camera;
+	class World;
+	class CPUWorld;
 	/*
 	 * Менеджер файлов - статический класс для сохранения классов,
 	 * унаследовавших абстрактный класс Saveable
@@ -195,8 +236,6 @@ public:
 		}
 	};
 
-public:
-
 	/*
 	 * Короткое имя для матрицы лабиринта / мира и прочего
 	 */
@@ -205,7 +244,9 @@ public:
 	/*
 	 * Функция, генерируящая матрицу
 	 */
-	static [[nodiscard]] Matrix generateMatrix(const unsigned int sizeX,
+	static
+	[[nodiscard]]
+	Matrix generateMatrix(const unsigned int sizeX,
 		const unsigned int sizeY, const int val)
 	{
 		return Matrix(sizeX, std::vector<int>(sizeY, val));
@@ -724,24 +765,21 @@ public:
 	 * Объявляем класс Camera,
 	 * чтобы обозначить его как friend class в других классах.
 	 */
-	class Camera;
-
-VAILDER_3D_API_ACCESS_MODIFER_1:
+	//class Camera;
 
 	/*
 	 * Объявляем класс RayCaster,
 	 * чтобы обозначить его как friend class в других классах.
 	 */
-	class RayCaster;
+	//class RayCaster;
 
 	/*
 	 * Объявляем класс World,
 	 * чтобы обозначить его как friend class в других классах.
 	 */
-	class World;
+	//class World;
 
-VAILDER_3D_API_ACCESS_MODIFER_2:
-
+	
 	class CameraSave
 	{
 	public:
@@ -762,122 +800,145 @@ VAILDER_3D_API_ACCESS_MODIFER_2:
 		}
 	};
 
-public:
-
 	/*
 	 * Каласс для удобного проведения процедуры бросания лучей.
 	 */
-	class RayCaster
+
+	 /*
+  * Класс для хранения состояния луча
+  */
+
+	enum class dir
+	{
+		left,
+		right,
+		down,
+		up,
+		none
+	};
+
+	struct ray_data
+	{
+		float position_x;
+		float position_y;
+		float length;
+		unsigned int wall_number;
+		float rotation;
+		dir direction;
+	};
+	
+	class RayData : public  ray_data
 	{
 	public:
+		
 
-		RayCaster()
+		RayData() :
+			ray_data
+		{
+			NULL,
+			NULL,
+			NULL,
+			NULL,
+			NULL,
+			dir::none
+		}
 		{
 		}
 
-		/*
-		 * Объявляем класс RayData,
-		 * чтобы обозначить его как friend class в других классах.
-		 */
-		class RayData;
+		RayData(const float pos_x,
+			const float pos_y,
+			const float length,
+			const unsigned int wall_num,
+			const float rotation,
+			const dir dir) :
 
-		/*
-		 * При удалении класса удаляем массив лучей
-		 */
-		~RayCaster()
+			ray_data
+		{
+			pos_x,
+			pos_y,
+			length,
+			wall_num,
+			rotation,
+			dir
+		}
 		{
 		}
 
-		/*
-		 * Энумераторы сторон стены
-		 */
-		enum class dir
+		bool operator < (const ray_data& ray_data) const
 		{
-			left,
-			right,
-			down,
-			up,
-			none
-		};
-
-		/*
-		 * Класс для хранения состояния луча
-		 */
-		class RayData
-		{
-		public:
-			float position_x;
-			float position_y;
-			float length;
-			unsigned int wall_number;
-			float rotation;
-			dir direction;
-
-			RayData() :
-				position_x(0),
-				position_y(0),
-				length(0),
-				wall_number(0),
-				rotation(0),
-				direction(dir::none)
+			if (length < ray_data.length)
 			{
+				return true;
 			}
 
-			RayData(const float pos_x,
-				const float pos_y,
-				const float len,
-				const unsigned int wall_num,
-				const float rotation,
-				const RayCaster::dir dir) :
+			return false;
+		}
+		
+	};
 
-				position_x(pos_x),
-				position_y(pos_y),
-				length(len),
-				wall_number(wall_num),
-				rotation(rotation),
-				direction(dir)
-			{
-			}
+	typedef std::vector<RayData> pixel_depth;
+	typedef std::vector<pixel_depth> pixel_depth_vector;
 
-			/*
-			 * Перегрузка / переопределение оператора.
-			 * Для сравнения длин лучей
-			 */
-			bool operator < (const RayData& ray_data) const
-			{
-				if (length < ray_data.length)
-				{
-					return true;
-				}
-
-				return false;
-			}
-		};
-
-		typedef std::vector<RayData> pixel_depth;
-		typedef std::vector<pixel_depth> pixel_depth_vector;
-
-	VAILDER_3D_API_ACCESS_MODIFER_1:
-
+	class RayCaster
+	{
+	protected:
+		const World* world_;
+		const Camera* camera_;
 		bool sort_enable_ = true;
+		bool break_acceleration_enable_ = true;
+		
+		ray_data** buffer_ray_data_;
+		tu::DataImpl2<ray_data> buffer_ray_data_impl2_;
+		
+		unsigned max_pixel_depth_ = V3D_GPU_RAYCASTING_MAX_PIXEL_DEPTH;
+		unsigned window_width_ = NULL;
+	
+	public:	
 
-	public:
+		virtual ~RayCaster() = default;
 
 		void setSortEnable(const bool sort_enable)
 		{
 			sort_enable_ = sort_enable;
 		}
 
+		[[nodiscard]]
 		bool getSortEnable() const
 		{
 			return sort_enable_;
 		}
 
-		void __fastcall RayCast(
-			Camera* const camera,
+		virtual void __fastcall startRayCasting
+		(
+			v3d::Camera* const camera,
 			const World* world,
-			pixel_depth_vector* t_ray_data_vec) const
+			unsigned int window_width,
+			ray_data** buffer_ray_data
+		) = 0;
+		
+	};
+	
+	class CPURayCaster final:
+		public RayCaster
+	{
+
+	public:
+
+		void startRayCasting
+		(
+			v3d::Camera* const camera,
+			const World* world,
+			unsigned int window_width,
+			ray_data** buffer_ray_data
+		) override
 		{
+			this->buffer_ray_data_ = buffer_ray_data;
+
+			buffer_ray_data_impl2_ = tu::DataImpl2<ray_data>(
+					this->buffer_ray_data_,
+					window_width_,
+					V3D_GPU_RAYCASTING_MAX_PIXEL_DEPTH);
+			
 			/*Условные обозначения
 				up
 			 ________
@@ -887,541 +948,737 @@ public:
 			|________|
 			   down
 			*/
-
-			/*
-			 * Отношение угла обзора к количеству лучей
-			 */
-			float frn = camera->fov_ /
-				static_cast<float>(camera->window_size_.x);
-
-			/*
-			 * Счётчик лучей
-			 */
-			int f = static_cast<float>(-camera->window_size_2_.x);
-
+			
 			/*
 			 * Процедура бросания лучей
-			 * Old API (2020)
+			 * API 2020 year
 			 */
-			for (auto r = 0; r < camera->window_size_.x; r++)
-			{
-				std::vector<RayData> ray_data_vec;
-				/*
-				 * Вектор состояний лучей.
-				 * Для дальнейшей его сортировки
-				 */
-
-				 /*
-				  * Угол данного луча
-				  */
-				const float angle = camera->rotation_ +
-					(static_cast<float>(f) * (frn));
-
-				/*
-				 * Тригонометрические состояния угла
-				 */
-				const float cos_angle = cosf(angle);
-				const float sin_angle = sinf(angle);
-				const float tan_angle = tanf(angle);
-				const float ctg_angle = math::ctg(angle);
-
-				f++;
-
-				if (cos_angle > 0 && sin_angle > 0)
+			std::thread* _thread_ray_caster_
+			= new std::thread
+			(
+				[&]()
 				{
-					//Ver
+					while (true)
+					{
+						unsigned buffer_ray_data_impl2_i = 0;
+						float angle_per_ray = camera->fov_ /
+							static_cast<float>(camera->window_size_.x);
+						for (auto r = 0; r < camera->window_size_.x; r++)
+						{
+							/*
+							 * Вектор состояний лучей.
+							 * Для дальнейшей его сортировки
+							 */
 
-					const float vA = world->wall_size_.x - (camera
-						->position_.x -
-						math::getMatrixPos(camera->position_.x,
-							world->wall_size_.x) *
-						world->wall_size_.x);
-					const float vB = vA * tan_angle;
-					float vcx = camera->position_.x + vA;
-					float vcy = camera->position_.y + vB;
-					int vjx = math::getMatrixPos(vcx,
-						world->wall_size_.x);
-					int vjy = math::getMatrixPos(vcy,
-						world->wall_size_.y);
-					if (vjx < world->matrix_size_.x && vjx >= 0 &&
-						vjy < world->matrix_size_.y && vjy >= 0)
-					{
-						if (world->matrix_[vjx][vjy] != 0)
-						{
-							ray_data_vec.emplace_back(vcx, vcy,
-								math::fast_hypot(vcx - camera->position_.x,
-									vcy - camera->position_.y),
-								world->matrix_[vjx][vjy], angle, dir::left);
-						}
-					}
-					const float vAA = world->wall_size_.x;
-					const float vBB = vAA * tan_angle;
+							 /*
+							  * Угол данного луча
+							  */
+							const float angle = camera->rotation_ +
+								(static_cast<float>(r) * (angle_per_ray));
 
-					//Hor
-					const float hB = world->wall_size_.y - (camera
-						->position_.y -
-						math::getMatrixPos(camera->position_.y,
-							world->wall_size_.y) *
-						world->wall_size_.y);
-					const float hA = hB * ctg_angle;
-					float hcx = camera->position_.x + hA;
-					float hcy = camera->position_.y + hB;
-					int hjx = math::getMatrixPos(hcx,
-						world->wall_size_.x);
-					int hjy = math::getMatrixPos(hcy,
-						world->wall_size_.y);
-					if (hjx < world->matrix_size_.x && hjx >= 0 &&
-						hjy < world->matrix_size_.y && hjy >= 0)
-					{
-						if (world->matrix_[hjx][hjy] != 0)
-						{
-							ray_data_vec.emplace_back(hcx, hcy,
-								math::fast_hypot(hcx - camera->position_.x,
-									hcy - camera->position_.y),
-								world->matrix_[hjx][hjy], angle, dir::up);
-						}
-					}
-					const float hBB = world->wall_size_.y;
-					const float hAA = hBB * ctg_angle;
-					//RAY LEN SEARCHER
-					for (unsigned int i = 0; i < 4194304; i++)
-					{
-						vcx += vAA;
-						vcy += vBB;
-						vjx = math::getMatrixPos(vcx,
-							world->wall_size_.x);
-						vjy = math::getMatrixPos(vcy,
-							world->wall_size_.y);
-						if (vjx < world->matrix_size_.x && vjx >= 0 &&
-							vjy < world->matrix_size_.y && vjy >= 0)
-						{
-							if (world->matrix_[vjx][vjy] != 0)
+							/*
+							 * Тригонометрические состояния угла
+							 */
+							const float cos_angle = cosf(angle);
+							const float sin_angle = sinf(angle);
+							const float tan_angle = tanf(angle);
+							const float ctg_angle = math::ctg(angle);
+
+
+							if (cos_angle > 0 && sin_angle > 0)
 							{
-								ray_data_vec.emplace_back(vcx, vcy,
-									math::fast_hypot(vcx - camera->position_.x,
-										vcy - camera->position_.y),
-									world->matrix_[vjx][vjy], angle, dir::left);
-								break;
+								//Ver
+
+								const float vA = world->wall_size_.x - (camera
+									->position_.x -
+									math::getMatrixPos(camera->position_.x,
+										world->wall_size_.x) *
+									world->wall_size_.x);
+								const float vB = vA * tan_angle;
+								float vcx = camera->position_.x + vA;
+								float vcy = camera->position_.y + vB;
+								int vjx = math::getMatrixPos(vcx,
+									world->wall_size_.x);
+								int vjy = math::getMatrixPos(vcy,
+									world->wall_size_.y);
+								if (vjx < world->matrix_size_.x && vjx >= 0 &&
+									vjy < world->matrix_size_.y && vjy >= 0)
+								{
+									if (world->matrix_[vjx][vjy] != 0)
+									{
+										buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) = 
+											ray_data
+										{
+											vcx,
+											vcy,
+											math::fast_hypot(vcx - camera->position_.x,
+											vcy - camera->position_.y),
+											world->matrix_[vjx][vjy],
+											angle,
+											dir::left
+										};
+										buffer_ray_data_impl2_i++;
+									}
+								}
+								const float vAA = world->wall_size_.x;
+								const float vBB = vAA * tan_angle;
+
+								//Hor
+								const float hB = world->wall_size_.y - (camera
+									->position_.y -
+									math::getMatrixPos(camera->position_.y,
+										world->wall_size_.y) *
+									world->wall_size_.y);
+								const float hA = hB * ctg_angle;
+								float hcx = camera->position_.x + hA;
+								float hcy = camera->position_.y + hB;
+								int hjx = math::getMatrixPos(hcx,
+									world->wall_size_.x);
+								int hjy = math::getMatrixPos(hcy,
+									world->wall_size_.y);
+								if (hjx < world->matrix_size_.x && hjx >= 0 &&
+									hjy < world->matrix_size_.y && hjy >= 0)
+								{
+									if (world->matrix_[hjx][hjy] != 0)
+									{
+										ray_data_vec.emplace_back(hcx, hcy,
+											math::fast_hypot(hcx - camera->position_.x,
+												hcy - camera->position_.y),
+											world->matrix_[hjx][hjy], angle, dir::up);
+									}
+								}
+								const float hBB = world->wall_size_.y;
+								const float hAA = hBB * ctg_angle;
+								//RAY LEN SEARCHER
+								for (unsigned int i = 0; i < 4194304; i++)
+								{
+									vcx += vAA;
+									vcy += vBB;
+									vjx = math::getMatrixPos(vcx,
+										world->wall_size_.x);
+									vjy = math::getMatrixPos(vcy,
+										world->wall_size_.y);
+									if (vjx < world->matrix_size_.x && vjx >= 0 &&
+										vjy < world->matrix_size_.y && vjy >= 0)
+									{
+										if (world->matrix_[vjx][vjy] != 0)
+										{
+											ray_data_vec.emplace_back(vcx, vcy,
+												math::fast_hypot(vcx - camera->position_.x,
+													vcy - camera->position_.y),
+												world->matrix_[vjx][vjy], angle, dir::left);
+
+											if (!break_acceleration_enable_)
+											{
+												break;
+											}
+										}
+									}
+									else
+									{
+										break;
+									}
+								}
+								for (unsigned int i = 0; i < 4194304; i++)
+								{
+									hcx += hAA;
+									hcy += hBB;
+									hjx = math::getMatrixPos(hcx,
+										world->wall_size_.x);
+									hjy = math::getMatrixPos(hcy,
+										world->wall_size_.y);
+									if (hjx < world->matrix_size_.x && hjx >= 0 &&
+										hjy < world->matrix_size_.y && hjy >= 0)
+									{
+										if (world->matrix_[hjx][hjy] != 0)
+										{
+											ray_data_vec.emplace_back(hcx, hcy,
+												math::fast_hypot(hcx - camera->position_.x,
+													hcy - camera->position_.y),
+												world->matrix_[hjx][hjy], angle, dir::up);
+
+											if (!break_acceleration_enable_)
+											{
+												break;
+											}
+										}
+									}
+									else
+									{
+										break;
+									}
+								}
+
+								if (sort_enable_)
+								{
+									std::sort
+									(
+										ray_data_vec.begin(),
+										ray_data_vec.end(),
+										[](RayData const& a, RayData const& b) -> bool
+										{
+											return a.length < b.length;
+										}
+									);
+								}
+
+								t_ray_data_vec->at(r) = ray_data_vec;
+							}
+
+							else if (cos_angle < 0 && sin_angle > 0)
+							{
+								//Ver
+								const float vA = camera->position_.x -
+									math::getMatrixPos(camera->position_.x,
+										world->wall_size_.x) * world
+									->wall_size_.x;
+								const float vB = vA * tan_angle;
+								float vcx = camera->position_.x - vA;
+								float vcy = camera->position_.y - vB;
+								int vjx = math::getMatrixPos(vcx - 0.1f,
+									world->wall_size_.x);
+								int vjy = math::getMatrixPos(vcy, world
+									->wall_size_.y);
+								if (vjx < world->matrix_size_.x && vjx >= 0 &&
+									vjy < world->matrix_size_.y && vjy >= 0)
+								{
+									if (world->matrix_[vjx][vjy] != 0)
+									{
+										ray_data_vec.emplace_back(vcx, vcy,
+											math::fast_hypot(vcx - camera->position_.x,
+												vcy - camera->position_.y),
+											world->matrix_[vjx][vjy], angle, dir::right);
+									}
+								}
+								const float vAA = world->wall_size_.x;
+								const float vBB = vAA * tan_angle;
+								//Hor
+								const float hB = world->wall_size_.y - (camera
+									->position_.y -
+									math::getMatrixPos(camera->position_.y,
+										world->wall_size_.y) *
+									world->wall_size_.y);
+								const float hA = hB * ctg_angle;
+								float hcx = camera->position_.x + hA;
+								float hcy = camera->position_.y + hB;
+								int hjx = math::getMatrixPos(hcx,
+									world->wall_size_.x);
+								int hjy = math::getMatrixPos(hcy,
+									world->wall_size_.y);
+								if (hjx < world->matrix_size_.x && hjx >= 0 &&
+									hjy < world->matrix_size_.y && hjy >= 0)
+								{
+									if (world->matrix_[hjx][hjy] != 0)
+									{
+										ray_data_vec.emplace_back(hcx, hcy,
+											math::fast_hypot(hcx - camera->position_.x,
+												hcy - camera->position_.y),
+											world->matrix_[hjx][hjy], angle, dir::up);
+									}
+								}
+								const float hBB = world->wall_size_.y;
+								const float hAA = hBB * ctg_angle;
+								//RAY LEN SEARCHER
+								for (unsigned int i = 0; i < 4194304; i++)
+								{
+									vcx -= vAA;
+									vcy -= vBB;
+									vjx = math::getMatrixPos(vcx - 0.1f,
+										world->wall_size_.x);
+									vjy = math::getMatrixPos(vcy,
+										world->wall_size_.y);
+									if (vjx < world->matrix_size_.x && vjx >= 0 &&
+										vjy < world->matrix_size_.y && vjy >= 0)
+									{
+										if (world->matrix_[vjx][vjy] != 0)
+										{
+											ray_data_vec.emplace_back(vcx, vcy,
+												math::fast_hypot(vcx - camera->position_.x,
+													vcy - camera->position_.y),
+												world->matrix_[vjx][vjy], angle, dir::right);
+
+											if (!break_acceleration_enable_)
+											{
+												break;
+											}
+										}
+									}
+									else
+									{
+										break;
+									}
+								}
+								for (unsigned int i = 0; i < 4194304; i++)
+								{
+									hcx += hAA;
+									hcy += hBB;
+									hjx = math::getMatrixPos(hcx,
+										world->wall_size_.x);
+									hjy = math::getMatrixPos(hcy,
+										world->wall_size_.y);
+									if (hjx < world->matrix_size_.x && hjx >= 0 &&
+										hjy < world->matrix_size_.y && hjy >= 0)
+									{
+										if (world->matrix_[hjx][hjy] != 0)
+										{
+											ray_data_vec.emplace_back(hcx, hcy,
+												math::fast_hypot(hcx - camera->position_.x,
+													hcy - camera->position_.y),
+												world->matrix_[hjx][hjy], angle, dir::up);
+
+											if (!break_acceleration_enable_)
+											{
+												break;
+											}
+										}
+									}
+									else
+									{
+										break;
+									}
+								}
+
+								if (sort_enable_)
+								{
+									std::sort
+									(
+										ray_data_vec.begin(),
+										ray_data_vec.end(),
+										[](RayData const& a, RayData const& b) -> bool
+										{
+											return a.length < b.length;
+										}
+									);
+								}
+
+								t_ray_data_vec->at(r) = ray_data_vec;
+							}
+
+							else if (cos_angle > 0 && sin_angle < 0)
+							{
+								//Ver
+								const float vA = world->wall_size_.x - (camera
+									->position_.x -
+									math::getMatrixPos(camera->position_.x,
+										world->wall_size_.x) *
+									world->wall_size_.x);
+								const float vB = vA * tan_angle;
+								float vcx = camera->position_.x + vA;
+								float vcy = camera->position_.y + vB;
+								int vjx = math::getMatrixPos(vcx,
+									world->wall_size_.x);
+								int vjy = math::getMatrixPos(vcy,
+									world->wall_size_.y);
+								if (vjx < world->matrix_size_.x && vjx >= 0 &&
+									vjy < world->matrix_size_.y && vjy >= 0)
+								{
+									if (world->matrix_[vjx][vjy] != 0)
+									{
+										ray_data_vec.emplace_back(vcx, vcy,
+											math::fast_hypot(vcx - camera->position_.x,
+												vcy - camera->position_.y),
+											world->matrix_[vjx][vjy], angle, dir::left);
+									}
+								}
+								const float vAA = world->wall_size_.x;
+								const float vBB = vAA * tan_angle;
+
+								//Hor
+								const float hB = camera->position_.y -
+									math::getMatrixPos(camera->position_.y,
+										world->wall_size_.y)
+									* world->wall_size_.y;
+								const float hA = hB * ctg_angle;
+								float hcx = camera->position_.x - hA;
+								float hcy = camera->position_.y - hB;
+								int hjx = math::getMatrixPos(hcx,
+									world->wall_size_.x);
+								int hjy = math::getMatrixPos(hcy - 0.1f,
+									world->wall_size_.y);
+								if (hjx < world->matrix_size_.x && hjx >= 0 &&
+									hjy < world->matrix_size_.y && hjy >= 0)
+								{
+									if (world->matrix_[hjx][hjy] != 0)
+									{
+										ray_data_vec.emplace_back(hcx, hcy,
+											math::fast_hypot(hcx - camera->position_.x,
+												hcy - camera->position_.y),
+											world->matrix_[hjx][hjy], angle, dir::down);
+									}
+								}
+								const float hBB = world->wall_size_.y;
+								const float hAA = hBB * ctg_angle;
+								//RAY LEN SEARCHER
+								for (unsigned int i = 0; i < 4194304; i++)
+								{
+									vcx += vAA;
+									vcy += vBB;
+									vjx = math::getMatrixPos(vcx,
+										world->wall_size_.x);
+									vjy = math::getMatrixPos(vcy,
+										world->wall_size_.y);
+									if (vjx < world->matrix_size_.x && vjx >= 0 &&
+										vjy < world->matrix_size_.y && vjy >= 0)
+									{
+										if (world->matrix_[vjx][vjy] != 0)
+										{
+											ray_data_vec.emplace_back(vcx, vcy,
+												math::fast_hypot(vcx - camera->position_.x,
+													vcy - camera->position_.y),
+												world->matrix_[vjx][vjy], angle, dir::left);
+
+											if (!break_acceleration_enable_)
+											{
+												break;
+											}
+										}
+									}
+									else
+									{
+										break;
+									}
+								}
+								for (unsigned int i = 0; i < 4194304; i++)
+								{
+									hcx -= hAA;
+									hcy -= hBB;
+									hjx = math::getMatrixPos(hcx,
+										world->wall_size_.x);
+									hjy = math::getMatrixPos(hcy - 0.1f,
+										world->wall_size_.y);
+									if (hjx < world->matrix_size_.x && hjx >= 0 &&
+										hjy < world->matrix_size_.y && hjy >= 0)
+									{
+										if (world->matrix_[hjx][hjy] != 0)
+										{
+											ray_data_vec.emplace_back(hcx, hcy,
+												math::fast_hypot(hcx - camera->position_.x,
+													hcy - camera->position_.y),
+												world->matrix_[hjx][hjy], angle, dir::down);
+
+											if (!break_acceleration_enable_)
+											{
+												break;
+											}
+										}
+									}
+									else
+									{
+										break;
+									}
+								}
+
+								if (sort_enable_)
+								{
+									std::sort
+									(
+										ray_data_vec.begin(),
+										ray_data_vec.end(),
+										[](RayData const& a, RayData const& b) -> bool
+										{
+											return a.length < b.length;
+										}
+									);
+								}
+
+								t_ray_data_vec->at(r) = ray_data_vec;
+							}
+
+							else if (cos_angle < 0 && sin_angle < 0)
+							{
+								//Ver
+								const float vA = camera->position_.x -
+									math::getMatrixPos(camera->position_.x,
+										world->wall_size_.x) *
+									world->wall_size_.x;
+								const float vB = vA * tan_angle;
+								float vcx = camera->position_.x - vA;
+								float vcy = camera->position_.y - vB;
+								int vjx = math::getMatrixPos(vcx - 0.1f,
+									world->wall_size_.x);
+								int vjy = math::getMatrixPos(vcy,
+									world->wall_size_.y);
+								if (vjx < world->matrix_size_.x && vjx >= 0 &&
+									vjy < world->matrix_size_.y && vjy >= 0)
+								{
+									if (world->matrix_[vjx][vjy] != 0)
+									{
+										ray_data_vec.emplace_back(vcx, vcy,
+											math::fast_hypot(vcx - camera->position_.x,
+												vcy - camera->position_.y),
+											world->matrix_[vjx][vjy], angle, dir::right);
+									}
+								}
+								const float vAA = world->wall_size_.x;
+								const float vBB = vAA * tan_angle;
+
+								//Hor
+								const float hB = camera->position_.y -
+									math::getMatrixPos(camera->position_.y,
+										world->wall_size_.y) * world->wall_size_.y;
+								const float hA = hB * ctg_angle;
+								float hcx = camera->position_.x - hA;
+								float hcy = camera->position_.y - hB;
+								int hjx = math::getMatrixPos(hcx,
+									world->wall_size_.x);
+								int hjy = math::getMatrixPos(hcy - 0.1f,
+									world->wall_size_.y);
+								if (hjx < world->matrix_size_.x && hjx >= 0 &&
+									hjy < world->matrix_size_.y && hjy >= 0)
+								{
+									if (world->matrix_[hjx][hjy] != 0)
+									{
+										ray_data_vec.emplace_back(hcx, hcy,
+											math::fast_hypot(hcx - camera->position_.x,
+												hcy - camera->position_.y),
+											world->matrix_[hjx][hjy], angle, dir::down);
+									}
+								}
+								const float hBB = world->wall_size_.y;
+								const float hAA = hBB * ctg_angle;
+								//RAY LEN SEARCHER
+								for (unsigned int i = 0; i < 4194304; i++)
+								{
+									vcx -= vAA;
+									vcy -= vBB;
+									vjx = math::getMatrixPos(vcx - 0.1f,
+										world->wall_size_.x);
+									vjy = math::getMatrixPos(vcy,
+										world->wall_size_.y);
+									if (vjx < world->matrix_size_.x && vjx >= 0 &&
+										vjy < world->matrix_size_.y && vjy >= 0)
+									{
+										if (world->matrix_[vjx][vjy] != 0)
+										{
+											ray_data_vec.emplace_back(vcx, vcy,
+												math::fast_hypot(vcx - camera->position_.x,
+													vcy - camera->position_.y),
+												world->matrix_[vjx][vjy], angle, dir::right);
+
+											if (!break_acceleration_enable_)
+											{
+												break;
+											}
+										}
+									}
+									else
+									{
+										break;
+									}
+								}
+								for (unsigned int i = 0; i < 4194304; i++)
+								{
+									hcx -= hAA;
+									hcy -= hBB;
+									hjx = math::getMatrixPos(hcx,
+										world->wall_size_.x);
+									hjy = math::getMatrixPos(hcy - 0.1f,
+										world->wall_size_.y);
+									if (hjx < world->matrix_size_.x && hjx >= 0 &&
+										hjy < world->matrix_size_.y && hjy >= 0)
+									{
+										if (world->matrix_[hjx][hjy] != 0)
+										{
+											ray_data_vec.emplace_back(hcx, hcy,
+												math::fast_hypot(hcx - camera->position_.x,
+													hcy - camera->position_.y),
+												world->matrix_[hjx][hjy], angle, dir::down);
+
+											if (!break_acceleration_enable_)
+											{
+												break;
+											}
+										}
+									}
+									else
+									{
+										break;
+									}
+								}
+
+								if (sort_enable_)
+								{
+									//SORT BUFFER
+									std::sort
+									(
+										ray_data_vec.begin(),
+										ray_data_vec.end(),
+										[](RayData const& a, RayData const& b) -> bool
+										{
+											return a.length < b.length;
+										}
+									);
+								}
+
+								t_ray_data_vec->at(r) = ray_data_vec;
 							}
 						}
-						else
-						{
-							break;
-						}
 					}
-					for (unsigned int i = 0; i < 4194304; i++)
-					{
-						hcx += hAA;
-						hcy += hBB;
-						hjx = math::getMatrixPos(hcx,
-							world->wall_size_.x);
-						hjy = math::getMatrixPos(hcy,
-							world->wall_size_.y);
-						if (hjx < world->matrix_size_.x && hjx >= 0 &&
-							hjy < world->matrix_size_.y && hjy >= 0)
-						{
-							if (world->matrix_[hjx][hjy] != 0)
-							{
-								ray_data_vec.emplace_back(hcx, hcy,
-									math::fast_hypot(hcx - camera->position_.x,
-										hcy - camera->position_.y),
-									world->matrix_[hjx][hjy], angle, dir::up);
-								break;
-							}
-						}
-						else
-						{
-							break;
-						}
-					}
-
-					if (sort_enable_)
-					{
-						std::sort
-						(
-							ray_data_vec.begin(),
-							ray_data_vec.end(),
-							[](RayData const& a, RayData const& b) -> bool
-							{
-								return a.length < b.length;
-							}
-						);
-					}
-
-					t_ray_data_vec->at(r) = ray_data_vec;
 				}
-
-				else if (cos_angle < 0 && sin_angle > 0)
-				{
-					//Ver
-					const float vA = camera->position_.x -
-						math::getMatrixPos(camera->position_.x,
-							world->wall_size_.x) * world
-						->wall_size_.x;
-					const float vB = vA * tan_angle;
-					float vcx = camera->position_.x - vA;
-					float vcy = camera->position_.y - vB;
-					int vjx = math::getMatrixPos(vcx - 0.1f,
-						world->wall_size_.x);
-					int vjy = math::getMatrixPos(vcy, world
-						->wall_size_.y);
-					if (vjx < world->matrix_size_.x && vjx >= 0 &&
-						vjy < world->matrix_size_.y && vjy >= 0)
-					{
-						if (world->matrix_[vjx][vjy] != 0)
-						{
-							ray_data_vec.emplace_back(vcx, vcy,
-								math::fast_hypot(vcx - camera->position_.x,
-									vcy - camera->position_.y),
-								world->matrix_[vjx][vjy], angle, dir::right);
-						}
-					}
-					const float vAA = world->wall_size_.x;
-					const float vBB = vAA * tan_angle;
-					//Hor
-					const float hB = world->wall_size_.y - (camera
-						->position_.y -
-						math::getMatrixPos(camera->position_.y,
-							world->wall_size_.y) *
-						world->wall_size_.y);
-					const float hA = hB * ctg_angle;
-					float hcx = camera->position_.x + hA;
-					float hcy = camera->position_.y + hB;
-					int hjx = math::getMatrixPos(hcx,
-						world->wall_size_.x);
-					int hjy = math::getMatrixPos(hcy,
-						world->wall_size_.y);
-					if (hjx < world->matrix_size_.x && hjx >= 0 &&
-						hjy < world->matrix_size_.y && hjy >= 0)
-					{
-						if (world->matrix_[hjx][hjy] != 0)
-						{
-							ray_data_vec.emplace_back(hcx, hcy,
-								math::fast_hypot(hcx - camera->position_.x,
-									hcy - camera->position_.y),
-								world->matrix_[hjx][hjy], angle, dir::up);
-						}
-					}
-					const float hBB = world->wall_size_.y;
-					const float hAA = hBB * ctg_angle;
-					//RAY LEN SEARCHER
-					for (unsigned int i = 0; i < 4194304; i++)
-					{
-						vcx -= vAA;
-						vcy -= vBB;
-						vjx = math::getMatrixPos(vcx - 0.1f,
-							world->wall_size_.x);
-						vjy = math::getMatrixPos(vcy,
-							world->wall_size_.y);
-						if (vjx < world->matrix_size_.x && vjx >= 0 &&
-							vjy < world->matrix_size_.y && vjy >= 0)
-						{
-							if (world->matrix_[vjx][vjy] != 0)
-							{
-								ray_data_vec.emplace_back(vcx, vcy,
-									math::fast_hypot(vcx - camera->position_.x,
-										vcy - camera->position_.y),
-									world->matrix_[vjx][vjy], angle, dir::right);
-								break;
-							}
-						}
-						else
-						{
-							break;
-						}
-					}
-					for (unsigned int i = 0; i < 4194304; i++)
-					{
-						hcx += hAA;
-						hcy += hBB;
-						hjx = math::getMatrixPos(hcx,
-							world->wall_size_.x);
-						hjy = math::getMatrixPos(hcy,
-							world->wall_size_.y);
-						if (hjx < world->matrix_size_.x && hjx >= 0 &&
-							hjy < world->matrix_size_.y && hjy >= 0)
-						{
-							if (world->matrix_[hjx][hjy] != 0)
-							{
-								ray_data_vec.emplace_back(hcx, hcy,
-									math::fast_hypot(hcx - camera->position_.x,
-										hcy - camera->position_.y),
-									world->matrix_[hjx][hjy], angle, dir::up);
-								break;
-							}
-						}
-						else
-						{
-							break;
-						}
-					}
-
-					if (sort_enable_)
-					{
-						std::sort
-						(
-							ray_data_vec.begin(),
-							ray_data_vec.end(),
-							[](RayData const& a, RayData const& b) -> bool
-							{
-								return a.length < b.length;
-							}
-						);
-					}
-
-					t_ray_data_vec->at(r) = ray_data_vec;
-				}
-
-				else if (cos_angle > 0 && sin_angle < 0)
-				{
-					//Ver
-					const float vA = world->wall_size_.x - (camera
-						->position_.x -
-						math::getMatrixPos(camera->position_.x,
-							world->wall_size_.x) *
-						world->wall_size_.x);
-					const float vB = vA * tan_angle;
-					float vcx = camera->position_.x + vA;
-					float vcy = camera->position_.y + vB;
-					int vjx = math::getMatrixPos(vcx,
-						world->wall_size_.x);
-					int vjy = math::getMatrixPos(vcy,
-						world->wall_size_.y);
-					if (vjx < world->matrix_size_.x && vjx >= 0 &&
-						vjy < world->matrix_size_.y && vjy >= 0)
-					{
-						if (world->matrix_[vjx][vjy] != 0)
-						{
-							ray_data_vec.emplace_back(vcx, vcy,
-								math::fast_hypot(vcx - camera->position_.x,
-									vcy - camera->position_.y),
-								world->matrix_[vjx][vjy], angle, dir::left);
-						}
-					}
-					const float vAA = world->wall_size_.x;
-					const float vBB = vAA * tan_angle;
-
-					//Hor
-					const float hB = camera->position_.y -
-						math::getMatrixPos(camera->position_.y,
-							world->wall_size_.y)
-						* world->wall_size_.y;
-					const float hA = hB * ctg_angle;
-					float hcx = camera->position_.x - hA;
-					float hcy = camera->position_.y - hB;
-					int hjx = math::getMatrixPos(hcx,
-						world->wall_size_.x);
-					int hjy = math::getMatrixPos(hcy - 0.1f,
-						world->wall_size_.y);
-					if (hjx < world->matrix_size_.x && hjx >= 0 &&
-						hjy < world->matrix_size_.y && hjy >= 0)
-					{
-						if (world->matrix_[hjx][hjy] != 0)
-						{
-							ray_data_vec.emplace_back(hcx, hcy,
-								math::fast_hypot(hcx - camera->position_.x,
-									hcy - camera->position_.y),
-								world->matrix_[hjx][hjy], angle, dir::down);
-						}
-					}
-					const float hBB = world->wall_size_.y;
-					const float hAA = hBB * ctg_angle;
-					//RAY LEN SEARCHER
-					for (unsigned int i = 0; i < 4194304; i++)
-					{
-						vcx += vAA;
-						vcy += vBB;
-						vjx = math::getMatrixPos(vcx,
-							world->wall_size_.x);
-						vjy = math::getMatrixPos(vcy,
-							world->wall_size_.y);
-						if (vjx < world->matrix_size_.x && vjx >= 0 &&
-							vjy < world->matrix_size_.y && vjy >= 0)
-						{
-							if (world->matrix_[vjx][vjy] != 0)
-							{
-								ray_data_vec.emplace_back(vcx, vcy,
-									math::fast_hypot(vcx - camera->position_.x,
-										vcy - camera->position_.y),
-									world->matrix_[vjx][vjy], angle, dir::left);
-								break;
-							}
-						}
-						else
-						{
-							break;
-						}
-					}
-					for (unsigned int i = 0; i < 4194304; i++)
-					{
-						hcx -= hAA;
-						hcy -= hBB;
-						hjx = math::getMatrixPos(hcx,
-							world->wall_size_.x);
-						hjy = math::getMatrixPos(hcy - 0.1f,
-							world->wall_size_.y);
-						if (hjx < world->matrix_size_.x && hjx >= 0 &&
-							hjy < world->matrix_size_.y && hjy >= 0)
-						{
-							if (world->matrix_[hjx][hjy] != 0)
-							{
-								ray_data_vec.emplace_back(hcx, hcy,
-									math::fast_hypot(hcx - camera->position_.x,
-										hcy - camera->position_.y),
-									world->matrix_[hjx][hjy], angle, dir::down);
-								break;
-							}
-						}
-						else
-						{
-							break;
-						}
-					}
-
-					if (sort_enable_)
-					{
-						std::sort
-						(
-							ray_data_vec.begin(),
-							ray_data_vec.end(),
-							[](RayData const& a, RayData const& b) -> bool
-							{
-								return a.length < b.length;
-							}
-						);
-					}
-
-					t_ray_data_vec->at(r) = ray_data_vec;
-				}
-
-				else if (cos_angle < 0 && sin_angle < 0)
-				{
-					//Ver
-					const float vA = camera->position_.x -
-						math::getMatrixPos(camera->position_.x,
-							world->wall_size_.x) *
-						world->wall_size_.x;
-					const float vB = vA * tan_angle;
-					float vcx = camera->position_.x - vA;
-					float vcy = camera->position_.y - vB;
-					int vjx = math::getMatrixPos(vcx - 0.1f,
-						world->wall_size_.x);
-					int vjy = math::getMatrixPos(vcy,
-						world->wall_size_.y);
-					if (vjx < world->matrix_size_.x && vjx >= 0 &&
-						vjy < world->matrix_size_.y && vjy >= 0)
-					{
-						if (world->matrix_[vjx][vjy] != 0)
-						{
-							ray_data_vec.emplace_back(vcx, vcy,
-								math::fast_hypot(vcx - camera->position_.x,
-									vcy - camera->position_.y),
-								world->matrix_[vjx][vjy], angle, dir::right);
-						}
-					}
-					const float vAA = world->wall_size_.x;
-					const float vBB = vAA * tan_angle;
-
-					//Hor
-					const float hB = camera->position_.y -
-						math::getMatrixPos(camera->position_.y,
-							world->wall_size_.y) * world->wall_size_.y;
-					const float hA = hB * ctg_angle;
-					float hcx = camera->position_.x - hA;
-					float hcy = camera->position_.y - hB;
-					int hjx = math::getMatrixPos(hcx,
-						world->wall_size_.x);
-					int hjy = math::getMatrixPos(hcy - 0.1f,
-						world->wall_size_.y);
-					if (hjx < world->matrix_size_.x && hjx >= 0 &&
-						hjy < world->matrix_size_.y && hjy >= 0)
-					{
-						if (world->matrix_[hjx][hjy] != 0)
-						{
-							ray_data_vec.emplace_back(hcx, hcy,
-								math::fast_hypot(hcx - camera->position_.x,
-									hcy - camera->position_.y),
-								world->matrix_[hjx][hjy], angle, dir::down);
-						}
-					}
-					const float hBB = world->wall_size_.y;
-					const float hAA = hBB * ctg_angle;
-					//RAY LEN SEARCHER
-					for (unsigned int i = 0; i < 4194304; i++)
-					{
-						vcx -= vAA;
-						vcy -= vBB;
-						vjx = math::getMatrixPos(vcx - 0.1f,
-							world->wall_size_.x);
-						vjy = math::getMatrixPos(vcy,
-							world->wall_size_.y);
-						if (vjx < world->matrix_size_.x && vjx >= 0 &&
-							vjy < world->matrix_size_.y && vjy >= 0)
-						{
-							if (world->matrix_[vjx][vjy] != 0)
-							{
-								ray_data_vec.emplace_back(vcx, vcy,
-									math::fast_hypot(vcx - camera->position_.x,
-										vcy - camera->position_.y),
-									world->matrix_[vjx][vjy], angle, dir::right);
-								break;
-							}
-						}
-						else
-						{
-							break;
-						}
-					}
-					for (unsigned int i = 0; i < 4194304; i++)
-					{
-						hcx -= hAA;
-						hcy -= hBB;
-						hjx = math::getMatrixPos(hcx,
-							world->wall_size_.x);
-						hjy = math::getMatrixPos(hcy - 0.1f,
-							world->wall_size_.y);
-						if (hjx < world->matrix_size_.x && hjx >= 0 &&
-							hjy < world->matrix_size_.y && hjy >= 0)
-						{
-							if (world->matrix_[hjx][hjy] != 0)
-							{
-								ray_data_vec.emplace_back(hcx, hcy,
-									math::fast_hypot(hcx - camera->position_.x,
-										hcy - camera->position_.y),
-									world->matrix_[hjx][hjy], angle, dir::down);
-								break;
-							}
-						}
-						else
-						{
-							break;
-						}
-					}
-
-					if (sort_enable_)
-					{
-						//SORT BUFFER
-						std::sort
-						(
-							ray_data_vec.begin(),
-							ray_data_vec.end(),
-							[](RayData const& a, RayData const& b) -> bool
-							{
-								return a.length < b.length;
-							}
-						);
-					}
-
-					t_ray_data_vec->at(r) = ray_data_vec;
-				}
-			}
+			);
+			
 		}
+		
 	};
 
-public:
+	class PARALLELGPGPUPROCRAYCASTER
+	{
+	private:
+		concurrency::array_view<RayData, 1> host_mem_array_pixel_depth_;
+		concurrency::array_view<float, 1> host_mem_array_camera_states_;
+		concurrency::array_view<float, 1> host_mem_array_world_states_;
+		
+	public:
+
+		PARALLELGPGPUPROCRAYCASTER(
+			const unsigned window_width,
+			RayData*& data)
+		:
+			host_mem_array_pixel_depth_(V3D_GPU_RAYCASTING_MAX_PIXEL_DEPTH * window_width, data),
+			host_mem_array_camera_states_(4),
+			host_mem_array_world_states_(1)
+		
+		{
+		}
+
+		void update(const Camera* camera, const World* world) const
+		{
+			host_mem_array_camera_states_[0] = camera->position_.x;
+			host_mem_array_camera_states_[1] = camera->position_.y;
+			host_mem_array_camera_states_[2] = camera->fov_;
+			host_mem_array_camera_states_[3] = camera->rotation_;
+		}
+		
+		void operator()(concurrency::index<1> idx) const restrict(amp)
+		{
+			host_mem_array_pixel_depth_[idx].rotation += 1;
+		}
+
+		void discard_data() const
+		{
+			host_mem_array_pixel_depth_.discard_data();
+		}
+		
+		void operator ~() const
+		{
+			host_mem_array_pixel_depth_.discard_data();
+		}
+		
+		void synchronize() const
+		{
+			host_mem_array_pixel_depth_.synchronize();
+		}
+
+		concurrency::extent<1> extent() const
+		{
+			return host_mem_array_pixel_depth_.extent;
+		}
+	};
+	
+	class GPU_RayCaster
+	{
+	private:
+		std::thread* thread_;
+
+		const unsigned window_width_;
+		
+		Camera* const camera_;
+		const World* world_;
+
+		const unsigned int pixel_depth_ = V3D_GPU_RAYCASTING_MAX_PIXEL_DEPTH;
+
+		const unsigned int size_;
+
+		pixel_depth_vector mem_array_pixel_depth_;
+
+		RayData* data_;
+		
+		bool stopped_ = false;
+
+		concurrency::array<RayData, 2>* data_ptr_;
+
+		PARALLELGPGPUPROCRAYCASTER parallelgpgpuprocraycaster_;
+
+	
+	public:
+		GPU_RayCaster(
+			Camera* const camera,
+			const World* world,
+			const unsigned window_width
+		)
+			:
+			thread_(nullptr),
+			window_width_(window_width),
+			camera_(camera),
+			world_(world),
+			size_(pixel_depth_* window_width_),
+			mem_array_pixel_depth_(size_),
+			data_(new RayData[size_]),
+			parallelgpgpuprocraycaster_(window_width_, data_)
+		{
+			//host_t_ray_data_vec_.discard_data();
+		}
+
+		~GPU_RayCaster()
+		{
+			//host_t_ray_data_vec_[1][1].rotation;
+		}
+
+		void start_gpgpu_parallel_raycasting()
+		{
+			
+			thread_ = new std::thread
+			(
+				[&]()->void
+				{
+					
+					for (int i = 0; i < size_; i++)
+					{
+						data_[i] = RayData(1, 1, 1, 1, 1, dir::right);
+					}
+
+					//concurrency::array_view<RayData, 1> host_mem_array_pixel_depth(pixel_depth_* window_width_, data_);
+					//concurrency::array_view<float, 1> host_mem_array_camera_states(4);
+					
+					while (!stopped_)
+					{
+						
+						//host_mem_array_camera_states[0] = camera_->position_.x;
+						//host_mem_array_camera_states[1] = camera_->position_.y;
+						//host_mem_array_camera_states[2] = camera_->fov_;
+						//host_mem_array_camera_states[3] = camera_->rotation_;
+
+						//host_mem_array_pixel_depth.discard_data();
+
+						parallelgpgpuprocraycaster_.update(camera_, world_);
+						
+						~parallelgpgpuprocraycaster_;
+						
+						concurrency::parallel_for_each
+						(
+							parallelgpgpuprocraycaster_.extent(),
+							parallelgpgpuprocraycaster_
+						);
+						
+						parallelgpgpuprocraycaster_.synchronize();
+						
+						Sleep(1);
+					}
+				}
+			);
+			thread_->detach();
+		}
+
+		v3d::RayData*& getDataPtr()
+		{
+			return this->data_;
+		}
+		
+	};
+
 	class Wall
 	{
-		friend class World;
+		friend class CPUWorld;
 
 	protected:
 
@@ -1450,17 +1707,17 @@ public:
 			return texture_;
 		}
 
-		virtual void wall_states(const RayCaster::RayData& data) = 0;
+		virtual void wall_states(const RayData& data) = 0;
 
 		virtual void wall_states_center_ray(
-			const RayCaster::RayData& data,
+			const RayData& data,
 			const sf::Vector2<float> center_ray) = 0;
 	};
 
 	/*
 	 * Стена, самая обычная, без свойств, имеет номер 1
 	 */
-	class MainWall : public Wall
+	class MainWall final: public Wall
 	{
 	public:
 
@@ -1473,13 +1730,13 @@ public:
 
 		sf::RenderTexture render_texture;
 
-		void wall_states(const RayCaster::RayData& data) override
+		void wall_states(const RayData& data) override
 		{
 			this->texture_ = this->texture_;
 		}
 
 		void wall_states_center_ray(
-			const RayCaster::RayData& data,
+			const RayData& data,
 			const sf::Vector2<float> center_ray) override
 		{
 			this->texture_ = this->texture_;
@@ -1492,7 +1749,7 @@ public:
 	 */
 	class Sprite
 	{
-		friend class World;
+		friend class CPUWorld;
 
 #ifdef V3D_FUNCTIONAL
 
@@ -1621,7 +1878,7 @@ public:
 			return size_;
 		}
 
-		virtual void sprite_states(const RayCaster::RayData& data) = 0;
+		virtual void sprite_states(const RayData& data) = 0;
 
 		// Pattern builder
 		virtual Sprite* build()
@@ -1630,7 +1887,7 @@ public:
 		}
 	};
 
-	class MainSprite : public Sprite
+	class MainSprite final: public Sprite
 	{
 	public:
 		MainSprite() = default;
@@ -1641,7 +1898,7 @@ public:
 			const sf::Vector2<float> size = {},
 			const std::string& texture_path = {}
 		) :
-			Sprite(position, size, texture)
+			Sprite(position, size, texture_path)
 		{
 			
 		}
@@ -1653,14 +1910,14 @@ public:
 			const float z,
 			const float width,
 			const float height,
-			const sf::Texture& texture = {}
+			const std::string& texture_path = {}
 		) :
-			Sprite({ x, y, z }, {width, height}, texture)
+			Sprite({ x, y, z }, {width, height}, texture_path)
 		{
 			
 		}
 
-		void sprite_states(const RayCaster::RayData& data) override
+		void sprite_states(const RayData& data) override
 		{
 			/*
 			 * ...code...
@@ -1669,40 +1926,81 @@ public:
 	};
 
 	/*
-	 * Самый главный класс.
+	 * \brief Самый главный класс.
 	 * Хранит все свойства псевдо-3D мира.
-	 * Можно отрисовать средствами самого SFMl.
-	 * Подчиняется класслу FileManager
+	 * Можно отрисовать средствами самого SFML.
 	 */
 	class World :
-		public sf::Drawable,
-		public sf::Transformable
+		public sf::Drawable
 	{
-		friend void __fastcall RayCaster::RayCast(
-			Camera* const camera,
-			const World* world,
-			RayCaster::pixel_depth_vector* t_ray_data_vec) const;
+
+		friend class v3d::CPURayCaster;
+
+		friend void PARALLELGPGPUPROCRAYCASTER::update
+		(
+			const Camera* camera,
+			const World* world
+		) const;
+
+		
+	public:
+		World
+		(
+			RayCaster* ray_caster,
+			const sf::Vector2<float> size =
+			sf::Vector2<float>(1024.0F, 1024.0F),
+			Matrix matrix = 
+			generateMatrix(32, 32, 1)
+		)
+		:
+			size_(size),
+			matrix_(matrix),
+			matrix_size_({
+				static_cast<int>(matrix.size()),
+				static_cast<int>(matrix[0].size())
+			}),
+			wall_size_({
+				size.x / static_cast<float>(matrix_size_.x),
+				size.y / static_cast<float>(matrix_size_.y)
+			}),
+			ray_caster_api_(ray_caster),
+			floor_color_(0, 150, 0)
+		{
+
+		}
+		
+	protected:
+		unsigned pixel_depth_max_ = 1;
+		bool* multi_threading_enable_ = new bool(false);
+		unsigned long long* render_step_ = new unsigned long long(0);
+		sf::Vector2<float> size_;
+		Matrix matrix_;
+		sf::Vector2<int> matrix_size_;
+		sf::Vector2<float> wall_size_;
+		RayCaster* ray_caster_api_ = nullptr;
+		std::vector<Wall*> walls_{};
+		std::vector<Sprite*> sprites_{};
+		Camera* camera_ = nullptr;
+		sf::Color floor_color_;
+		sf::Texture background_texture_p_;
+		sf::Texture* background_texture_ = nullptr;
+		
 
 	public:
 
-#ifdef V3D_FUNCTIONAL
+		virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override
+		{
 
-		//РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ФУНККЦИИ
-#define VAILDER_3D_WORLD_API_RESULT World&
+		}
 
-//ВОЗВРАЩАЕМОЕ ФУНКЦИИ
-#define VAILDER_3D_WORLD_API_RETURN return *this;
-
-#else
-
-		//РЕЗУЛЬТАТ ВЫПОЛНЕНИЯ ФУНККЦИИ
-#define VAILDER_3D_WORLD_API_RESULT void
-
-//ВОЗВРАЩАЕМОЕ ФУНКЦИИ
-#define VAILDER_3D_WORLD_API_RETURN
-
-#endif
-
+		VAILDER_3D_WORLD_API_RESULT
+			setRayCaster(RayCaster* ray_caster)
+		{
+			this->ray_caster_api_ = ray_caster;
+			
+			VAILDER_3D_WORLD_API_RETURN
+		}
+		
 		sf::Vector2<float> getSize() const
 		{
 			return this->size_;
@@ -1734,6 +2032,19 @@ public:
 		}
 
 		VAILDER_3D_WORLD_API_RESULT
+			setPixelDepthMax(const unsigned pixel_depth_max)
+		{
+			pixel_depth_max_ = pixel_depth_max;
+			
+			VAILDER_3D_WORLD_API_RETURN
+		}
+
+		unsigned getPixelDepthMax() const
+		{
+			return pixel_depth_max_;
+		}
+
+		VAILDER_3D_WORLD_API_RESULT
 			setCamera(Camera* camera)
 		{
 			camera_ = camera;
@@ -1749,71 +2060,6 @@ public:
 			VAILDER_3D_WORLD_API_RETURN
 		}
 
-	VAILDER_3D_API_ACCESS_MODIFER_2:
-
-		sf::Vector2<float> size_;
-
-		Matrix matrix_;
-
-		sf::Vector2<int> matrix_size_;
-
-		sf::Vector2<float> wall_size_;
-
-		/*
-		 * Ксласс бросателя лучей
-		 */
-		RayCaster ray_caster_api_{};
-
-		/*
-		 * Вектор,
-		 * хранящий все классы,
-		 * которые унаследовали абстрактный класс Wall.
-		 */
-		std::vector<Wall*> walls_{};
-
-		std::vector<Sprite*> sprites_{};
-
-		Camera* camera_ = nullptr;
-
-		/*
-		 * Цвет пола
-		 */
-		sf::Color floor_color_;
-
-		/*
-		 * Текстура заднего плана
-		 */
-		sf::Texture background_texture_p_;
-
-		sf::Texture* background_texture_ = nullptr;
-
-	public:
-
-		explicit World(sf::RenderTarget& target,
-			const sf::Vector2<float> size =
-			sf::Vector2<float>(1024, 1024),
-			Matrix matrix = generateMatrix(32, 32, 1)) :
-
-			size_(size),
-			matrix_(matrix),
-			matrix_size_({ static_cast<int>(matrix.size()),
-			static_cast<int>(matrix[0].size()) }),
-			wall_size_({ size.x / static_cast<float>(matrix_size_.x),
-			size.y / static_cast<float>(matrix_size_.y) }),
-			floor_color_(0, 150, 0)
-		{
-			walls_.push_back(new MainWall);
-			walls_.push_back(new MainWall);
-
-			background_texture_p_.loadFromFile("data/tex/bg.jpg");
-			setBackgroundTexture(&background_texture_p_);
-
-			ray_caster_api_.setSortEnable(true);
-		}
-
-		/*
-		 * Добавление новой стены в мир
-		 */
 		VAILDER_3D_WORLD_API_RESULT
 			addWallType(Wall* wall)
 		{
@@ -1861,14 +2107,60 @@ public:
 			return *this;
 		}
 
-		/*
-		 * Переопределение виртуальной функции.
-		 * Для отрисовки средстсвами SFML.
-		 */
+		void camera_move_with_cls(Camera& camera, const float step_x,
+			const float step_y) const
+		{
+			if (matrix_[math::getMatrixPos(((step_x > 0) ?
+				(camera_->position_.x + camera_->radius_) :
+				(camera_->position_.x - camera_->radius_)) + step_x,
+				wall_size_.x)]
+				[math::getMatrixPos(((step_y > 0) ?
+					(camera_->position_.y + camera_->radius_) :
+					(camera_->position_.y - camera_->radius_)),
+					wall_size_.y)] == 0)
+			{
+				camera_->move(step_x, 0);
+			}
+
+			if (matrix_[math::getMatrixPos(((step_x > 0) ?
+				(camera_->position_.x + camera_->radius_) :
+				(camera_->position_.x - camera_->radius_)),
+				wall_size_.x)]
+				[math::getMatrixPos(((step_y > 0) ?
+					(camera_->position_.y + camera_->radius_) :
+					(camera_->position_.y - camera_->radius_)) + step_y,
+					wall_size_.y)] == 0)
+			{
+				camera_->move(0, step_y);
+			}
+		}
+
+	};
+	
+	class CPUWorld final :
+		public World
+	{
+		
+	public:
+
+	public:
+
+		explicit CPUWorld(World&& world)
+		:
+			World(world)
+		{
+			walls_.push_back(new MainWall);
+			walls_.push_back(new MainWall);
+
+			background_texture_p_.loadFromFile("data/tex/bg.jpg");
+			setBackgroundTexture(&background_texture_p_);
+
+			ray_caster_api_->setSortEnable(true);
+		}
 
 	VAILDER_3D_API_ACCESS_MODIFER_1:
-		RayCaster::pixel_depth_vector* ray_data_ =
-			new RayCaster::pixel_depth_vector;
+		pixel_depth_vector* ray_data_ =
+			new pixel_depth_vector;
 
 	VAILDER_3D_API_ACCESS_MODIFER_2:
 
@@ -1879,22 +2171,28 @@ public:
 			{
 				ray_data_->resize(camera_->window_size_.x);
 			}
-
-			ray_caster_api_.RayCast(camera_, this, ray_data_);
+			if (*render_step_ == 0)
+			{
+				ray_caster_api_->RayCast(camera_, this, ray_data_);
+			}
+			if (!*multi_threading_enable_)
+			{
+				ray_caster_api_->RayCast(camera_, this, ray_data_);
+			}
 
 			/*
 			* Вектор использованых номеров стен
 			*/
-			std::vector<unsigned int> used_walls_;
+			std::vector<unsigned int> used_walls;
 
 			/*
 			 * Вектор уникальных номеров использованых номером стен
 			 */
-			std::vector<unsigned int> unique_walls_;
+			std::vector<unsigned int> unique_walls;
 
 			for (int i = 1; i < camera_->window_size_.x; i++)
 			{
-				used_walls_.push_back(ray_data_->at(i)[0].wall_number);
+				used_walls.push_back(ray_data_->at(i)[0].wall_number);
 			}
 
 			/*
@@ -1903,17 +2201,17 @@ public:
 			 * и их сортировка средствами STL
 			 */
 			std::unique_copy(
-				used_walls_.begin(),
-				used_walls_.end(),
-				std::back_inserter(unique_walls_)
+				used_walls.begin(),
+				used_walls.end(),
+				std::back_inserter(unique_walls)
 			);
 
 			/*
 			 * Вызов виртуальных функций стен
 			 */
-			for (int i = 0; i < unique_walls_.size(); i++)
+			for (int i = 0; i < unique_walls.size(); i++)
 			{
-				walls_[unique_walls_[i]]->wall_states(ray_data_->at(i)[0]);
+				walls_[unique_walls[i]]->wall_states(ray_data_->at(i)[0]);
 			}
 
 			float d{};
@@ -1925,31 +2223,31 @@ public:
 
 			switch (ray_data_->at(static_cast<int>(camera_
 				->window_size_2_.x))[0].direction) {
-			case RayCaster::dir::left:
+			case dir::left:
 				d = fmodf(ray_data_->at(static_cast<int>(camera_
 					->window_size_2_.x))[0].position_y,
 					wall_size_.y);
 				break;
 
-			case RayCaster::dir::right:
+			case dir::right:
 				d = (wall_size_.y - fmodf(ray_data_->at(static_cast<int>(camera_
 					->window_size_2_.x))[0].position_y,
 					wall_size_.y));
 				break;
 
-			case RayCaster::dir::down:
+			case dir::down:
 				d = (wall_size_.x - fmodf(ray_data_->at(static_cast<int>(camera_
 					->window_size_2_.x))[0].position_x,
 					wall_size_.x));
 				break;
 
-			case RayCaster::dir::up:
+			case dir::up:
 				d = fmodf(ray_data_->at(static_cast<int>(camera_
 					->window_size_2_.x))[0].position_x,
 					wall_size_.x);
 				break;
 
-			case RayCaster::dir::none:
+			case dir::none:
 				break;
 
 			default:
@@ -1975,8 +2273,7 @@ public:
 					static_cast<float>(walls_
 						[ray_data_->at(
 							static_cast<int>(camera_->window_size_2_.x))
-						[0].wall_number]
-									   ->texture_.getSize().y) -
+						[0].wall_number]->texture_.getSize().y) -
 					((camera_->window_size_2_.y -
 						(camera_->window_delta_y_ -
 							(camera_->render_constant_ / (ray_data_->at(
@@ -2000,7 +2297,7 @@ public:
 								rotation_)))))
 					});
 
-			unique_walls_.clear();
+			unique_walls.clear();
 
 			/*
 			 * Отрисовка пола
@@ -2033,8 +2330,7 @@ public:
 					sf::Color(it * delta_color_r,
 						it * delta_color_g, it * delta_color_b));
 
-				target.draw(rectangle_shape_floor_,
-					this->getTransform());
+				target.draw(rectangle_shape_floor_);
 			}
 
 			/*
@@ -2076,7 +2372,7 @@ public:
 						0, 1,
 						background_texture_->getSize().y));
 
-				target.draw(background_sprite, this->getTransform());
+				target.draw(background_sprite);
 			}
 
 			/*
@@ -2086,109 +2382,117 @@ public:
 
 			for (auto i = 0; i < camera_->window_size_.x; i++)
 			{
-				/*
-				 * В зависимости от того, на какую сторону падает луч,
-				 * находим столб текстуры
-				 */
+				const unsigned pixel_depth_max = 
+					ray_data_->at(i).size() > pixel_depth_max_ ?
+					pixel_depth_max_ :
+					static_cast<unsigned>(ray_data_->at(i).size());
+				for (unsigned _d_i = 1; _d_i <= pixel_depth_max; _d_i++)
+				{
+					//std::cout << _d_i << std::endl;
+					const unsigned d_i = pixel_depth_max - _d_i;
+					/*
+					 * В зависимости от того, на какую сторону падает луч,
+					 * находим столб текстуры
+					 */
 
-				switch (ray_data_->at(i)[0].direction) {
-				case RayCaster::dir::left:
-					d = fmodf(ray_data_->at(i)[0].position_y,
-						wall_size_.y);
-					break;
+					switch (ray_data_->at(i)[d_i].direction) {
+					case dir::left:
+						d = fmodf(ray_data_->at(i)[d_i].position_y,
+							wall_size_.y);
+						break;
 
-				case RayCaster::dir::right:
-					d = (wall_size_.y - fmodf(ray_data_->at(i)[0].position_y,
-						wall_size_.y));
-					break;
+					case dir::right:
+						d = (wall_size_.y - fmodf(ray_data_->at(i)[d_i].position_y,
+							wall_size_.y));
+						break;
 
-				case RayCaster::dir::down:
-					d = (wall_size_.x - fmodf(ray_data_->at(i)[0].position_x,
-						wall_size_.x));
-					break;
+					case dir::down:
+						d = (wall_size_.x - fmodf(ray_data_->at(i)[d_i].position_x,
+							wall_size_.x));
+						break;
 
-				case RayCaster::dir::up:
-					d = fmodf(ray_data_->at(i)[0].position_x,
-						wall_size_.x);
-					break;
+					case dir::up:
+						d = fmodf(ray_data_->at(i)[d_i].position_x,
+							wall_size_.x);
+						break;
 
-				case RayCaster::dir::none:
-					break;
+					case dir::none:
+						break;
 
-				default:
-					break;
-				}
+					default:
+						break;
+					}
 
-				/*
-				 * Берём текстуру у стены.
-				 */
-				sprite.setTexture(walls_[ray_data_->at(i)[0].wall_number]->texture_);
+					/*
+					 * Берём текстуру у стены.
+					 */
+					sprite.setTexture(walls_[ray_data_->at(i)[d_i].wall_number]->texture_);
 
-				/*
-				 * Высота стены.
-				 */
-				const float wall_height = camera_->render_constant_ /
-					(ray_data_->at(i)[0].length * cosf(
-						ray_data_->at(i)[0].rotation -
-						camera_->rotation_));
+					/*
+					 * Высота стены.
+					 */
+					const float wall_height = camera_->render_constant_ /
+						(ray_data_->at(i)[d_i].length * cosf(
+							ray_data_->at(i)[d_i].rotation -
+							camera_->rotation_));
 
-				/*
-				 * Позиция столба стены на экране по координате Y.
-				 */
-				const float sprite_position_y = camera_->window_delta_y_
-					- wall_height / 2.f;
+					/*
+					 * Позиция столба стены на экране по координате Y.
+					 */
+					const float sprite_position_y = camera_->window_delta_y_
+						- wall_height / 2.f;
 
-				/*
-				 * Ставим столб стены на данную позицию.
-				 */
-				sprite.setPosition(i, sprite_position_y);
+					/*
+					 * Ставим столб стены на данную позицию.
+					 */
+					sprite.setPosition(i, sprite_position_y);
 
-				const float tex_wall_scale = (static_cast<float>
-					(walls_[ray_data_->at(i)[0].wall_number]->texture_.getSize().x)
-					/ wall_size_.x);
+					const float tex_wall_scale = (static_cast<float>
+						(walls_[ray_data_->at(i)[d_i].wall_number]->texture_.getSize().x)
+						/ wall_size_.x);
 
-				const int texture_position_x = d * tex_wall_scale;
+					const int texture_position_x = d * tex_wall_scale;
 
-				sprite.setTextureRect(sf::IntRect(
-					texture_position_x,
-					0, 1,
-					walls_[ray_data_->at(i)[0].wall_number]
-					->texture_.getSize().y));
-
-				const float scale = 1.f / tex_wall_scale;
-
-				sprite.setScale(1, wall_height /
-					static_cast<float>(walls_[ray_data_->at(i)[0].wall_number]
+					sprite.setTextureRect(sf::IntRect(
+						texture_position_x,
+						0, 1,
+						walls_[ray_data_->at(i)[d_i].wall_number]
 						->texture_.getSize().y));
 
+					const float scale = 1.f / tex_wall_scale;
+
+					sprite.setScale(1, wall_height /
+						static_cast<float>(walls_[ray_data_->at(i)[d_i].wall_number]
+							->texture_.getSize().y));
+
+					/*
+					 * Определяем цвет стены,
+					 * в зависимости от её расстояния до камеры.
+					 */
+					const sf::Uint8 wall_clr = 255.f / (1.f +
+						powf(ray_data_->at(i)[d_i].length, 2.f) *
+						camera_->shading_coefficient_);
+
+					sprite.setColor(sf::Color(wall_clr,
+						wall_clr, wall_clr));
+					/*
+					 * Отрисовка данного столба
+					 */
+					target.draw(sprite);
+				}
+
+
 				/*
-				 * Определяем цвет стены,
-				 * в зависимости от её расстояния до камеры.
+				  ╔═══╗░░░░░░╔╗░░░░░░░░░░░░
+				  ║╔═╗║░░░░░╔╝╚╗░░░░░░░░░░░
+				  ║╚══╦══╦═╦╬╗╔╬══╗ ╔══╦══╦╗
+				  ╚══╗║╔╗║╔╬╣║║║║═╣ ║╔╗║╔╗╠╣
+				  ║╚═╝║╚╝║║║║║╚╣║═╣ ║╔╗║╚╝║║
+				  ╚═══╣╔═╩╝╚╝╚═╩══╝ ╚╝╚╣╔═╩╝
+				  ░░░░║║░░░░░░░░░░░░░░ ║║░░░
+				  ░░░░╚╝░░░░░░░░░░░░░░ ╚╝░░░
+				  (SPRITE SCRIPT)
 				 */
-				const sf::Uint8 wall_clr = 255.f / (1.f +
-					powf(ray_data_->at(i)[0].length, 2.f) *
-					camera_->shading_coefficient_);
-
-				sprite.setColor(sf::Color(wall_clr,
-					wall_clr, wall_clr));
-				/*
-				 * Отрисовка данного столба
-				 */
-				target.draw(sprite, this->getTransform());
-
-
-				
-				  /*
-				    ╔═══╗░░░░░░╔╗░░░░░░░░░░░░
-					║╔═╗║░░░░░╔╝╚╗░░░░░░░░░░░
-					║╚══╦══╦═╦╬╗╔╬══╗ ╔══╦══╦╗
-					╚══╗║╔╗║╔╬╣║║║║═╣ ║╔╗║╔╗╠╣
-					║╚═╝║╚╝║║║║║╚╣║═╣ ║╔╗║╚╝║║
-					╚═══╣╔═╩╝╚╝╚═╩══╝ ╚╝╚╣╔═╩╝
-					░░░░║║░░░░░░░░░░░░░░ ║║░░░
-					░░░░╚╝░░░░░░░░░░░░░░ ╚╝░░░
-					(SPRITE SCRIPT)
-				   */
 
 				for (auto i = 0; i < sprites_.size(); i++)
 				{
@@ -2204,8 +2508,10 @@ public:
 							camera_->background_repeating_fov_));
 					}
 
-					std::cout << a << std::endl;
+					//std::cout << a << std::endl;
 				}
+
+				(*render_step_)++;
 				
 			}
 		}
@@ -2214,49 +2520,24 @@ public:
 		 * Передвинуть камеру,
 		 * в соответствии с матрицей мира
 		 */
-	public:
-		void camera_move_with_cls(Camera& camera, const float step_x,
-			const float step_y) const
-		{
-			if (matrix_[math::getMatrixPos(((step_x > 0) ?
-				(camera_->position_.x + camera_->radius_) :
-				(camera_->position_.x - camera_->radius_)) + step_x,
-				wall_size_.x)]
-				[math::getMatrixPos(((step_y > 0) ?
-					(camera_->position_.y + camera_->radius_) :
-					(camera_->position_.y - camera_->radius_)),
-					wall_size_.y)] == 0)
-			{
-				camera_->move(step_x, 0);
-			}
-
-			if (matrix_[math::getMatrixPos(((step_x > 0) ?
-				(camera_->position_.x + camera_->radius_) :
-				(camera_->position_.x - camera_->radius_)),
-				wall_size_.x)]
-				[math::getMatrixPos(((step_y > 0) ?
-					(camera_->position_.y + camera_->radius_) :
-					(camera_->position_.y - camera_->radius_)) + step_y,
-					wall_size_.y)] == 0)
-			{
-				camera_->move(0, step_y);
-			}
-		}
 	};
 
 	/*
 	 * Класс камеры.
 	 */
 
-	class Camera : protected Saveable
+	class Camera final : protected Saveable
 	{
 		/*
 		 * Дружелюбные классы
 		 */
 
-		friend class RayCaster;
-
-		friend class World;
+		friend class v3d::RayCaster;
+		friend class v3d::CPURayCaster;
+		friend void v3d::GPU_RayCaster::start_gpgpu_parallel_raycasting();
+		friend void PARALLELGPGPUPROCRAYCASTER::update(const Camera* camera, const World* world) const;
+		friend class v3d::World;
+		friend class v3d::CPUWorld;
 
 #ifdef V3D_FUNCTIONAL
 
@@ -2529,7 +2810,7 @@ public:
 		* то возвращает класс Camera, иначе ничего
 		*/
 		VAILDER_3D_CAMERA_API_RESULT
-			move(const float x, const float y)
+			__fastcall move(const float x, const float y)
 		{
 			this->position_.x += x;
 			this->position_.y += y;

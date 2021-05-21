@@ -53,5 +53,8 @@
     <ClInclude Include="Math.h">
       <Filter>Файлы заголовков\Library</Filter>
     </ClInclude>
+    <ClInclude Include="DataImpl.h">
+      <Filter>Файлы заголовков\Library</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
