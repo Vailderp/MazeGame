@@ -7,6 +7,7 @@
  */
 namespace tu
 {
+	///////////////////////////////////////////////////////////////////////////
 	/**
 	 * \brief даёт сумму вариативных аргументов
 	 * \param args вариативные аргументы
@@ -18,6 +19,8 @@ namespace tu
 		return sizeof...(args);
 	}
 
+	///////////////////////////////////////////////////////////////////////////
+	
 	/**
 	 * \brief Оболочка для векторов одного типа, для их объединения
 	 * \tparam _Value_type тип объекта в векторе
@@ -45,6 +48,8 @@ namespace tu
 
 	typedef int rank_t;
 
+	///////////////////////////////////////////////////////////////////////////
+	
 	/**
 	* \brief создаёт многомерный массив
 	* \tparam _Value_type тип объекта
@@ -67,6 +72,8 @@ namespace tu
 		typedef _Value_type type;
 	};
 
+	///////////////////////////////////////////////////////////////////////////
+	
 	/**
 	* \brief Превращает вариативные аргументы в массив
 	*/
@@ -86,6 +93,8 @@ namespace tu
 		_Args...
 	};
 
+	///////////////////////////////////////////////////////////////////////////
+	
 	template <typename _Value_type>
 	struct TemplArgs
 	{
@@ -181,6 +190,11 @@ namespace tu
 
 	};
 	*/
+
+
+	/////////////////////////////////////////////////////////////////////////////////
+
+	
 /**
  * \brief Оболочка (обёртка) над обычным одномерным массивом
  * \tparam _Value_type тип элементов
@@ -201,7 +215,9 @@ namespace tu
 		 */
 		explicit DataImpl2(_Value_type** data_ptr, 
 			const rank_t _Size_1, const rank_t _Size_2) :
-			data_ptr_(data_ptr)
+			data_ptr_(data_ptr),
+			size_first(_Size_1),
+			size_second(_Size_2)
 		{
 			for (rank_t i = 0; i < _Size_1; i++)
 			{
@@ -213,6 +229,8 @@ namespace tu
 				}
 			}
 		}
+
+		DataImpl2() = default;
 		
 		/**
 		 * \brief получить элемени по данным индексам
@@ -220,12 +238,18 @@ namespace tu
 		 * \param idx2 индекс второго измерения
 		 * \return возвращает значение по данным индексам
 		 */
-		inline constexpr _Value_type get(const rank_t idx1, const rank_t idx2)
+		constexpr _Value_type& get(const rank_t idx1, const rank_t idx2) const
 		{
 			return *(this->at(idx1).at(idx2));
 		}
 
-		
+	public:
+		const rank_t size_first;
+		const rank_t size_second;
 		
 	};
+	
+	template<typename _Value_type, rank_t _Size = 1>
+	inline _Value_type fix_array[_Size] = {};
+	
 }

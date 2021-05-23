@@ -1,4 +1,5 @@
 #define V3D_FUNCTIONAL
+#define V3D_GPU_RAYCASTING_MAX_PIXEL_DEPTH 16
 #include "Walls.h"
 #include <Windows.h>
 #include "GUI_inits.h"
@@ -10,7 +11,7 @@
 int main()
 {
 	std::ios_base::sync_with_stdio(false);
-	sf::RenderWindow window(sf::VideoMode(400, 400), "Maze Game!", sf::Style::Default);
+	sf::RenderWindow window(sf::VideoMode(1500, 1000), "Maze Game!", sf::Style::Default);
 	window.setPosition({ 10, 10 });
 	//window.setFramerateLimit(60);
 	//window.setVerticalSyncEnabled(true);
@@ -20,29 +21,25 @@ int main()
 
 	v3d::Maze<sizeX, sizeY, 2> maze{};
 	v3d::Matrix lab = maze.generate();
-	v3d::Matrix lab =
+	/*v3d::Matrix lab =
 	{   {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 		{1, 1, 1, 1, 1, 2, 1, 1, 1, 1},
 		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 1, 2, 1, 1, 1, 1, 1, 1, 1},
 		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 1, 1, 1, 1, 1, 1, 2, 1, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 		{1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-	};
-	
-	concurrency::array_view<>
-	v3d::CPURayCaster ray_caster();
-	v3d::CPUWorld world(v3d::World(sf::Vector2f(250, 250), lab));
+	};*/
+
+	v3d::ray_data* ray_data = new v3d::ray_data[1500 * V3D_GPU_RAYCASTING_MAX_PIXEL_DEPTH];
+	v3d::CPURayCaster ray_caster(1500, &ray_data);
 	v3d::Camera camera(window);
-
-
-	v3d::RayCaster caster(&camera, &world);
-
+	v3d::CPUWorld world(v3d::World(&camera, &ray_data, sf::Vector2f(250, 250), lab));
 	
-	world.setCamera(&camera.setRadius(1).setShadingCoefficient(10).setBackgroundRepeatingFov(360.0_deg)).setPixelDepthMax(10);
+	world.setCamera(&camera.setRadius(1).setShadingCoefficient(10).setBackgroundRepeatingFov(360.0_deg).setFov(30.0_deg).setZoom(0.0045F)).setPixelDepthMax(10);
 
 	std::vector<float> a = 
 	{
@@ -130,6 +127,8 @@ int main()
 	float fps_data = 0;
 	const float speed = 0.45f;
 
+	//world.addWalls(new CircleWall);
+	
 	world
 		<< new CircleWall
 		<< new v3d::MainWall("data/tex/wall5.png")
@@ -141,7 +140,7 @@ int main()
 	v3d::Timer<float> timer_esc;
 	Menu menu(&window, &camera);
 
-	v3d::GPU_RayCaster gpu_ray_caster(&camera, &world, window.getSize().x);
+	/*v3d::GPU_RayCaster gpu_ray_caster(&camera, &world, window.getSize().x);
 	gpu_ray_caster.start_gpgpu_parallel_raycasting();
 	v3d::RayData* data = gpu_ray_caster.getDataPtr();
 
@@ -150,7 +149,8 @@ int main()
 	
 		std::cout << data[45].rotation << std::endl;
 		Sleep(100);
-	}
+	}*/
+
 	
 	while (window.isOpen())
 	{
@@ -158,6 +158,8 @@ int main()
 		Time = clock.getElapsedTime();
 		float currentTime = Time.asSeconds();
 
+		ray_caster.startRayCasting(&camera, &world);
+		
 		sf::Event event{};
 		while (window.pollEvent(event))
 		{
@@ -183,26 +185,26 @@ int main()
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 		{
 			world.camera_move_with_cls(camera,
-				cosf(camera.getRotation()) * speed,
-				sinf(camera.getRotation()) * speed);
+				cosf(camera.getRotation() + 15.0_deg) * speed,
+				sinf(camera.getRotation() + 15.0_deg) * speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 		{
 			world.camera_move_with_cls(camera,
-				-cosf(camera.getRotation()) * speed,
-				-sinf(camera.getRotation()) * speed);
+				-cosf(camera.getRotation() + 15.0_deg) * speed,
+				-sinf(camera.getRotation() + 15.0_deg) * speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 		{
 			world.camera_move_with_cls(camera,
-				cosf(camera.getRotation() + 90) * speed,
-				sinf(camera.getRotation() + 90) * speed);
+				cosf(camera.getRotation() + 90.0_deg) * speed,
+				sinf(camera.getRotation() + 90.0_deg) * speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 		{
 			world.camera_move_with_cls(camera,
-				cosf(camera.getRotation() - 90) * speed,
-				sinf(camera.getRotation() - 90) * speed);
+				cosf(camera.getRotation() - 90.0_deg) * speed,
+				sinf(camera.getRotation() - 90.0_deg) * speed);
 		}
 		//window_position = window.getPosition();
 
