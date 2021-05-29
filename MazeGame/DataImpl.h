@@ -221,11 +221,11 @@ namespace tu
 		{
 			for (rank_t i = 0; i < _Size_1; i++)
 			{
-				this->push_back(multi_dimension_vector_<_Value_type*, 1>
+				this->push_back(multi_dimension_vector_<_Value_type*, 1> \
 					::type(_Size_2));
 				for (rank_t l = 0; l < _Size_2; l++)
 				{
-					this->at(i).at(l) = &((*data_ptr)[i * _Size_2 + l]);
+					(*this)[i][l] = &(*data_ptr)[i * _Size_2 + l];
 				}
 			}
 		}
@@ -238,11 +238,14 @@ namespace tu
 		 * \param idx2 индекс второго измерения
 		 * \return возвращает значение по данным индексам
 		 */
-		constexpr _Value_type& get(const rank_t idx1, const rank_t idx2) const
+		
+		[[nodiscard]] constexpr \
+		_Value_type& (get)(const rank_t idx1, const rank_t idx2) const
 		{
-			return *(this->at(idx1).at(idx2));
+			return *(*this)[idx1][idx2];
 		}
 
+	
 	public:
 		const rank_t size_first;
 		const rank_t size_second;

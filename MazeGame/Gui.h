@@ -261,7 +261,6 @@ namespace gui
 
 				on_change_function_(value_);
 
-				std::cout << value_ << std::endl;
 
 			}
 		}

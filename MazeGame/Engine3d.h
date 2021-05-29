@@ -899,10 +899,10 @@ public:
 			{
 				for (tu::rank_t l = 0; l < buffer_ray_data_impl2_.size_second; l++)
 				{
-					buffer_ray_data_impl2_.get(i, l).length = 0;
+					(*buffer_ray_data_impl2_[i][l]).length = 0;
 				}
 			}
-			
+
 			/*Условные обозначения
 				up
 			 ________
@@ -912,805 +912,800 @@ public:
 			|________|
 			   down
 			*/
-			
+
 			/*
 			 * Процедура бросания лучей
 			 * API 2020 year
 			 */
+			float angle_per_ray = camera_->fov_ /
+				static_cast<float>(camera_->window_size_.x);
+			for (auto r = 0; r < camera_->window_size_.x; r++)
+			{
+				unsigned buffer_ray_data_impl2_i = 0;
+				/*
+				 * Вектор состояний лучей.
+				 * Для дальнейшей его сортировки
+				 */
+				
+				 /*
+				  * Угол данного луча
+				  */
+				const float angle = camera_->rotation_ +
+					(static_cast<float>(r) * (angle_per_ray)) - camera_->fov_ / 2;
 
-					
-						float angle_per_ray = camera_->fov_ /
-							static_cast<float>(camera_->window_size_.x);
-						for (auto r = 0; r < camera_->window_size_.x; r++)
+				/*
+				 * Тригонометрические состояния угла
+				 */
+				const float cos_angle = cosf(angle);
+				const float sin_angle = sinf(angle);
+				const float tan_angle = tanf(angle);
+				const float ctg_angle = math::ctg(angle);
+
+				//std::cout << r << std::endl;
+
+				if (cos_angle > 0 && sin_angle > 0)
+				{
+					//Ver
+
+					const float vA = world_->wall_size_.x - (camera_
+						->position_.x -
+						math::getMatrixPos(camera_->position_.x,
+							world_->wall_size_.x) *
+						world_->wall_size_.x);
+					const float vB = vA * tan_angle;
+					float vcx = camera_->position_.x + vA;
+					float vcy = camera_->position_.y + vB;
+					int vjx = math::getMatrixPos(vcx,
+						world_->wall_size_.x);
+					int vjy = math::getMatrixPos(vcy,
+						world_->wall_size_.y);
+					if (vjx < world_->matrix_size_.x && vjx >= 0 &&
+						vjy < world_->matrix_size_.y && vjy >= 0)
+					{
+						if (world_->matrix_[vjx][vjy] != 0)
 						{
-							unsigned buffer_ray_data_impl2_i = 0;
-							/*
-							 * Вектор состояний лучей.
-							 * Для дальнейшей его сортировки
-							 */
-
-							 /*
-							  * Угол данного луча
-							  */
-							const float angle = camera_->rotation_ +
-								(static_cast<float>(r) * (angle_per_ray));
-
-							
-
-							/*
-							 * Тригонометрические состояния угла
-							 */
-							const float cos_angle = cosf(angle);
-							const float sin_angle = sinf(angle);
-							const float tan_angle = tanf(angle);
-							const float ctg_angle = math::ctg(angle);
-
-							//std::cout << r << std::endl;
-
-							if (cos_angle > 0 && sin_angle > 0)
+							if (buffer_ray_data_impl2_i < max_pixel_depth_)
 							{
-								//Ver
-
-								const float vA = world_->wall_size_.x - (camera_
-									->position_.x -
-									math::getMatrixPos(camera_->position_.x,
-										world_->wall_size_.x) *
-									world_->wall_size_.x);
-								const float vB = vA * tan_angle;
-								float vcx = camera_->position_.x + vA;
-								float vcy = camera_->position_.y + vB;
-								int vjx = math::getMatrixPos(vcx,
-									world_->wall_size_.x);
-								int vjy = math::getMatrixPos(vcy,
-									world_->wall_size_.y);
-								if (vjx < world_->matrix_size_.x && vjx >= 0 &&
-									vjy < world_->matrix_size_.y && vjy >= 0)
+								buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
+									ray_data
 								{
-									if (world_->matrix_[vjx][vjy] != 0)
-									{
-										if (buffer_ray_data_impl2_i < max_pixel_depth_)
-										{
-											buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
-												ray_data
-											{
-												vcx,
-												vcy,
-												math::fast_hypot(vcx - camera_->position_.x,
-												vcy - camera_->position_.y),
-												world_->matrix_[vjx][vjy],
-												angle,
-												dir::left
-											};
-											buffer_ray_data_impl2_i++;
-										}
-										else
-										{
-											break;
-										}
-									}
-								}
-								const float vAA = world_->wall_size_.x;
-								const float vBB = vAA * tan_angle;
-
-								//Hor
-								const float hB = world_->wall_size_.y - (camera_
-									->position_.y -
-									math::getMatrixPos(camera_->position_.y,
-										world_->wall_size_.y) *
-									world_->wall_size_.y);
-								const float hA = hB * ctg_angle;
-								float hcx = camera_->position_.x + hA;
-								float hcy = camera_->position_.y + hB;
-								int hjx = math::getMatrixPos(hcx,
-									world_->wall_size_.x);
-								int hjy = math::getMatrixPos(hcy,
-									world_->wall_size_.y);
-								if (hjx < world_->matrix_size_.x && hjx >= 0 &&
-									hjy < world_->matrix_size_.y && hjy >= 0)
-								{
-									if (world_->matrix_[hjx][hjy] != 0)
-									{
-										if (buffer_ray_data_impl2_i < max_pixel_depth_)
-										{
-											buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
-												ray_data
-											{
-												hcx,
-												hcy,
-												math::fast_hypot(hcx - camera_->position_.x,
-												hcy - camera_->position_.y),
-												world_->matrix_[hjx][hjy],
-												angle,
-												dir::up
-											};
-											buffer_ray_data_impl2_i++;
-										}
-										else
-										{
-											break;
-										}
-									}
-								}
-								const float hBB = world_->wall_size_.y;
-								const float hAA = hBB * ctg_angle;
-								//RAY LEN SEARCHER
-								for (unsigned int i = 0; i < 4194304; i++)
-								{
-									vcx += vAA;
-									vcy += vBB;
-									vjx = math::getMatrixPos(vcx,
-										world_->wall_size_.x);
-									vjy = math::getMatrixPos(vcy,
-										world_->wall_size_.y);
-									if (vjx < world_->matrix_size_.x && vjx >= 0 &&
-										vjy < world_->matrix_size_.y && vjy >= 0)
-									{
-										if (world_->matrix_[vjx][vjy] != 0)
-										{
-											if (buffer_ray_data_impl2_i < max_pixel_depth_)
-											{
-												buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
-													ray_data
-												{
-													vcx,
-													vcy,
-													math::fast_hypot(vcx - camera_->position_.x,
-													vcy - camera_->position_.y),
-													world_->matrix_[vjx][vjy],
-													angle,
-													dir::left
-												};
-												buffer_ray_data_impl2_i++;
-
-												if (!break_acceleration_enable_)
-												{
-													break;
-												}
-											}
-											else
-											{
-												break;
-											}
-										}
-									}
-									else
-									{
-										break;
-									}
-								}
-								for (unsigned int i = 0; i < 4194304; i++)
-								{
-									hcx += hAA;
-									hcy += hBB;
-									hjx = math::getMatrixPos(hcx,
-										world_->wall_size_.x);
-									hjy = math::getMatrixPos(hcy,
-										world_->wall_size_.y);
-									if (hjx < world_->matrix_size_.x && hjx >= 0 &&
-										hjy < world_->matrix_size_.y && hjy >= 0)
-									{
-										if (world_->matrix_[hjx][hjy] != 0)
-										{
-											if (buffer_ray_data_impl2_i < max_pixel_depth_)
-											{
-												buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
-													ray_data
-												{
-													hcx,
-													hcy,
-													math::fast_hypot(hcx - camera_->position_.x,
-													hcy - camera_->position_.y),
-													world_->matrix_[hjx][hjy],
-													angle,
-													dir::up
-												};
-												buffer_ray_data_impl2_i++;
-
-												if (!break_acceleration_enable_)
-												{
-													break;
-												}
-											}
-											else
-											{
-												break;
-											}
-										}
-									}
-									else
-									{
-										break;
-									}
-								}
-
-								if (sort_enable_)
-								{
-									/*std::sort
-									(
-										buffer_ray_data_impl2_[r].begin(),
-										buffer_ray_data_impl2_[r].end(),
-										[](ray_data * first, ray_data * second) -> bool
-										{
-											if (first->length == 0 || second->length == 0)
-											{
-												return false;
-											}
-											return first->length < second->length;
-										}
-									);*/
-								}
-
+									vcx,
+									vcy,
+									math::fast_hypot(vcx - camera_->position_.x,
+									vcy - camera_->position_.y),
+									world_->matrix_[vjx][vjy],
+									angle,
+									dir::left
+								};
+								buffer_ray_data_impl2_i++;
 							}
-
-							else if (cos_angle < 0 && sin_angle > 0)
+							else
 							{
-								//Ver
-								const float vA = camera_->position_.x -
-									math::getMatrixPos(camera_->position_.x,
-										world_->wall_size_.x) * world_
-									->wall_size_.x;
-								const float vB = vA * tan_angle;
-								float vcx = camera_->position_.x - vA;
-								float vcy = camera_->position_.y - vB;
-								int vjx = math::getMatrixPos(vcx - 0.1f,
-									world_->wall_size_.x);
-								int vjy = math::getMatrixPos(vcy, world_
-									->wall_size_.y);
-								if (vjx < world_->matrix_size_.x && vjx >= 0 &&
-									vjy < world_->matrix_size_.y && vjy >= 0)
-								{
-									if (world_->matrix_[vjx][vjy] != 0)
-									{
-										if (buffer_ray_data_impl2_i < max_pixel_depth_)
-										{
-											buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
-												ray_data
-											{
-												vcx,
-												vcy,
-												math::fast_hypot(vcx - camera_->position_.x,
-												vcy - camera_->position_.y),
-												world_->matrix_[vjx][vjy],
-												angle,
-												dir::right
-											};
-											buffer_ray_data_impl2_i++;
-										}
-									}
-								}
-								const float vAA = world_->wall_size_.x;
-								const float vBB = vAA * tan_angle;
-								//Hor
-								const float hB = world_->wall_size_.y - (camera_
-									->position_.y -
-									math::getMatrixPos(camera_->position_.y,
-										world_->wall_size_.y) *
-									world_->wall_size_.y);
-								const float hA = hB * ctg_angle;
-								float hcx = camera_->position_.x + hA;
-								float hcy = camera_->position_.y + hB;
-								int hjx = math::getMatrixPos(hcx,
-									world_->wall_size_.x);
-								int hjy = math::getMatrixPos(hcy,
-									world_->wall_size_.y);
-								if (hjx < world_->matrix_size_.x && hjx >= 0 &&
-									hjy < world_->matrix_size_.y && hjy >= 0)
-								{
-									if (world_->matrix_[hjx][hjy] != 0)
-									{
-										if (buffer_ray_data_impl2_i < max_pixel_depth_)
-										{
-											buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
-												ray_data
-											{
-												hcx,
-												hcy,
-												math::fast_hypot(hcx - camera_->position_.x,
-												hcy - camera_->position_.y),
-												world_->matrix_[hjx][hjy],
-												angle,
-												dir::up
-											};
-											buffer_ray_data_impl2_i++;
-										}
-										else
-										{
-											break;
-										}
-									}
-								}
-								const float hBB = world_->wall_size_.y;
-								const float hAA = hBB * ctg_angle;
-								//RAY LEN SEARCHER
-								for (unsigned int i = 0; i < 4194304; i++)
-								{
-									vcx -= vAA;
-									vcy -= vBB;
-									vjx = math::getMatrixPos(vcx - 0.1f,
-										world_->wall_size_.x);
-									vjy = math::getMatrixPos(vcy,
-										world_->wall_size_.y);
-									if (vjx < world_->matrix_size_.x && vjx >= 0 &&
-										vjy < world_->matrix_size_.y && vjy >= 0)
-									{
-										if (world_->matrix_[vjx][vjy] != 0)
-										{
-											if (buffer_ray_data_impl2_i < max_pixel_depth_)
-											{
-												buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
-													ray_data
-												{
-													vcx,
-													vcy,
-													math::fast_hypot(vcx - camera_->position_.x,
-													vcy - camera_->position_.y),
-													world_->matrix_[vjx][vjy],
-													angle,
-													dir::right
-												};
-												buffer_ray_data_impl2_i++;
-
-												if (!break_acceleration_enable_)
-												{
-													break;
-												}
-											}
-											else
-											{
-												break;
-											}
-										}
-									}
-									else
-									{
-										break;
-									}
-								}
-								for (unsigned int i = 0; i < 4194304; i++)
-								{
-									hcx += hAA;
-									hcy += hBB;
-									hjx = math::getMatrixPos(hcx,
-										world_->wall_size_.x);
-									hjy = math::getMatrixPos(hcy,
-										world_->wall_size_.y);
-									if (hjx < world_->matrix_size_.x && hjx >= 0 &&
-										hjy < world_->matrix_size_.y && hjy >= 0)
-									{
-										if (world_->matrix_[hjx][hjy] != 0)
-										{
-											if (buffer_ray_data_impl2_i < max_pixel_depth_)
-											{
-												buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
-													ray_data
-												{
-													hcx,
-													hcy,
-													math::fast_hypot(hcx - camera_->position_.x,
-													hcy - camera_->position_.y),
-													world_->matrix_[hjx][hjy],
-													angle,
-													dir::up
-												};
-												buffer_ray_data_impl2_i++;
-
-												if (!break_acceleration_enable_)
-												{
-													break;
-												}
-											}
-											else
-											{
-												break;
-											}
-										}
-									}
-									else
-									{
-										break;
-									}
-								}
-
-								if (sort_enable_)
-								{
-									/*std::sort
-									(
-										ray_data_vec.begin(),
-										ray_data_vec.end(),
-										[](RayData const& a, RayData const& b) -> bool
-										{
-											return a.length < b.length;
-										}
-									);*/
-								}
-
-								//t_ray_data_vec->at(r) = ray_data_vec;
-							}
-
-							else if (cos_angle > 0 && sin_angle < 0)
-							{
-								//Ver
-								const float vA = world_->wall_size_.x - (camera_
-									->position_.x -
-									math::getMatrixPos(camera_->position_.x,
-										world_->wall_size_.x) *
-									world_->wall_size_.x);
-								const float vB = vA * tan_angle;
-								float vcx = camera_->position_.x + vA;
-								float vcy = camera_->position_.y + vB;
-								int vjx = math::getMatrixPos(vcx,
-									world_->wall_size_.x);
-								int vjy = math::getMatrixPos(vcy,
-									world_->wall_size_.y);
-								if (vjx < world_->matrix_size_.x && vjx >= 0 &&
-									vjy < world_->matrix_size_.y && vjy >= 0)
-								{
-									if (world_->matrix_[vjx][vjy] != 0)
-									{
-										if (buffer_ray_data_impl2_i < max_pixel_depth_)
-										{
-											buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
-												ray_data
-											{
-												vcx,
-												vcy,
-												math::fast_hypot(vcx - camera_->position_.x,
-												vcy - camera_->position_.y),
-												world_->matrix_[vjx][vjy],
-												angle,
-												dir::left
-											};
-											buffer_ray_data_impl2_i++;
-										}
-										else
-										{
-											break;
-										}
-									}
-								}
-								const float vAA = world_->wall_size_.x;
-								const float vBB = vAA * tan_angle;
-
-								//Hor
-								const float hB = camera_->position_.y -
-									math::getMatrixPos(camera_->position_.y,
-										world_->wall_size_.y)
-									* world_->wall_size_.y;
-								const float hA = hB * ctg_angle;
-								float hcx = camera_->position_.x - hA;
-								float hcy = camera_->position_.y - hB;
-								int hjx = math::getMatrixPos(hcx,
-									world_->wall_size_.x);
-								int hjy = math::getMatrixPos(hcy - 0.1f,
-									world_->wall_size_.y);
-								if (hjx < world_->matrix_size_.x && hjx >= 0 &&
-									hjy < world_->matrix_size_.y && hjy >= 0)
-								{
-									if (world_->matrix_[hjx][hjy] != 0)
-									{
-										if (buffer_ray_data_impl2_i < max_pixel_depth_)
-										{
-											buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
-												ray_data
-											{
-												hcx,
-												hcy,
-												math::fast_hypot(hcx - camera_->position_.x,
-												hcy - camera_->position_.y),
-												world_->matrix_[hjx][hjy],
-												angle,
-												dir::down
-											};
-											buffer_ray_data_impl2_i++;
-										}
-										else
-										{
-											break;
-										}
-									}
-								}
-								const float hBB = world_->wall_size_.y;
-								const float hAA = hBB * ctg_angle;
-								//RAY LEN SEARCHER
-								for (unsigned int i = 0; i < 4194304; i++)
-								{
-									vcx += vAA;
-									vcy += vBB;
-									vjx = math::getMatrixPos(vcx,
-										world_->wall_size_.x);
-									vjy = math::getMatrixPos(vcy,
-										world_->wall_size_.y);
-									if (vjx < world_->matrix_size_.x && vjx >= 0 &&
-										vjy < world_->matrix_size_.y && vjy >= 0)
-									{
-										if (world_->matrix_[vjx][vjy] != 0)
-										{
-											if (buffer_ray_data_impl2_i < max_pixel_depth_)
-											{
-												buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
-													ray_data
-												{
-													vcx,
-													vcy,
-													math::fast_hypot(vcx - camera_->position_.x,
-													vcy - camera_->position_.y),
-													world_->matrix_[vjx][vjy],
-													angle,
-													dir::left
-												};
-												buffer_ray_data_impl2_i++;
-
-												if (!break_acceleration_enable_)
-												{
-													break;
-												}
-											}
-											else
-											{
-												break;
-											}
-										}
-									}
-									else
-									{
-										break;
-									}
-								}
-								for (unsigned int i = 0; i < 4194304; i++)
-								{
-									hcx -= hAA;
-									hcy -= hBB;
-									hjx = math::getMatrixPos(hcx,
-										world_->wall_size_.x);
-									hjy = math::getMatrixPos(hcy - 0.1f,
-										world_->wall_size_.y);
-									if (hjx < world_->matrix_size_.x && hjx >= 0 &&
-										hjy < world_->matrix_size_.y && hjy >= 0)
-									{
-										if (world_->matrix_[hjx][hjy] != 0)
-										{
-											if (buffer_ray_data_impl2_i < max_pixel_depth_)
-											{
-												buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
-													ray_data
-												{
-													hcx,
-													hcy,
-													math::fast_hypot(hcx - camera_->position_.x,
-													hcy - camera_->position_.y),
-													world_->matrix_[hjx][hjy],
-													angle,
-													dir::down
-												};
-												buffer_ray_data_impl2_i++;
-
-												if (!break_acceleration_enable_)
-												{
-													break;
-												}
-											}
-											else
-											{
-												break;
-											}
-										}
-									}
-									else
-									{
-										break;
-									}
-								}
-
-								if (sort_enable_)
-								{
-									/*std::sort
-									(
-										ray_data_vec.begin(),
-										ray_data_vec.end(),
-										[](RayData const& a, RayData const& b) -> bool
-										{
-											return a.length < b.length;
-										}
-									);*/
-								}
-
-								//t_ray_data_vec->at(r) = ray_data_vec;
-							}
-
-							else if (cos_angle < 0 && sin_angle < 0)
-							{
-								//Ver
-								const float vA = camera_->position_.x -
-									math::getMatrixPos(camera_->position_.x,
-										world_->wall_size_.x) *
-									world_->wall_size_.x;
-								const float vB = vA * tan_angle;
-								float vcx = camera_->position_.x - vA;
-								float vcy = camera_->position_.y - vB;
-								int vjx = math::getMatrixPos(vcx - 0.1f,
-									world_->wall_size_.x);
-								int vjy = math::getMatrixPos(vcy,
-									world_->wall_size_.y);
-								if (vjx < world_->matrix_size_.x && vjx >= 0 &&
-									vjy < world_->matrix_size_.y && vjy >= 0)
-								{
-									if (world_->matrix_[vjx][vjy] != 0)
-									{
-										if (buffer_ray_data_impl2_i < max_pixel_depth_)
-										{
-											buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
-												ray_data
-											{
-												vcx,
-												vcy,
-												math::fast_hypot(vcx - camera_->position_.x,
-												vcy - camera_->position_.y),
-												world_->matrix_[vjx][vjy],
-												angle,
-												dir::right
-											};
-											buffer_ray_data_impl2_i++;
-										}
-										else
-										{
-											break;
-										}
-									}
-								}
-								const float vAA = world_->wall_size_.x;
-								const float vBB = vAA * tan_angle;
-
-								//Hor
-								const float hB = camera_->position_.y -
-									math::getMatrixPos(camera_->position_.y,
-										world_->wall_size_.y) * world_->wall_size_.y;
-								const float hA = hB * ctg_angle;
-								float hcx = camera_->position_.x - hA;
-								float hcy = camera_->position_.y - hB;
-								int hjx = math::getMatrixPos(hcx,
-									world_->wall_size_.x);
-								int hjy = math::getMatrixPos(hcy - 0.1f,
-									world_->wall_size_.y);
-								if (hjx < world_->matrix_size_.x && hjx >= 0 &&
-									hjy < world_->matrix_size_.y && hjy >= 0)
-								{
-									if (world_->matrix_[hjx][hjy] != 0)
-									{
-										if (buffer_ray_data_impl2_i < max_pixel_depth_)
-										{
-											buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
-												ray_data
-											{
-												hcx,
-												hcy,
-												math::fast_hypot(hcx - camera_->position_.x,
-												hcy - camera_->position_.y),
-												world_->matrix_[hjx][hjy],
-												angle,
-												dir::down
-											};
-											buffer_ray_data_impl2_i++;
-										}
-										else
-										{
-											break;
-										}
-									}
-								}
-								const float hBB = world_->wall_size_.y;
-								const float hAA = hBB * ctg_angle;
-								//RAY LEN SEARCHER
-								for (unsigned int i = 0; i < 4194304; i++)
-								{
-									vcx -= vAA;
-									vcy -= vBB;
-									vjx = math::getMatrixPos(vcx - 0.1f,
-										world_->wall_size_.x);
-									vjy = math::getMatrixPos(vcy,
-										world_->wall_size_.y);
-									if (vjx < world_->matrix_size_.x && vjx >= 0 &&
-										vjy < world_->matrix_size_.y && vjy >= 0)
-									{
-										if (world_->matrix_[vjx][vjy] != 0)
-										{
-											if (buffer_ray_data_impl2_i < max_pixel_depth_)
-											{
-												buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
-													ray_data
-												{
-													vcx,
-													vcy,
-													math::fast_hypot(vcx - camera_->position_.x,
-													vcy - camera_->position_.y),
-													world_->matrix_[vjx][vjy],
-													angle,
-													dir::right
-												};
-												buffer_ray_data_impl2_i++;
-
-												if (!break_acceleration_enable_)
-												{
-													break;
-												}
-											}
-											else
-											{
-												break;
-											}
-										}
-									}
-									else
-									{
-										break;
-									}
-								}
-								
-								for (unsigned int i = 0; i < 4194304; i++)
-								{
-									hcx -= hAA;
-									hcy -= hBB;
-									hjx = math::getMatrixPos(hcx,
-										world_->wall_size_.x);
-									hjy = math::getMatrixPos(hcy - 0.1f,
-										world_->wall_size_.y);
-									if (hjx < world_->matrix_size_.x && hjx >= 0 &&
-										hjy < world_->matrix_size_.y && hjy >= 0)
-									{
-										if (world_->matrix_[hjx][hjy] != 0)
-										{
-											if (buffer_ray_data_impl2_i < max_pixel_depth_)
-											{
-												buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
-													ray_data
-												{
-													hcx,
-													hcy,
-													math::fast_hypot(hcx - camera_->position_.x,
-													hcy - camera_->position_.y),
-													world_->matrix_[hjx][hjy],
-													angle,
-													dir::down
-												};
-												buffer_ray_data_impl2_i++;
-
-												if (!break_acceleration_enable_)
-												{
-													break;
-												}
-											}
-											else
-											{
-												break;
-											}
-										}
-									}
-									else
-									{
-										break;
-									}
-								}
-
-								if (sort_enable_)
-								{
-									//SORT BUFFER
-									/*std::sort
-									(
-										ray_data_vec.begin(),
-										ray_data_vec.end(),
-										[](RayData const& a, RayData const& b) -> bool
-										{
-											return a.length < b.length;
-										}
-									);*/
-								}
-
-								//t_ray_data_vec->at(r) = ray_data_vec;
+								break;
 							}
 						}
-				
-						//buffer_ray_data_impl2_i = 0;
-			//_thread_ray_caster_->detach();
-			
+					}
+					const float vAA = world_->wall_size_.x;
+					const float vBB = vAA * tan_angle;
+
+					//Hor
+					const float hB = world_->wall_size_.y - (camera_
+						->position_.y -
+						math::getMatrixPos(camera_->position_.y,
+							world_->wall_size_.y) *
+						world_->wall_size_.y);
+					const float hA = hB * ctg_angle;
+					float hcx = camera_->position_.x + hA;
+					float hcy = camera_->position_.y + hB;
+					int hjx = math::getMatrixPos(hcx,
+						world_->wall_size_.x);
+					int hjy = math::getMatrixPos(hcy,
+						world_->wall_size_.y);
+					if (hjx < world_->matrix_size_.x && hjx >= 0 &&
+						hjy < world_->matrix_size_.y && hjy >= 0)
+					{
+						if (world_->matrix_[hjx][hjy] != 0)
+						{
+							if (buffer_ray_data_impl2_i < max_pixel_depth_)
+							{
+								buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
+									ray_data
+								{
+									hcx,
+									hcy,
+									math::fast_hypot(hcx - camera_->position_.x,
+									hcy - camera_->position_.y),
+									world_->matrix_[hjx][hjy],
+									angle,
+									dir::up
+								};
+								buffer_ray_data_impl2_i++;
+							}
+							else
+							{
+								break;
+							}
+						}
+					}
+					const float hBB = world_->wall_size_.y;
+					const float hAA = hBB * ctg_angle;
+					//RAY LEN SEARCHER
+					for (unsigned int i = 0; i < 4194304; i++)
+					{
+						vcx += vAA;
+						vcy += vBB;
+						vjx = math::getMatrixPos(vcx,
+							world_->wall_size_.x);
+						vjy = math::getMatrixPos(vcy,
+							world_->wall_size_.y);
+						if (vjx < world_->matrix_size_.x && vjx >= 0 &&
+							vjy < world_->matrix_size_.y && vjy >= 0)
+						{
+							if (world_->matrix_[vjx][vjy] != 0)
+							{
+								if (buffer_ray_data_impl2_i < max_pixel_depth_)
+								{
+									buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
+										ray_data
+									{
+										vcx,
+										vcy,
+										math::fast_hypot(vcx - camera_->position_.x,
+										vcy - camera_->position_.y),
+										world_->matrix_[vjx][vjy],
+										angle,
+										dir::left
+									};
+									buffer_ray_data_impl2_i++;
+
+									if (!break_acceleration_enable_)
+									{
+										break;
+									}
+								}
+								else
+								{
+									break;
+								}
+							}
+						}
+						else
+						{
+							break;
+						}
+					}
+					for (unsigned int i = 0; i < 4194304; i++)
+					{
+						hcx += hAA;
+						hcy += hBB;
+						hjx = math::getMatrixPos(hcx,
+							world_->wall_size_.x);
+						hjy = math::getMatrixPos(hcy,
+							world_->wall_size_.y);
+						if (hjx < world_->matrix_size_.x && hjx >= 0 &&
+							hjy < world_->matrix_size_.y && hjy >= 0)
+						{
+							if (world_->matrix_[hjx][hjy] != 0)
+							{
+								if (buffer_ray_data_impl2_i < max_pixel_depth_)
+								{
+									buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
+										ray_data
+									{
+										hcx,
+										hcy,
+										math::fast_hypot(hcx - camera_->position_.x,
+										hcy - camera_->position_.y),
+										world_->matrix_[hjx][hjy],
+										angle,
+										dir::up
+									};
+									buffer_ray_data_impl2_i++;
+
+									if (!break_acceleration_enable_)
+									{
+										break;
+									}
+								}
+								else
+								{
+									break;
+								}
+							}
+						}
+						else
+						{
+							break;
+						}
+					}
+
+					if (sort_enable_)
+					{
+						/*std::sort
+						(
+							buffer_ray_data_impl2_[r].begin(),
+							buffer_ray_data_impl2_[r].end(),
+							[](ray_data * first, ray_data * second) -> bool
+							{
+								if (first->length == 0 || second->length == 0)
+								{
+									return false;
+								}
+								return first->length < second->length;
+							}
+						);*/
+					}
+
+				}
+
+				else if (cos_angle < 0 && sin_angle > 0)
+				{
+					//Ver
+					const float vA = camera_->position_.x -
+						math::getMatrixPos(camera_->position_.x,
+							world_->wall_size_.x) * world_
+						->wall_size_.x;
+					const float vB = vA * tan_angle;
+					float vcx = camera_->position_.x - vA;
+					float vcy = camera_->position_.y - vB;
+					int vjx = math::getMatrixPos(vcx - 0.1f,
+						world_->wall_size_.x);
+					int vjy = math::getMatrixPos(vcy, world_
+						->wall_size_.y);
+					if (vjx < world_->matrix_size_.x && vjx >= 0 &&
+						vjy < world_->matrix_size_.y && vjy >= 0)
+					{
+						if (world_->matrix_[vjx][vjy] != 0)
+						{
+							if (buffer_ray_data_impl2_i < max_pixel_depth_)
+							{
+								buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
+									ray_data
+								{
+									vcx,
+									vcy,
+									math::fast_hypot(vcx - camera_->position_.x,
+									vcy - camera_->position_.y),
+									world_->matrix_[vjx][vjy],
+									angle,
+									dir::right
+								};
+								buffer_ray_data_impl2_i++;
+							}
+						}
+					}
+					const float vAA = world_->wall_size_.x;
+					const float vBB = vAA * tan_angle;
+					//Hor
+					const float hB = world_->wall_size_.y - (camera_
+						->position_.y -
+						math::getMatrixPos(camera_->position_.y,
+							world_->wall_size_.y) *
+						world_->wall_size_.y);
+					const float hA = hB * ctg_angle;
+					float hcx = camera_->position_.x + hA;
+					float hcy = camera_->position_.y + hB;
+					int hjx = math::getMatrixPos(hcx,
+						world_->wall_size_.x);
+					int hjy = math::getMatrixPos(hcy,
+						world_->wall_size_.y);
+					if (hjx < world_->matrix_size_.x && hjx >= 0 &&
+						hjy < world_->matrix_size_.y && hjy >= 0)
+					{
+						if (world_->matrix_[hjx][hjy] != 0)
+						{
+							if (buffer_ray_data_impl2_i < max_pixel_depth_)
+							{
+								buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
+									ray_data
+								{
+									hcx,
+									hcy,
+									math::fast_hypot(hcx - camera_->position_.x,
+									hcy - camera_->position_.y),
+									world_->matrix_[hjx][hjy],
+									angle,
+									dir::up
+								};
+								buffer_ray_data_impl2_i++;
+							}
+							else
+							{
+								break;
+							}
+						}
+					}
+					const float hBB = world_->wall_size_.y;
+					const float hAA = hBB * ctg_angle;
+					//RAY LEN SEARCHER
+					for (unsigned int i = 0; i < 4194304; i++)
+					{
+						vcx -= vAA;
+						vcy -= vBB;
+						vjx = math::getMatrixPos(vcx - 0.1f,
+							world_->wall_size_.x);
+						vjy = math::getMatrixPos(vcy,
+							world_->wall_size_.y);
+						if (vjx < world_->matrix_size_.x && vjx >= 0 &&
+							vjy < world_->matrix_size_.y && vjy >= 0)
+						{
+							if (world_->matrix_[vjx][vjy] != 0)
+							{
+								if (buffer_ray_data_impl2_i < max_pixel_depth_)
+								{
+									buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
+										ray_data
+									{
+										vcx,
+										vcy,
+										math::fast_hypot(vcx - camera_->position_.x,
+										vcy - camera_->position_.y),
+										world_->matrix_[vjx][vjy],
+										angle,
+										dir::right
+									};
+									buffer_ray_data_impl2_i++;
+
+									if (!break_acceleration_enable_)
+									{
+										break;
+									}
+								}
+								else
+								{
+									break;
+								}
+							}
+						}
+						else
+						{
+							break;
+						}
+					}
+					for (unsigned int i = 0; i < 4194304; i++)
+					{
+						hcx += hAA;
+						hcy += hBB;
+						hjx = math::getMatrixPos(hcx,
+							world_->wall_size_.x);
+						hjy = math::getMatrixPos(hcy,
+							world_->wall_size_.y);
+						if (hjx < world_->matrix_size_.x && hjx >= 0 &&
+							hjy < world_->matrix_size_.y && hjy >= 0)
+						{
+							if (world_->matrix_[hjx][hjy] != 0)
+							{
+								if (buffer_ray_data_impl2_i < max_pixel_depth_)
+								{
+									buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
+										ray_data
+									{
+										hcx,
+										hcy,
+										math::fast_hypot(hcx - camera_->position_.x,
+										hcy - camera_->position_.y),
+										world_->matrix_[hjx][hjy],
+										angle,
+										dir::up
+									};
+									buffer_ray_data_impl2_i++;
+
+									if (!break_acceleration_enable_)
+									{
+										break;
+									}
+								}
+								else
+								{
+									break;
+								}
+							}
+						}
+						else
+						{
+							break;
+						}
+					}
+
+					if (sort_enable_)
+					{
+						/*std::sort
+						(
+							ray_data_vec.begin(),
+							ray_data_vec.end(),
+							[](RayData const& a, RayData const& b) -> bool
+							{
+								return a.length < b.length;
+							}
+						);*/
+					}
+
+					//t_ray_data_vec->at(r) = ray_data_vec;
+				}
+
+				else if (cos_angle > 0 && sin_angle < 0)
+				{
+					//Ver
+					const float vA = world_->wall_size_.x - (camera_
+						->position_.x -
+						math::getMatrixPos(camera_->position_.x,
+							world_->wall_size_.x) *
+						world_->wall_size_.x);
+					const float vB = vA * tan_angle;
+					float vcx = camera_->position_.x + vA;
+					float vcy = camera_->position_.y + vB;
+					int vjx = math::getMatrixPos(vcx,
+						world_->wall_size_.x);
+					int vjy = math::getMatrixPos(vcy,
+						world_->wall_size_.y);
+					if (vjx < world_->matrix_size_.x && vjx >= 0 &&
+						vjy < world_->matrix_size_.y && vjy >= 0)
+					{
+						if (world_->matrix_[vjx][vjy] != 0)
+						{
+							if (buffer_ray_data_impl2_i < max_pixel_depth_)
+							{
+								buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
+									ray_data
+								{
+									vcx,
+									vcy,
+									math::fast_hypot(vcx - camera_->position_.x,
+									vcy - camera_->position_.y),
+									world_->matrix_[vjx][vjy],
+									angle,
+									dir::left
+								};
+								buffer_ray_data_impl2_i++;
+							}
+							else
+							{
+								break;
+							}
+						}
+					}
+					const float vAA = world_->wall_size_.x;
+					const float vBB = vAA * tan_angle;
+
+					//Hor
+					const float hB = camera_->position_.y -
+						math::getMatrixPos(camera_->position_.y,
+							world_->wall_size_.y)
+						* world_->wall_size_.y;
+					const float hA = hB * ctg_angle;
+					float hcx = camera_->position_.x - hA;
+					float hcy = camera_->position_.y - hB;
+					int hjx = math::getMatrixPos(hcx,
+						world_->wall_size_.x);
+					int hjy = math::getMatrixPos(hcy - 0.1f,
+						world_->wall_size_.y);
+					if (hjx < world_->matrix_size_.x && hjx >= 0 &&
+						hjy < world_->matrix_size_.y && hjy >= 0)
+					{
+						if (world_->matrix_[hjx][hjy] != 0)
+						{
+							if (buffer_ray_data_impl2_i < max_pixel_depth_)
+							{
+								buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
+									ray_data
+								{
+									hcx,
+									hcy,
+									math::fast_hypot(hcx - camera_->position_.x,
+									hcy - camera_->position_.y),
+									world_->matrix_[hjx][hjy],
+									angle,
+									dir::down
+								};
+								buffer_ray_data_impl2_i++;
+							}
+							else
+							{
+								break;
+							}
+						}
+					}
+					const float hBB = world_->wall_size_.y;
+					const float hAA = hBB * ctg_angle;
+					//RAY LEN SEARCHER
+					for (unsigned int i = 0; i < 4194304; i++)
+					{
+						vcx += vAA;
+						vcy += vBB;
+						vjx = math::getMatrixPos(vcx,
+							world_->wall_size_.x);
+						vjy = math::getMatrixPos(vcy,
+							world_->wall_size_.y);
+						if (vjx < world_->matrix_size_.x && vjx >= 0 &&
+							vjy < world_->matrix_size_.y && vjy >= 0)
+						{
+							if (world_->matrix_[vjx][vjy] != 0)
+							{
+								if (buffer_ray_data_impl2_i < max_pixel_depth_)
+								{
+									buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
+										ray_data
+									{
+										vcx,
+										vcy,
+										math::fast_hypot(vcx - camera_->position_.x,
+										vcy - camera_->position_.y),
+										world_->matrix_[vjx][vjy],
+										angle,
+										dir::left
+									};
+									buffer_ray_data_impl2_i++;
+
+									if (!break_acceleration_enable_)
+									{
+										break;
+									}
+								}
+								else
+								{
+									break;
+								}
+							}
+						}
+						else
+						{
+							break;
+						}
+					}
+					for (unsigned int i = 0; i < 4194304; i++)
+					{
+						hcx -= hAA;
+						hcy -= hBB;
+						hjx = math::getMatrixPos(hcx,
+							world_->wall_size_.x);
+						hjy = math::getMatrixPos(hcy - 0.1f,
+							world_->wall_size_.y);
+						if (hjx < world_->matrix_size_.x && hjx >= 0 &&
+							hjy < world_->matrix_size_.y && hjy >= 0)
+						{
+							if (world_->matrix_[hjx][hjy] != 0)
+							{
+								if (buffer_ray_data_impl2_i < max_pixel_depth_)
+								{
+									buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
+										ray_data
+									{
+										hcx,
+										hcy,
+										math::fast_hypot(hcx - camera_->position_.x,
+										hcy - camera_->position_.y),
+										world_->matrix_[hjx][hjy],
+										angle,
+										dir::down
+									};
+									buffer_ray_data_impl2_i++;
+
+									if (!break_acceleration_enable_)
+									{
+										break;
+									}
+								}
+								else
+								{
+									break;
+								}
+							}
+						}
+						else
+						{
+							break;
+						}
+					}
+
+					if (sort_enable_)
+					{
+						/*std::sort
+						(
+							ray_data_vec.begin(),
+							ray_data_vec.end(),
+							[](RayData const& a, RayData const& b) -> bool
+							{
+								return a.length < b.length;
+							}
+						);*/
+					}
+
+					//t_ray_data_vec->at(r) = ray_data_vec;
+				}
+
+				else if (cos_angle < 0 && sin_angle < 0)
+				{
+					//Ver
+					const float vA = camera_->position_.x -
+						math::getMatrixPos(camera_->position_.x,
+							world_->wall_size_.x) *
+						world_->wall_size_.x;
+					const float vB = vA * tan_angle;
+					float vcx = camera_->position_.x - vA;
+					float vcy = camera_->position_.y - vB;
+					int vjx = math::getMatrixPos(vcx - 0.1f,
+						world_->wall_size_.x);
+					int vjy = math::getMatrixPos(vcy,
+						world_->wall_size_.y);
+					if (vjx < world_->matrix_size_.x && vjx >= 0 &&
+						vjy < world_->matrix_size_.y && vjy >= 0)
+					{
+						if (world_->matrix_[vjx][vjy] != 0)
+						{
+							if (buffer_ray_data_impl2_i < max_pixel_depth_)
+							{
+								buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
+									ray_data
+								{
+									vcx,
+									vcy,
+									math::fast_hypot(vcx - camera_->position_.x,
+									vcy - camera_->position_.y),
+									world_->matrix_[vjx][vjy],
+									angle,
+									dir::right
+								};
+								buffer_ray_data_impl2_i++;
+							}
+							else
+							{
+								break;
+							}
+						}
+					}
+					const float vAA = world_->wall_size_.x;
+					const float vBB = vAA * tan_angle;
+
+					//Hor
+					const float hB = camera_->position_.y -
+						math::getMatrixPos(camera_->position_.y,
+							world_->wall_size_.y) * world_->wall_size_.y;
+					const float hA = hB * ctg_angle;
+					float hcx = camera_->position_.x - hA;
+					float hcy = camera_->position_.y - hB;
+					int hjx = math::getMatrixPos(hcx,
+						world_->wall_size_.x);
+					int hjy = math::getMatrixPos(hcy - 0.1f,
+						world_->wall_size_.y);
+					if (hjx < world_->matrix_size_.x && hjx >= 0 &&
+						hjy < world_->matrix_size_.y && hjy >= 0)
+					{
+						if (world_->matrix_[hjx][hjy] != 0)
+						{
+							if (buffer_ray_data_impl2_i < max_pixel_depth_)
+							{
+								buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
+									ray_data
+								{
+									hcx,
+									hcy,
+									math::fast_hypot(hcx - camera_->position_.x,
+									hcy - camera_->position_.y),
+									world_->matrix_[hjx][hjy],
+									angle,
+									dir::down
+								};
+								buffer_ray_data_impl2_i++;
+							}
+							else
+							{
+								break;
+							}
+						}
+					}
+					const float hBB = world_->wall_size_.y;
+					const float hAA = hBB * ctg_angle;
+					//RAY LEN SEARCHER
+					for (unsigned int i = 0; i < 4194304; i++)
+					{
+						vcx -= vAA;
+						vcy -= vBB;
+						vjx = math::getMatrixPos(vcx - 0.1f,
+							world_->wall_size_.x);
+						vjy = math::getMatrixPos(vcy,
+							world_->wall_size_.y);
+						if (vjx < world_->matrix_size_.x && vjx >= 0 &&
+							vjy < world_->matrix_size_.y && vjy >= 0)
+						{
+							if (world_->matrix_[vjx][vjy] != 0)
+							{
+								if (buffer_ray_data_impl2_i < max_pixel_depth_)
+								{
+									buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
+										ray_data
+									{
+										vcx,
+										vcy,
+										math::fast_hypot(vcx - camera_->position_.x,
+										vcy - camera_->position_.y),
+										world_->matrix_[vjx][vjy],
+										angle,
+										dir::right
+									};
+									buffer_ray_data_impl2_i++;
+
+									if (!break_acceleration_enable_)
+									{
+										break;
+									}
+								}
+								else
+								{
+									break;
+								}
+							}
+						}
+						else
+						{
+							break;
+						}
+					}
+
+					for (unsigned int i = 0; i < 4194304; i++)
+					{
+						hcx -= hAA;
+						hcy -= hBB;
+						hjx = math::getMatrixPos(hcx,
+							world_->wall_size_.x);
+						hjy = math::getMatrixPos(hcy - 0.1f,
+							world_->wall_size_.y);
+						if (hjx < world_->matrix_size_.x && hjx >= 0 &&
+							hjy < world_->matrix_size_.y && hjy >= 0)
+						{
+							if (world_->matrix_[hjx][hjy] != 0)
+							{
+								if (buffer_ray_data_impl2_i < max_pixel_depth_)
+								{
+									buffer_ray_data_impl2_.get(r, buffer_ray_data_impl2_i) =
+										ray_data
+									{
+										hcx,
+										hcy,
+										math::fast_hypot(hcx - camera_->position_.x,
+										hcy - camera_->position_.y),
+										world_->matrix_[hjx][hjy],
+										angle,
+										dir::down
+									};
+									buffer_ray_data_impl2_i++;
+
+									if (!break_acceleration_enable_)
+									{
+										break;
+									}
+								}
+								else
+								{
+									break;
+								}
+							}
+						}
+						else
+						{
+							break;
+						}
+					}
+
+					if (sort_enable_)
+					{
+						//SORT BUFFER
+						/*std::sort
+						(
+							ray_data_vec.begin(),
+							ray_data_vec.end(),
+							[](RayData const& a, RayData const& b) -> bool
+							{
+								return a.length < b.length;
+							}
+						);*/
+					}
+
+					//t_ray_data_vec->at(r) = ray_data_vec;
+				}
+			}
+
+			//buffer_ray_data_impl2_i = 0;
+
 		}
 		
 	};
@@ -1743,7 +1738,7 @@ public:
 			host_mem_array_camera_states_[3] = camera->rotation_;
 		}
 		
-		void operator()(concurrency::index<1> idx) const restrict(amp)
+		void operator()(const concurrency::index<1> idx) const restrict(amp)
 		{
 			host_mem_array_pixel_depth_[idx].rotation += 1;
 		}
@@ -1873,12 +1868,15 @@ public:
 	class Wall
 	{
 		friend class CPUWorld;
+		friend class World;
 
 	protected:
 
 		sf::Texture texture_;
 
-		bool is_transparent_ = false;
+		bool is_transparent_ = true;
+
+		bool is_illusory_ = false;
 
 	public:
 
@@ -1887,6 +1885,15 @@ public:
 		explicit Wall(const sf::Texture& texture = {}) :
 			texture_(texture)
 		{
+
+		}
+		
+		explicit Wall(const bool is_transparent, const bool is_illusory = false, const sf::Texture& texture = {}) :
+			texture_(texture),
+			is_transparent_(is_transparent),
+			is_illusory_(is_illusory)
+		{
+			
 		}
 
 		/*
@@ -1917,9 +1924,18 @@ public:
 	{
 	public:
 
-		explicit MainWall(const std::string& texture_path =
-			"data/tex/wall5.png") :
-			Wall()
+		explicit MainWall( 
+			const bool is_transparent = true,
+			const bool is_illusory = false,
+			const _STD string& texture_path = "data/tex/wall5.png") :
+			Wall(is_transparent, is_illusory)
+		{
+			texture_.loadFromFile(texture_path);
+		}
+
+		MainWall(
+			const _STD string& texture_path) :
+			Wall(true, false)
 		{
 			texture_.loadFromFile(texture_path);
 		}
@@ -1972,7 +1988,7 @@ public:
 		explicit Sprite(
 			const sf::Vector3<float> position = {},
 			const sf::Vector2<float> size = {},
-			const std::string& texture_path = {}) :
+			const _STD string& texture_path = {}) :
 
 			position_(position),
 			size_(size)
@@ -1986,7 +2002,7 @@ public:
 			const float z,
 			const float width,
 			const float height,
-			const std::string& texture_path = {}) :
+			const _STD string& texture_path = {}) :
 
 			position_({ x, y, z }),
 			size_({ width, height })
@@ -1994,7 +2010,7 @@ public:
 			texture_.loadFromFile(texture_path);
 		}
 
-		explicit Sprite(const std::string& texture_path = {})
+		explicit Sprite(const _STD string& texture_path = {})
 		{
 			texture_.loadFromFile(texture_path);
 		}
@@ -2092,7 +2108,7 @@ public:
 		(
 			const sf::Vector3<float> position = {},
 			const sf::Vector2<float> size = {},
-			const std::string& texture_path = {}
+			const _STD string& texture_path = {}
 		) :
 			Sprite(position, size, texture_path)
 		{
@@ -2106,9 +2122,11 @@ public:
 			const float z,
 			const float width,
 			const float height,
-			const std::string& texture_path = {}
+			const _STD string& texture_path = {}
 		) :
-			Sprite({ x, y, z }, {width, height}, texture_path)
+			Sprite({ x, y, z },
+				{width, height},
+				texture_path)
 		{
 			
 		}
@@ -2169,6 +2187,9 @@ public:
 					camera_->window_size_.x,
 					V3D_GPU_RAYCASTING_MAX_PIXEL_DEPTH))
 		{
+
+			image_png->loadFromFile("data/tex/floor1.png");
+			image_pixel_dat->create(camera_->window_size_.x, camera_->window_size_.y );
 		}
 
 	protected:
@@ -2179,15 +2200,17 @@ public:
 		Matrix matrix_;
 		sf::Vector2<int> matrix_size_;
 		sf::Vector2<float> wall_size_;
-		RayCaster* ray_caster_api_ = nullptr;
-		std::vector<Wall*> walls_{};
-		std::vector<Sprite*> sprites_{};
+	_STD vector<Wall*> walls_{};
+		_STD vector<Sprite*> sprites_{};
 		Camera* camera_ = nullptr;
 		sf::Color floor_color_;
 		sf::Texture background_texture_p_;
 		sf::Texture* background_texture_ = nullptr;
 		ray_data** buffer_ray_data_;
 		tu::DataImpl2<ray_data> buffer_ray_data_impl2_;
+		sf::Image *image_png = new sf::Image;
+		sf::Image *image_pixel_dat = new sf::Image;
+
 
 	public:
 
@@ -2195,13 +2218,6 @@ public:
 			sf::RenderStates states) const override
 		{
 
-		}
-
-		VAILDER_3D_WORLD_API_RESULT
-			setRayCaster(RayCaster* ray_caster)
-		{
-			this->ray_caster_api_ = ray_caster;
-			VAILDER_3D_WORLD_API_RETURN
 		}
 		
 		sf::Vector2<float> getSize() const
@@ -2312,29 +2328,31 @@ public:
 			return *this;
 		}
 
-		void camera_move_with_cls(Camera& camera, const float step_x,
+		void camera_move_with_cls(
+			Camera& camera,
+			const float step_x,
 			const float step_y) const
 		{
-			if (matrix_[math::getMatrixPos(((step_x > 0) ?
+			if (walls_[matrix_[math::getMatrixPos(((step_x > 0) ?
 				(camera_->position_.x + camera_->radius_) :
 				(camera_->position_.x - camera_->radius_)) + step_x,
 				wall_size_.x)]
 				[math::getMatrixPos(((step_y > 0) ?
 					(camera_->position_.y + camera_->radius_) :
 					(camera_->position_.y - camera_->radius_)),
-					wall_size_.y)] == 0)
+					wall_size_.y)]]->is_illusory_)
 			{
 				camera_->move(step_x, 0);
 			}
 
-			if (matrix_[math::getMatrixPos(((step_x > 0) ?
+			if (walls_[matrix_[math::getMatrixPos(((step_x > 0) ?
 				(camera_->position_.x + camera_->radius_) :
 				(camera_->position_.x - camera_->radius_)),
 				wall_size_.x)]
 				[math::getMatrixPos(((step_y > 0) ?
 					(camera_->position_.y + camera_->radius_) :
 					(camera_->position_.y - camera_->radius_)) + step_y,
-					wall_size_.y)] == 0)
+					wall_size_.y)]]->is_illusory_)
 			{
 				camera_->move(0, step_y);
 			}
@@ -2351,8 +2369,8 @@ public:
 		:
 			World(world)
 		{
-			walls_.push_back(new MainWall);
-			walls_.push_back(new MainWall);
+			walls_.push_back(new MainWall(false, true));
+			walls_.push_back(new MainWall(false, false));
 
 			background_texture_p_.loadFromFile("data/tex/bg.jpg");
 			setBackgroundTexture(&background_texture_p_);
@@ -2417,7 +2435,7 @@ public:
 				break;
 
 			case dir::right:
-				d = (wall_size_.y - fmodf(buffer_ray_data_impl2_.get(static_cast<int>(camera_
+				d = (wall_size_.y - fmodf(buffer_ray_data_impl2_.get(static_cast<int>(camera_\
 					->window_size_2_.x), 0).position_y,
 					wall_size_.y));
 				break;
@@ -2471,7 +2489,7 @@ public:
 			/*
 			 * Отрисовка пола
 			 */
-			sf::RectangleShape rectangle_shape_floor_;
+/*			sf::RectangleShape rectangle_shape_floor_;
 
 			rectangle_shape_floor_.setSize({ static_cast<float>(camera_
 				->window_size_.x),1 });
@@ -2500,8 +2518,10 @@ public:
 						it * delta_color_g, it * delta_color_b));
 
 				target.draw(rectangle_shape_floor_);
-			}
+			}*/
 
+
+			
 			/*
 			 * Отрисовка заднего плана
 			 */
@@ -2544,140 +2564,303 @@ public:
 				target.draw(background_sprite);
 			}
 
+			
+
 			/*
 			 * Отрисовка стен
 			 */
 			sf::Sprite sprite;
 
+			//_STD cout << cos(camera_->rotation_) - sin(camera_->rotation_) << _STD endl;
+
+			double posX = camera_->position_.x / this->wall_size_.x, posY = camera_->position_.y / this->wall_size_.y; //x and y start position
+			double dirX = cos(camera_->rotation_) * camera_->fov_, dirY = sin(camera_->rotation_) * camera_->fov_; //initial direction vector
+			double planeX = -sin(camera_->rotation_) * camera_->fov_ * (camera_->fov_ / 2), planeY = cos(camera_->rotation_) * camera_->fov_ * (camera_->fov_ / 2); //the 2d raycaster version of camera plane
+
+			int window_delta_y = camera_->window_delta_y_;
+			int window_size_y = camera_->window_size_.y;
+			if (window_delta_y < 0)
+			{
+
+				window_delta_y = 0;
+			}
+			
+			for (int y = window_delta_y + 1; y < window_size_y; ++y)
+			{
+				
+				float rayDirX0 = dirX - planeX;
+				float rayDirY0 = dirY - planeY;
+				float rayDirX1 = dirX + planeX;
+				float rayDirY1 = dirY + planeY;
+				
+				const int p = y - camera_->window_delta_y_;
+				const float posZ = camera_->window_size_2_.y  - 250 * (1050 / 600);
+				const float rowDistance = posZ / p * 2;
+
+				float floorStepX = rowDistance * \
+				(rayDirX1 - rayDirX0) / camera_->window_size_.x;
+				float floorStepY = rowDistance * \
+				(rayDirY1 - rayDirY0) / camera_->window_size_.x;
+
+				float floorX = posX + rowDistance * rayDirX0;
+				float floorY = posY + rowDistance * rayDirY0;
+				
+				for (int xx = 0; xx < camera_->window_size_.x; xx++)
+				{
+					// the cell coord is simply got from the integer parts of floorX and floorY
+					int cellX = (int)(floorX);
+					int cellY = (int)(floorY);
+
+					// get the texture coordinate from the fractional part
+					int tx = (int)(image_png->getSize().x * \
+						(floorX - cellX)) % (image_png->getSize().x - 1);
+					int ty = (int)(image_png->getSize().y * \
+						(floorY - cellY)) % (image_png->getSize().y - 1);
+
+					//_STD cout << floorX << _STD endl;
+
+					floorX += floorStepX;
+					floorY += floorStepY;
+
+					image_pixel_dat->setPixel(xx, y, \
+						image_png->getPixel(tx, ty));
+
+					// choose texture and draw the pixel
+					/*int checkerBoardPattern = (int(cellX + cellY)) & 1;
+					int floorTexture;
+					if (checkerBoardPattern == 0) floorTexture = 3;
+					else floorTexture = 4;
+					int ceilingTexture = 6;
+					sf::Uint32 color;
+
+					// floor
+					color = texture[floorTexture][texWidth * ty + tx];
+					color = (color >> 1) & 8355711; // make a bit darker
+					buffer[y][x] = color;
+
+					//ceiling (symmetrical, at screenHeight - y - 1 instead of y)
+					color = texture[ceilingTexture][texWidth * ty + tx];
+					color = (color >> 1) & 8355711; // make a bit darker
+					buffer[screenHeight - y - 1][x] = color;*/
+				}
+
+			}
+
+			sf::Texture texture;
+			texture.create(camera_->window_size_.x, \
+				camera_->window_size_.y);
+			sf::Sprite spf;
+			texture.update(*image_pixel_dat);
+			spf.setTexture(texture);
+			target.draw(spf);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+			
+			
+			
 			for (auto i = 0; i < camera_->window_size_.x; i++)
 			{
 
-				for (int l = 0; l < buffer_ray_data_impl2_.size_first; l++)
+				/*
+				//std::cout << "FLOOR: " << std::endl;
+				//if (i == 400)
+				//{
+				const float y = math::ctg(i) * sin(buffer_ray_data_impl2_.get(i, 0).rotation) * 800;
+				//std::cout << y << std::endl;	
+				const float cos_alpha = cos(buffer_ray_data_impl2_.get(i, 0).rotation);
+				const float sin_beta = sin(buffer_ray_data_impl2_.get(i, 0).rotation);
+				//const float tan_theta = sin_beta / cos_alpha;
+				float a_it = math::PI2 / 2 / (camera_->window_size_2_.y);
+				for (int j = camera_->window_size_.x; j > camera_->window_size_2_.y; j--)
+				{
+					const float ctg_gamma = 1 * tan((a_it * j) + (math::PI2 - a_it * j));
+					const float texture_position_y = fmodf(camera_->position_.y + ctg_gamma * sin_beta * this->wall_size_.y, wall_size_.y)
+					* (texture.getSize().y / this->wall_size_.y);
+					const float texture_position_x = fmodf(camera_->position_.x + ctg_gamma * cos_alpha * this->wall_size_.x, wall_size_.x)
+					* (texture.getSize().x / this->wall_size_.x);
+					if (texture_position_x > -1 && texture_position_x < texture.getSize().x &&
+						texture_position_y > -1 && texture_position_y < texture.getSize().y &&
+						j > -1 && j < camera_->window_size_.y)
+					{
+						spf.setTextureRect(sf::IntRect(texture_position_x,texture_position_y, 1, 1));
+
+						if (i == 400)
+						{
+							//std::cout << texture_position_y << std::endl;
+						}
+
+						spf.setPosition(i, j);
+						target.draw(spf);
+					}
+				}
+				//}
+				*/
+				
+				for (int l = 0; l < buffer_ray_data_impl2_.size_second; l++)
 				{
 					if (buffer_ray_data_impl2_.get(i, l).length == 0)
 					{
 						break;
 					}
 					
-					for (int j = 0; j < buffer_ray_data_impl2_.size_first; j++)
+					for (int j = 0; j < buffer_ray_data_impl2_.size_second; j++)
 					{
 						if (buffer_ray_data_impl2_.get(i, j).length == 0)
 						{
 							break;
 						}
 
-						if (buffer_ray_data_impl2_.get(i, j).length < buffer_ray_data_impl2_.get(i, j + 1).length)
+						if (buffer_ray_data_impl2_.get(i, j).length <
+							buffer_ray_data_impl2_.get(i, 1 + j).length)
 						{
 						
-							std::swap(*buffer_ray_data_impl2_[i][j], *buffer_ray_data_impl2_[i][j + 1]);
+							_STD swap(*buffer_ray_data_impl2_[i][j], \
+								*buffer_ray_data_impl2_[i][1 + j]);
 						}
 						
 					}
 				}
+
+				bool other_transparent_wall = false;
+				for (tu::rank_t l = buffer_ray_data_impl2_.size_second - 1; l >= 0; --l)
+				{
+					if (buffer_ray_data_impl2_.get(i, l).length != 0)
+					{
+						if (other_transparent_wall)
+						{
+							buffer_ray_data_impl2_.get(i, l).length = 0;
+						}
+						else if (!walls_[buffer_ray_data_impl2_.get(i, l).wall_number]->is_transparent_)
+						{
+
+							other_transparent_wall = true;
+						}
+					}
+
+					
+
+				}
 				
 				const unsigned pixel_depth_max = 
-					buffer_ray_data_impl2_.size_second > pixel_depth_max_ ?
-					pixel_depth_max_ :
+					buffer_ray_data_impl2_.size_second > pixel_depth_max_ ? \
+					pixel_depth_max_ : \
 					static_cast<unsigned>(buffer_ray_data_impl2_.size_second);
 				for (unsigned d_i = 0; d_i <= pixel_depth_max; d_i++)
 				{
 					//std::cout << _d_i << std::endl;
 					//const unsigned d_i = pixel_depth_max - _d_i;
-					if (buffer_ray_data_impl2_.get(i, d_i).length == 0)
+					if (buffer_ray_data_impl2_.get(i, d_i).length != 0)
 					{
-						break;
-					}
-					/*
-					 * В зависимости от того, на какую сторону падает луч,
-					 * находим столб текстуры
-					 */
+						/*
+						 * В зависимости от того, на какую сторону падает луч,
+						 * находим столб текстуры
+						 */
 
-					switch (buffer_ray_data_impl2_.get(i, d_i).direction) {
-					case dir::left:
-						d = fmodf(buffer_ray_data_impl2_.get(i, d_i).position_y,
-							wall_size_.y);
-						break;
+						switch (buffer_ray_data_impl2_.get(i, d_i).direction) {
+						case dir::left:
+							d = fmodf(buffer_ray_data_impl2_.get(i, d_i).position_y, \
+								wall_size_.y);
+							break;
 
-					case dir::right:
-						d = (wall_size_.y - fmodf(buffer_ray_data_impl2_.get(i, d_i).position_y,
-							wall_size_.y));
-						break;
+						case dir::right:
+							d = (wall_size_.y - fmodf(buffer_ray_data_impl2_.get(i, d_i).position_y, \
+								wall_size_.y));
+							break;
 
-					case dir::down:
-						d = (wall_size_.x - fmodf(buffer_ray_data_impl2_.get(i, d_i).position_x,
-							wall_size_.x));
-						break;
+						case dir::down:
+							d = (wall_size_.x - fmodf(buffer_ray_data_impl2_.get(i, d_i).position_x, \
+								wall_size_.x));
+							break;
 
-					case dir::up:
-						d = fmodf(buffer_ray_data_impl2_.get(i, d_i).position_x,
-							wall_size_.x);
-						break;
+						case dir::up:
+							d = fmodf(buffer_ray_data_impl2_.get(i, d_i).position_x, \
+								wall_size_.x);
+							break;
 
-					case dir::none:
-						break;
+						case dir::none:
+							break;
 
-					default:
-						break;
-					}
+						default:
+							break;
+						}
 
-					/*
-					 * Берём текстуру у стены.
-					 */
-					sprite.setTexture(walls_[buffer_ray_data_impl2_.get(i, d_i).wall_number]->texture_);
+						/*
+						 * Берём текстуру у стены.
+						 */
+						sprite.setTexture(walls_[buffer_ray_data_impl2_ \
+							.get(i, d_i).wall_number]->texture_);
 
-					/*
-					 * Высота стены.
-					 */
-					const float wall_height = camera_->render_constant_ /
-						(buffer_ray_data_impl2_.get(i, d_i).length * cosf(
-							buffer_ray_data_impl2_.get(i, d_i).rotation -
-							camera_->rotation_));
+						/*
+						 * Высота стены.
+						 */
+						const float wall_height = camera_->window_size_.y \
+						/ ((buffer_ray_data_impl2_.get(i, d_i).length / 64) * cosf(buffer_ray_data_impl2_.get(i, d_i).rotation - camera_->rotation_));
 
-					/*
-					 * Позиция столба стены на экране по координате Y.
-					 */
-					const float sprite_position_y = camera_->window_delta_y_
-						- wall_height / 2.f;
+						/*
+						 * Позиция столба стены на экране по координате Y.
+						 */
+						const float sprite_position_y = camera_->window_delta_y_ \
+							- wall_height / 2.f;
 
-					/*
-					 * Ставим столб стены на данную позицию.
-					 */
-					sprite.setPosition(i, sprite_position_y);
+						/*
+						 * Ставим столб стены на данную позицию.
+						 */
+						sprite.setPosition(i, sprite_position_y);
 
-					const float tex_wall_scale = (static_cast<float>
-						(walls_[buffer_ray_data_impl2_.get(i, d_i).wall_number]->texture_.getSize().x)
-						/ wall_size_.x);
+						const float tex_wall_scale = (static_cast<float> \
+							(walls_[buffer_ray_data_impl2_.get(i, d_i).wall_number]->texture_.getSize().x) \
+							/ wall_size_.x);
 
-					const int texture_position_x = d * tex_wall_scale;
+						const int texture_position_x = d * tex_wall_scale;
 
-					sprite.setTextureRect(sf::IntRect(
-						texture_position_x,
-						0, 1,
-						walls_[buffer_ray_data_impl2_.get(i, d_i).wall_number]
-						->texture_.getSize().y));
+						sprite.setTextureRect(sf::IntRect( \
+							texture_position_x, \
+							0, 1, \
+							walls_[buffer_ray_data_impl2_.get(i, d_i).wall_number] \
+							->texture_.getSize().y)); \
 
-					const float scale = 1.f / tex_wall_scale;
+						const float scale = 1.f / tex_wall_scale;
 
-					sprite.setScale(1, wall_height /
-						static_cast<float>(walls_[buffer_ray_data_impl2_.get(i, d_i).wall_number]
-							->texture_.getSize().y));
+						sprite.setScale(1, wall_height / \
+							static_cast<float>(walls_[buffer_ray_data_impl2_.get(i, d_i).wall_number] \
+								->texture_.getSize().y)); \
 
-					/*
-					 * Определяем цвет стены,
-					 * в зависимости от её расстояния до камеры.
-					 */
-					const sf::Uint8 wall_clr = 255.f / (1.f +
-						powf(buffer_ray_data_impl2_.get(i, d_i).length, 2.f) *
-						camera_->shading_coefficient_);
+						/*
+						 * Определяем цвет стены,
+						 * в зависимости от её расстояния до камеры.
+						 */
+						const sf::Uint8 wall_clr = 255.f / (1.f +
+							powf(buffer_ray_data_impl2_.get(i, d_i).length, 2.f) *
+							camera_->shading_coefficient_);
 
-					sprite.setColor(sf::Color(wall_clr,
-						wall_clr, wall_clr));
-					/*
-					 * Отрисовка данного столба
-					 */
-					target.draw(sprite);
+						sprite.setColor(sf::Color(wall_clr,
+							wall_clr, wall_clr));
+						/*
+						 * Отрисовка данного столба
+						 */
+						target.draw(sprite);
+					}	
 				}
-
+				
 
 				/*
 				  ╔═══╗░░░░░░╔╗░░░░░░░░░░░░

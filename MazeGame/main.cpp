@@ -1,5 +1,5 @@
 #define V3D_FUNCTIONAL
-#define V3D_GPU_RAYCASTING_MAX_PIXEL_DEPTH 16
+#define V3D_GPU_RAYCASTING_MAX_PIXEL_DEPTH 64
 #include "Walls.h"
 #include <Windows.h>
 #include "GUI_inits.h"
@@ -8,10 +8,36 @@
 #include <amp_math.h>
 
 
+double posX = 22.0, posY = 11.5; //x and y start position
+double dirX = -1.0, dirY = 0.0; //initial direction vector
+double planeX = 0.0, planeY = 30.0_deg; //the 2d raycaster version of camera plane
+
+void right(const float rotSpeed)
+{
+	double oldDirX = dirX;
+	dirX = dirX * cos(-rotSpeed) - dirY * sin(-rotSpeed);
+	dirY = oldDirX * sin(-rotSpeed) + dirY * cos(-rotSpeed);
+	double oldPlaneX = planeX;
+	planeX = planeX * cos(-rotSpeed) - planeY * sin(-rotSpeed);
+	planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed);
+}
+
+void left(const float rotSpeed)
+{
+	double oldDirX = dirX;
+	dirX = dirX * cos(rotSpeed) - dirY * sin(rotSpeed);
+	dirY = oldDirX * sin(rotSpeed) + dirY * cos(rotSpeed);
+	double oldPlaneX = planeX;
+	planeX = planeX * cos(rotSpeed) - planeY * sin(rotSpeed);
+	planeY = oldPlaneX * sin(rotSpeed) + planeY * cos(rotSpeed);
+}
+
+
 int main()
 {
 	std::ios_base::sync_with_stdio(false);
-	sf::RenderWindow window(sf::VideoMode(1500, 1000), "Maze Game!", sf::Style::Default);
+	//floorg(90._deg, 10, 10);
+	sf::RenderWindow window(sf::VideoMode(1680, 1050), "Maze Game!", sf::Style::Default);
 	window.setPosition({ 10, 10 });
 	//window.setFramerateLimit(60);
 	//window.setVerticalSyncEnabled(true);
@@ -20,26 +46,30 @@ int main()
 	const int sizeY = 10;
 
 	v3d::Maze<sizeX, sizeY, 2> maze{};
-	v3d::Matrix lab = maze.generate();
-	/*v3d::Matrix lab =
+	//v3d::Matrix lab = maze.generate();
+	v3d::Matrix lab =
 	{   {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 		{1, 1, 1, 1, 1, 2, 1, 1, 1, 1},
 		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 0, 0, 0, 0, 2, 0, 0, 0, 1},
 		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{1, 0, 0, 0, 0, 2, 0, 0, 0, 1},
 		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 		{1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-	};*/
+	};
 
-	v3d::ray_data* ray_data = new v3d::ray_data[1500 * V3D_GPU_RAYCASTING_MAX_PIXEL_DEPTH];
-	v3d::CPURayCaster ray_caster(1500, &ray_data);
+	v3d::ray_data* ray_data = new v3d::ray_data[window.getSize().x \
+		* V3D_GPU_RAYCASTING_MAX_PIXEL_DEPTH];
+	v3d::CPURayCaster ray_caster(window.getSize().x, &ray_data);
 	v3d::Camera camera(window);
-	v3d::CPUWorld world(v3d::World(&camera, &ray_data, sf::Vector2f(250, 250), lab));
+	v3d::CPUWorld world(v3d::World(&camera, &ray_data, \
+		sf::Vector2f(600, 600), lab));
 	
-	world.setCamera(&camera.setRadius(1).setShadingCoefficient(10).setBackgroundRepeatingFov(360.0_deg).setFov(30.0_deg).setZoom(0.0045F)).setPixelDepthMax(10);
+	world.setCamera(&camera.setRadius(0.10F).setShadingCoefficient(0) \
+		.setBackgroundRepeatingFov(360.0_deg).setFov(60.0_deg) \
+		.setZoom(0.03F).setWindowDeltaY(300)).setPixelDepthMax(10);
 
 	std::vector<float> a = 
 	{
@@ -62,7 +92,7 @@ int main()
 		}
 	);
 
-	std::cout << h_a[0][0] << std::endl;
+	//std::cout << h_a[0][0] << std::endl;
 	
 	sf::Vector2f spawn_position;
 
@@ -80,7 +110,7 @@ int main()
 			}
 		}
 	}
-
+	/*
 	for (int i = 0; i < world.getMatrixSize().x; i++)
 	{
 		for (int l = 0; l < world.getMatrixSize().y; l++)
@@ -90,7 +120,7 @@ int main()
 				world[i][l] = math::rand(1, 4, i * l);
 			}
 		}
-	}
+	}*/
 
 	camera.setPosition(spawn_position.x, spawn_position.y);
 
@@ -125,15 +155,13 @@ int main()
 	const int fps_i = 3;
 	int fps_ii = 0;
 	float fps_data = 0;
-	const float speed = 0.45f;
+	const float speed = 1.2f;
+	const float rot_speed = 0.2f;
 
 	//world.addWalls(new CircleWall);
 	
 	world
-		<< new CircleWall
-		<< new v3d::MainWall("data/tex/wall5.png")
-		<< new v3d::MainWall("data/tex/flowers/1.png")
-		<< new v3d::MainWall("data/tex/flowers/1.png")
+		<< new v3d::MainWall(true, false,"data/tex/window.png")
 		<< new v3d::MainSprite(30, 30, 0, 10, 10, "data/tex/flowers/1.png");
 
 
@@ -154,12 +182,10 @@ int main()
 	
 	while (window.isOpen())
 	{
+		
 		//FPS
 		Time = clock.getElapsedTime();
 		float currentTime = Time.asSeconds();
-
-		ray_caster.startRayCasting(&camera, &world);
-		
 		sf::Event event{};
 		while (window.pollEvent(event))
 		{
@@ -185,14 +211,14 @@ int main()
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 		{
 			world.camera_move_with_cls(camera,
-				cosf(camera.getRotation() + 15.0_deg) * speed,
-				sinf(camera.getRotation() + 15.0_deg) * speed);
+				cosf(camera.getRotation()) * speed,
+				sinf(camera.getRotation()) * speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 		{
 			world.camera_move_with_cls(camera,
-				-cosf(camera.getRotation() + 15.0_deg) * speed,
-				-sinf(camera.getRotation() + 15.0_deg) * speed);
+				-cosf(camera.getRotation()) * speed,
+				-sinf(camera.getRotation()) * speed);
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 		{
@@ -216,13 +242,19 @@ int main()
 		if (!menu.active() || menu.activeSettings())
 		{
 			sf::Vector2i mouse_pos0 = sf::Mouse::getPosition(window);
+			ray_caster.startRayCasting(&camera, &world);
 			window.draw(world);
 			if (!menu.active())
 			{
 				sf::Vector2i mouse_pos1 = sf::Mouse::getPosition(window);
-				camera.rotate(math::toRad(static_cast<float>(mouse_pos1.x - mouse_pos0.x) * speed))
-				.windowDeltaY_unary((static_cast<float>(mouse_pos0.y) - static_cast<float>(mouse_pos1.y)) * speed * 10);
-				sf::Mouse::setPosition(sf::Vector2i(window.getSize().x / 2, window.getSize().y / 2));
+				camera.rotate(math::toRad(static_cast<float> \
+					(mouse_pos1.x - mouse_pos0.x) * rot_speed)) \
+				.windowDeltaY_unary((static_cast<float>(mouse_pos0.y) \
+					- static_cast<float>(mouse_pos1.y)) * rot_speed * 10);
+
+				
+				sf::Mouse::setPosition(sf::Vector2i(window.getSize().x / 2, \
+					window.getSize().y / 2));
 			}
 		}
 
@@ -237,7 +269,8 @@ int main()
 		fps_data += fps;
 		if (fps_ii == fps_i)
 		{
-			FPStext.setString(std::to_string(static_cast<int>(fps_data / static_cast<float>(fps_ii))));
+			FPStext.setString(std::to_string(static_cast<int>(fps_data \
+				/ static_cast<float>(fps_ii))));
 			fps_ii = 0;
 			fps_data = 0;
 		}

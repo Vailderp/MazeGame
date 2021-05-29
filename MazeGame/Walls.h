@@ -11,7 +11,8 @@
 class CircleWall final : public v3d::Wall
 {
 public:
-	CircleWall()
+	explicit CircleWall(const bool is_transparent = false) :
+		Wall(is_transparent)
 	{
 		render_texture_.create(1000, 1000);
 		circle_shape_.setRadius(radius_);
@@ -55,16 +56,16 @@ protected:
 
 		if (circle_shape_.getPosition().x > 1000)
 		{
-			speed_.x = static_cast<float>(math::rand(100, 1000)) / 100.f * (speed_.x < 0 ? -1 : 1);
-			speed_.y = static_cast<float>(math::rand(100, 1000)) / 100.f * (speed_.y < 0 ? -1 : 1);
+			speed_.x = static_cast<float>(math::rand(100, 1000)) / 1000.f * (speed_.x < 0 ? -1 : 1);
+			speed_.y = static_cast<float>(math::rand(100, 1000)) / 1000.f * (speed_.y < 0 ? -1 : 1);
 			score_.x++;
 			score_text_.setString(std::to_string(score_.x) + " : " + std::to_string(score_.y));
 			circle_shape_.setPosition(500, 500);
 		}
 		if (circle_shape_.getPosition().x < 0)
 		{
-			speed_.x = static_cast<float>(math::rand(100, 1000)) / 100.f * (speed_.x < 0 ? -1 : 1);
-			speed_.y = static_cast<float>(math::rand(100, 1000)) / 100.f * (speed_.y < 0 ? -1 : 1);
+			speed_.x = static_cast<float>(math::rand(100, 1000)) / 1000.f * (speed_.x < 0 ? -1 : 1);
+			speed_.y = static_cast<float>(math::rand(100, 1000)) / 1000.f * (speed_.y < 0 ? -1 : 1);
 			score_.y++;
 			score_text_.setString(std::to_string(score_.x) + " : " + std::to_string(score_.y));
 			circle_shape_.setPosition(500, 500);
@@ -85,14 +86,14 @@ protected:
 		{
 			speed_.x += 0.5;
 			speed_.x = -speed_.x;
-			speed_.y = static_cast<float>(math::rand(500, 2000)) / 100.f * (speed_.y < 0 ? -1 : 1);
+			speed_.y = static_cast<float>(math::rand(500, 2000)) / 1000.f * (speed_.y < 0 ? -1 : 1);
 			circle_shape_.move(10, 0);
 		}
 		if (circle_shape_.getPosition().x + radius_ > player_y_.getPosition().x && circle_shape_.getPosition().y > player_y_.getPosition().y && circle_shape_.getPosition().y < player_y_.getPosition().y + 200)
 		{
 			speed_.x += 0.5;
 			speed_.x = -speed_.x;
-			speed_.y = static_cast<float>(math::rand(500, 2000)) / 100.f * (speed_.y < 0 ? -1 : 1);
+			speed_.y = static_cast<float>(math::rand(500, 2000)) / 1000.f * (speed_.y < 0 ? -1 : 1);
 			circle_shape_.move(-10, 0);
 		}
 
@@ -140,7 +141,7 @@ protected:
 	}
 
 private:
-	sf::Vector2f speed_ = { 35.5f, 0 };
+	sf::Vector2f speed_ = { 3.5f, 0 };
 	v3d::Timer<float> timer_;
 	sf::CircleShape circle_shape_;
 	sf::RenderTexture render_texture_;
