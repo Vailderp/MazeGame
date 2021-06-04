@@ -149,19 +149,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Game_generator.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="WallGameGenerator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DataImpl.h" />
     <ClInclude Include="Engine3d.h" />
     <ClInclude Include="Game_generator.h" />
+    <ClInclude Include="GPGPU.h" />
     <ClInclude Include="Gui.h" />
     <ClInclude Include="gui_core.h" />
     <ClInclude Include="GUI_inits.h" />
     <ClInclude Include="Math.h" />
-    <ClInclude Include="WallGameGenerator.h" />
     <ClInclude Include="Walls.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

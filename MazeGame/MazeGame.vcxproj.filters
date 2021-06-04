@@ -21,21 +21,12 @@
     <ClCompile Include="main.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="Game_generator.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="WallGameGenerator.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Walls.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="Game_generator.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="WallGameGenerator.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="GUI_inits.h">
@@ -54,6 +45,9 @@
       <Filter>Файлы заголовков\Library</Filter>
     </ClInclude>
     <ClInclude Include="DataImpl.h">
+      <Filter>Файлы заголовков\Library</Filter>
+    </ClInclude>
+    <ClInclude Include="GPGPU.h">
       <Filter>Файлы заголовков\Library</Filter>
     </ClInclude>
   </ItemGroup>

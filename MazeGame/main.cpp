@@ -1,40 +1,48 @@
-#define V3D_FUNCTIONAL
-#define V3D_GPU_RAYCASTING_MAX_PIXEL_DEPTH 64
-#include "Walls.h"
-#include <Windows.h>
-#include "GUI_inits.h"
-#include <algorithm>
-#include <amp.h>
-#include <amp_math.h>
+//#define V3D_FUNCTIONAL
+//#define V3D_GPU_RAYCASTING_MAX_PIXEL_DEPTH 64
+//#include "Walls.h"
+//#include <Windows.h>
+//#include "GUI_inits.h"
+//#include <algorithm>
+//#include "GPGPU.h"
+#include <iostream>
+
+#include "DataImpl.h"
 
 
-double posX = 22.0, posY = 11.5; //x and y start position
-double dirX = -1.0, dirY = 0.0; //initial direction vector
-double planeX = 0.0, planeY = 30.0_deg; //the 2d raycaster version of camera plane
-
-void right(const float rotSpeed)
+void test1(tu::Data<int, 2>::DataImpl<3, 3>& data_impl)
 {
-	double oldDirX = dirX;
-	dirX = dirX * cos(-rotSpeed) - dirY * sin(-rotSpeed);
-	dirY = oldDirX * sin(-rotSpeed) + dirY * cos(-rotSpeed);
-	double oldPlaneX = planeX;
-	planeX = planeX * cos(-rotSpeed) - planeY * sin(-rotSpeed);
-	planeY = oldPlaneX * sin(-rotSpeed) + planeY * cos(-rotSpeed);
+	for (int i = 0; i < 100000000; ++i)
+	{
+		data_impl.at<2, 2>()++;
+	}
 }
 
-void left(const float rotSpeed)
+void test2(const tu::DataImpl2<int>& data_impl)
 {
-	double oldDirX = dirX;
-	dirX = dirX * cos(rotSpeed) - dirY * sin(rotSpeed);
-	dirY = oldDirX * sin(rotSpeed) + dirY * cos(rotSpeed);
-	double oldPlaneX = planeX;
-	planeX = planeX * cos(rotSpeed) - planeY * sin(rotSpeed);
-	planeY = oldPlaneX * sin(rotSpeed) + planeY * cos(rotSpeed);
+	for (int i = 0; i < 100000000; ++i)
+	{
+		data_impl.get(2, 2)++;
+	}
 }
 
 
 int main()
 {
+	tu::ArrayFill<int, 9>::type data = new tu::ArrayFill<int, 9>::type_init;
+	tu::Data<int, 2>::DataImpl<3, 3> data_impl(data);
+
+	int* data2 = new int[9];
+	const tu::DataImpl2<int> data_impl2(&data2, 3, 3);
+	
+	while (true)
+	{
+		test1(data_impl);
+		test2(data_impl2);
+	}
+	return 0;
+}
+	/*
 	std::ios_base::sync_with_stdio(false);
 	//floorg(90._deg, 10, 10);
 	sf::RenderWindow window(sf::VideoMode(1680, 1050), "Maze Game!", sf::Style::Default);
@@ -71,29 +79,29 @@ int main()
 		.setBackgroundRepeatingFov(360.0_deg).setFov(60.0_deg) \
 		.setZoom(0.03F).setWindowDeltaY(300)).setPixelDepthMax(10);
 
-	std::vector<float> a = 
+
+	float* matrix = new float[3 * 3]
 	{
-	2, 2, 9, 7, 1, 4,
-	4, 4, 8, 8, 3, 4,
-	1, 5, 1, 2, 5, 2,
-	6, 8, 3, 2, 7, 2
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9
 	};
 	
-	concurrency::array<float, 2> h_a(4, 6, a.begin(), a.end());
+	GPGPUHOST<float, 3, 3> h_a(matrix);
 
-	concurrency::parallel_for_each(
-		h_a.extent,
-		[&h_a](concurrency::index<2> idx) restrict(amp)
+	/*concurrency::parallel_for_each(
+		h_a.host_array.extent,
+		[h_a](concurrency::index<2> idx) restrict(amp)
 		{
 			for (int i = 0; i < 100000; i++)
 			{
 				h_a[0][0] += 0.01;
 			}
 		}
-	);
+	);*/
 
 	//std::cout << h_a[0][0] << std::endl;
-	
+	/*
 	sf::Vector2f spawn_position;
 
 	for (int i = 0; i < world.getMatrixSize().x; i++)
@@ -121,7 +129,7 @@ int main()
 			}
 		}
 	}*/
-
+	/*
 	camera.setPosition(spawn_position.x, spawn_position.y);
 
 	sf::Vector2f r_size(world.getSize().x / sizeX,
@@ -179,7 +187,7 @@ int main()
 		Sleep(100);
 	}*/
 
-	
+	/*
 	while (window.isOpen())
 	{
 		
@@ -280,5 +288,10 @@ int main()
 		window.display();
 	}
 
+
+	
+	
+	//tu::ptr<int>::create<1>::value p;
+
 	return EXIT_SUCCESS;
-}
+}*/
