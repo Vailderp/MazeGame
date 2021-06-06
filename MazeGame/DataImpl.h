@@ -6,67 +6,84 @@ namespace tu
 
 	//////////////////////////////////////////////////////////////////////////////
 
+	/**
+	 * \brief value type of rank
+	 */
 	typedef int rank_t;
 
 	//////////////////////////////////////////////////////////////////////////////
 
-	//typename => typename*
+	/**
+	 * \brief typename -> typename*
+	 * \tparam _Value_ptr_type value type / тип величины
+	 */
 	template<typename _Value_ptr_type> using Ptr = _Value_ptr_type*;
 
-	//typename => typename&
+	/**
+	 * \brief typename -> typename&
+	 * \tparam _Value_ptr_type value type / тип величины
+	 */
 	template<typename _Value_ptr_type> using Ref = _Value_ptr_type&;
+
 	
 	//////////////////////////////////////////////////////////////////////////////
-	
-	template <typename _Value_type>
-	class VecOpImpl
-	{
-	public:
-		std::vector<_Value_type>& vector;
 
-		VecOpImpl(Ref<std::vector<_Value_type>> vector) :
-			vector(vector)
-		{
-
-
-		}
-		void operator << (Ref<VecOpImpl> constructor)
-		{
-			for (_Value_type it : constructor.vector)
-			{
-				this->vector.push_back(it);
-			}
-		}
-	};
-
-	//////////////////////////////////////////////////////////////////////////////
-
+	/**
+	* \brief get the sum of arguments / получить количество аргументов
+	* \param _Args args / аргументы
+	* \return the sum of arguments / сумма аргкментов
+	*/
 	template<typename... _Args>
 	constexpr inline rank_t argsum(_Args... args)
 	{
 		return sizeof...(args);
 	}
+	
 	//////////////////////////////////////////////////////////////////////////////
 	
+	/**
+	 * \brief multi-dimension vector / многомерный вектор
+	 * \tparam _Value_type value type
+	 * \tparam _Dimension_rank rank
+	 */
 	template <typename _Value_type, rank_t _Dimension_rank>
 	struct multi_dimension_vector_str
 	{
+		/**
+		 * \brief multi-dimension vector / многомерный вектор
+		 */
 		typedef std::vector<typename multi_dimension_vector_str
 			<_Value_type, _Dimension_rank - 1>::type> type;
 	};
+
+	/**
+	 * \brief multi-dimension vector / многомерный вектор
+	 * \tparam _Value_type value type
+	 * \tparam _Dimension_rank rank
+	 */
 	template<typename _Value_type>
 	struct multi_dimension_vector_str<_Value_type, 0>
 	{
+		/**
+		 * \brief multi-dimension vector / многомерный вектор
+		 */
 		typedef _Value_type type;
 	};
+
+	
+	/**
+	 * \brief multi-dimension vector / многомерный вектор
+	 * \tparam _Value_type value type
+	 * \tparam _Dimension_rank rank
+	 */
 	template <typename _Value_type, rank_t _Dimension_rank> 
 	using multi_dimension_vector = \
 	typename multi_dimension_vector_str<_Value_type, _Dimension_rank>::type;
-	template<typename _Value_type, _Value_type... _Args>
-	
+
 	/**
 	* \brief variadic args to array / массив вариативных аргументов
 	*/
+	template<typename _Value_type, _Value_type... _Args>
 	struct variadic_args_array_str
 	{
 		/**
@@ -336,7 +353,7 @@ namespace tu
 			for (rank_t i = 0; i < _Size_0; i++)
 			{
 				_Data[i] = new PtrInf<_Value_type, argsum(_Size_inf...) - 1>[_Size_0];
-				ArrayFill<_Value_type, _Size_inf...>::fill(_Data[i]);
+				ArrayFill<_Value_type, _Size_inf...>::fill(_Data[i]); 
 			}
 		}
 
@@ -503,7 +520,6 @@ namespace tu
 	
 	//////////////////////////////////////////////////////////////////////////////
 	
-
 	template<typename _Value_type, rank_t _Rank>
 	class Data
 	{
@@ -536,17 +552,14 @@ namespace tu
 				ArrayFill<_Value_type, _Sizes...>::fill(data_ptr, Data_src);
 			}
 		};
+
+	//////////////////////////////////////////////////////////////////////////////
+		
 		static inline rank_t dimension = _Rank;
 		static inline rank_t rank = _Rank;
 
+	//////////////////////////////////////////////////////////////////////////////
 
-
-
-
-
-
-
-		
 		template<rank_t _Size0, rank_t... _Sizes>
 		class DataImpl2
 		{
@@ -566,16 +579,5 @@ namespace tu
 		};		
 	};
 
-
-
-
-	
-
-
-
-	
 	//////////////////////////////////////////////////////////////////////////////
-		
-		
 };
-
